@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Friends of Biodiversity — Uganda Biodiversity Fund</title>
+<meta name="description" content="UBF Green Card — Protecting Uganda's biodiversity across the Albertine Rift and Karamoja landscapes."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+/* ═══ DESIGN TOKENS ═══ */
+:root{
+  --canopy:#0B2618;--canopy-mid:#174530;--canopy-lt:#2D6A4F;
+  --gold:#C8A84B;--gold-lt:#E4C97A;--gold-dk:#8A6E1E;
+  --mist:#F0F4EF;--white:#FFFFFF;--rust:#B5451B;
+  --text:#1A1A1A;--muted:#5A6B5D;--border:rgba(0,0,0,.08);
+  --silver-c:#909090;--gold-c:#C8A84B;--plat-c:#5BC4BF;--diamond-c:#7EB8C9;
+  --ff-d:'Playfair Display',Georgia,serif;
+  --ff-b:'Inter',system-ui,sans-serif;
+  --ff-m:'Space Mono',monospace;
+  --r:10px;--r-sm:6px;
+  --sh:0 4px 20px rgba(0,0,0,.12);--sh-lg:0 12px 48px rgba(0,0,0,.22);
+  --tr:.28s cubic-bezier(.4,0,.2,1);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;font-size:16px}
+body{font-family:var(--ff-b);color:var(--text);background:var(--mist);overflow-x:hidden}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:var(--ff-b)}
+
+/* ═══ VIEWS ═══ */
+.view{display:none;min-height:100vh}.view.active{display:block}
+
+/* ═══ TYPOGRAPHY ═══ */
+.eyebrow{font-family:var(--ff-m);font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--canopy-lt);margin-bottom:.6rem}
+.sec-title{font-family:var(--ff-d);font-size:clamp(1.6rem,4vw,2.6rem);font-weight:700;color:var(--canopy);line-height:1.2;margin-bottom:.9rem}
+.sec-title em{font-style:normal;color:var(--canopy-lt)}
+.sec-body{font-size:1rem;color:var(--muted);line-height:1.75;max-width:620px}
+section{padding:4.5rem 1.5rem}
+.inner{max-width:1200px;margin:0 auto}
+
+/* ═══ BUTTONS ═══ */
+.btn{display:inline-flex;align-items:center;gap:.45rem;padding:.8rem 1.6rem;border-radius:var(--r-sm);font-weight:600;font-size:.88rem;border:none;transition:transform var(--tr),box-shadow var(--tr),background var(--tr);cursor:pointer}
+.btn:hover{transform:translateY(-2px);box-shadow:var(--sh)}
+.btn:active{transform:none}
+.btn-gold{background:var(--gold);color:var(--canopy)}.btn-gold:hover{background:var(--gold-lt)}
+.btn-canopy{background:var(--canopy);color:var(--white)}.btn-canopy:hover{background:var(--canopy-mid)}
+.btn-outline{background:transparent;color:var(--white);border:1.5px solid rgba(255,255,255,.5)}.btn-outline:hover{background:rgba(255,255,255,.1);border-color:var(--white)}
+.btn-ghost{background:transparent;color:var(--canopy-lt);border:1.5px solid var(--canopy-lt)}.btn-ghost:hover{background:var(--canopy);color:var(--white);border-color:var(--canopy)}
+.btn-sm{padding:.5rem 1rem;font-size:.78rem}
+.btn-danger{background:var(--rust);color:var(--white)}.btn-danger:hover{background:#8B3415}
+.btn-full{width:100%;justify-content:center}
+
+/* ═══ HEADER / NAV ═══ */
+#site-header{position:fixed;top:0;left:0;right:0;z-index:200;padding:0 1.5rem;transition:background var(--tr),box-shadow var(--tr)}
+#site-header.scrolled{background:rgba(11,38,24,.97);box-shadow:0 2px 20px rgba(0,0,0,.35);backdrop-filter:blur(8px)}
+.nav-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:68px;gap:1rem}
+
+/* Dual-brand identity */
+.brand-strip{display:flex;align-items:center;gap:.85rem;flex-shrink:0}
+.logo-ubf{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--canopy-mid),var(--canopy-lt));border:2px solid var(--gold);flex-shrink:0;overflow:hidden}
+.logo-fob{display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:rgba(200,168,75,.1);border:2px solid rgba(200,168,75,.4);flex-shrink:0}
+.logo-divider{width:1px;height:36px;background:rgba(255,255,255,.18);flex-shrink:0}
+.brand-labels{display:flex;flex-direction:column;gap:1px}
+.brand-main{font-family:var(--ff-d);font-size:.9rem;font-weight:700;color:var(--white);line-height:1.1}
+.brand-sub{font-size:.58rem;color:var(--gold-lt);letter-spacing:.07em;text-transform:uppercase;line-height:1.2}
+.brand-sub2{font-size:.54rem;color:rgba(255,255,255,.4);letter-spacing:.05em;text-transform:uppercase;line-height:1.2}
+nav ul{display:flex;list-style:none;gap:.15rem;align-items:center}
+nav ul a{display:block;padding:.42rem .72rem;color:rgba(255,255,255,.82);font-size:.8rem;font-weight:500;border-radius:var(--r-sm);transition:color var(--tr),background var(--tr)}
+nav ul a:hover{color:var(--gold-lt);background:rgba(200,168,75,.1)}
+nav ul a.nav-cta{background:var(--gold);color:var(--canopy);font-weight:700}
+nav ul a.nav-cta:hover{background:var(--gold-lt)}
+nav ul a.nav-admin{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid rgba(126,184,201,.28)}
+nav ul a.nav-admin:hover{background:rgba(185,242,255,.18)}
+.hamburger{display:none;flex-direction:column;justify-content:space-between;width:26px;height:18px;background:none;border:none;padding:0}
+.hamburger span{display:block;height:2px;background:var(--white);border-radius:2px;transition:transform var(--tr),opacity var(--tr)}
+.hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg)}
+.hamburger.open span:nth-child(2){opacity:0}
+.hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
+.mob-menu{display:none;position:fixed;top:68px;left:0;right:0;background:rgba(11,38,24,.98);backdrop-filter:blur(12px);z-index:199;padding:1rem 1.5rem 1.5rem;border-bottom:1px solid rgba(200,168,75,.2)}
+.mob-menu.open{display:block}
+.mob-menu a{display:block;padding:.8rem 0;color:rgba(255,255,255,.82);font-weight:500;border-bottom:1px solid rgba(255,255,255,.07);font-size:.9rem}
+.mob-menu a:last-child{border-bottom:none}
+.mob-menu a.nav-cta{margin-top:.5rem;background:var(--gold);color:var(--canopy);text-align:center;border-radius:var(--r-sm);padding:.8rem;border-bottom:none}
+
+/* ═══ HERO SLIDESHOW ═══ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;overflow:hidden}
+.slide{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity 1.6s ease-in-out;z-index:0}
+.slide.active{opacity:1}
+/* Picsum nature seeds — replace with real UBF assets */
+.sl1{background-image:url('https://picsum.photos/seed/jungle11/1920/1080');background-color:#0B2618}
+.sl2{background-image:url('https://picsum.photos/seed/forest22/1920/1080');background-color:#162B0B}
+.sl3{background-image:url('https://picsum.photos/seed/nature33/1920/1080');background-color:#0B1A2B}
+.sl4{background-image:url('https://picsum.photos/seed/savanna44/1920/1080');background-color:#2B1A0B}
+.sl5{background-image:url('https://picsum.photos/seed/wetland55/1920/1080');background-color:#1A0B2B}
+.hero-veil{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(11,38,24,.55) 0%,rgba(11,38,24,.1) 40%,rgba(11,38,24,.82) 100%);z-index:1}
+.hero-content{position:relative;z-index:2;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:8rem 1.5rem 5rem;min-height:100vh}
+.hero-eyebrow{font-family:var(--ff-m);font-size:.7rem;letter-spacing:.22em;color:var(--gold-lt);text-transform:uppercase;margin-bottom:1.25rem;opacity:0;animation:fadeUp .8s .3s forwards}
+.hero-title{font-family:var(--ff-d);font-size:clamp(2.4rem,7vw,5rem);font-weight:900;color:var(--white);line-height:1.05;max-width:800px;margin-bottom:1.4rem;opacity:0;animation:fadeUp .8s .5s forwards}
+.hero-title em{font-style:italic;color:var(--gold-lt)}
+.hero-desc{font-size:clamp(.95rem,2.5vw,1.15rem);color:rgba(255,255,255,.75);max-width:560px;line-height:1.75;margin-bottom:2.5rem;opacity:0;animation:fadeUp .8s .7s forwards}
+.hero-acts{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeUp .8s .9s forwards}
+.slide-dots{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:.5rem}
+.dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:background var(--tr),transform var(--tr)}
+.dot.active{background:var(--gold);transform:scale(1.4)}
+
+/* ═══ STATS ═══ */
+#impact{background:var(--canopy)}
+.stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1.5px;background:rgba(200,168,75,.18);border-radius:var(--r);overflow:hidden;margin-top:2.5rem}
+.stat-cell{background:var(--canopy-mid);padding:1.75rem 1.25rem;text-align:center}
+.stat-n{font-family:var(--ff-d);font-size:2.2rem;font-weight:900;color:var(--gold);display:block}
+.stat-l{font-size:.77rem;color:rgba(255,255,255,.55);margin-top:.2rem;line-height:1.4}
+
+/* ═══ THEMES & PROGRAMS ═══ */
+#themes{background:var(--mist)}
+.theme-tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin:2rem 0 1.25rem}
+.ttab{padding:.5rem 1.1rem;border-radius:99px;border:1.5px solid var(--canopy-lt);background:transparent;color:var(--canopy-lt);font-size:.8rem;font-weight:600;cursor:pointer;transition:background var(--tr),color var(--tr),border-color var(--tr)}
+.ttab.active,.ttab:hover{background:var(--canopy);color:var(--white);border-color:var(--canopy)}
+.theme-panel{display:none}.theme-panel.active{display:block}
+.prog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1.2rem;margin-top:1.25rem}
+.prog-card{background:var(--white);border-radius:var(--r);padding:1.75rem;border-left:4px solid var(--canopy-lt);box-shadow:var(--sh);transition:transform var(--tr),box-shadow var(--tr)}
+.prog-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.prog-icon{font-size:1.65rem;margin-bottom:.7rem}
+.prog-title{font-family:var(--ff-d);font-size:1.05rem;font-weight:700;color:var(--canopy);margin-bottom:.45rem}
+.prog-desc{font-size:.82rem;color:var(--muted);line-height:1.65}
+.prog-tag{display:inline-block;font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.18rem .52rem;border-radius:99px;background:rgba(45,106,79,.1);color:var(--canopy-lt);margin-bottom:.6rem}
+
+/* ═══ GREEN CARD TIERS ═══ */
+#greencard{background:var(--white)}
+.tier-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem;margin-top:2.5rem}
+.tier-card{background:var(--mist);border-radius:var(--r);padding:1.75rem 1.5rem;border:2px solid transparent;cursor:pointer;transition:transform var(--tr),box-shadow var(--tr),border-color var(--tr);position:relative;overflow:hidden}
+.tier-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3.5px}
+.tier-card[data-tier=silver]::after{background:var(--silver-c)}
+.tier-card[data-tier=gold]::after{background:var(--gold-c)}
+.tier-card[data-tier=platinum]::after{background:var(--plat-c)}
+.tier-card[data-tier=diamond]::after{background:linear-gradient(90deg,var(--plat-c),var(--diamond-c),var(--gold-c))}
+.tier-card:hover,.tier-card.sel{transform:translateY(-4px);box-shadow:var(--sh-lg)}
+.tier-card[data-tier=silver].sel{border-color:var(--silver-c)}
+.tier-card[data-tier=gold].sel{border-color:var(--gold-c)}
+.tier-card[data-tier=platinum].sel{border-color:var(--plat-c)}
+.tier-card[data-tier=diamond].sel{border-color:var(--diamond-c)}
+.tier-badge{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.2rem;margin-bottom:.9rem}
+.tier-name{font-family:var(--ff-d);font-size:1.3rem;font-weight:700;margin-bottom:.3rem}
+.tier-card[data-tier=silver] .tier-name{color:var(--silver-c)}
+.tier-card[data-tier=gold] .tier-name{color:var(--gold-c)}
+.tier-card[data-tier=platinum] .tier-name{color:var(--plat-c)}
+.tier-card[data-tier=diamond] .tier-name{color:var(--diamond-c)}
+.tier-range{font-family:var(--ff-m);font-size:.74rem;color:var(--muted);margin-bottom:1.1rem}
+.tier-range strong{color:var(--text)}
+.tier-perks{list-style:none;display:flex;flex-direction:column;gap:.42rem;margin-bottom:1.35rem}
+.tier-perks li{font-size:.81rem;color:var(--muted);padding-left:1.2rem;position:relative;line-height:1.5}
+.tier-perks li::before{content:'✓';position:absolute;left:0;color:var(--canopy-lt);font-weight:700}
+.tier-btn{width:100%;padding:.65rem;border-radius:var(--r-sm);font-weight:600;font-size:.82rem;border:none;cursor:pointer;transition:filter var(--tr)}
+.tier-card[data-tier=silver] .tier-btn{background:rgba(144,144,144,.15);color:#555}
+.tier-card[data-tier=gold] .tier-btn{background:rgba(200,168,75,.18);color:var(--gold-dk)}
+.tier-card[data-tier=platinum] .tier-btn{background:rgba(91,196,191,.18);color:#1A7A76}
+.tier-card[data-tier=diamond] .tier-btn{background:rgba(126,184,201,.18);color:#1A6A7A}
+.tier-card.sel .tier-btn{filter:brightness(1.15)}
+
+/* ═══ AUTH MODALS ═══ */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:500;align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex}
+.modal{background:var(--white);border-radius:var(--r);padding:2.25rem;max-width:460px;width:100%;position:relative;animation:scaleIn .28s ease;max-height:90vh;overflow-y:auto}
+.modal-close{position:absolute;top:.9rem;right:.9rem;background:none;border:none;font-size:1.3rem;color:var(--muted);cursor:pointer;line-height:1}
+.modal-close:hover{color:var(--text)}
+.modal h2{font-family:var(--ff-d);font-size:1.45rem;color:var(--canopy);margin-bottom:.3rem}
+.modal .modal-sub{font-size:.84rem;color:var(--muted);margin-bottom:1.4rem;line-height:1.55}
+.form-group{display:flex;flex-direction:column;gap:.35rem;margin-bottom:1.05rem}
+label{font-size:.74rem;font-weight:600;color:var(--muted);letter-spacing:.05em;text-transform:uppercase}
+input,select,textarea{background:var(--mist);border:1.5px solid rgba(0,0,0,.1);border-radius:var(--r-sm);padding:.7rem .9rem;color:var(--text);font-size:.88rem;font-family:var(--ff-b);transition:border-color var(--tr);width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--canopy-lt);background:var(--white)}
+.form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.field-note{font-size:.71rem;color:var(--muted);margin-top:.15rem}
+.divider-text{text-align:center;color:var(--muted);font-size:.8rem;margin:.7rem 0;position:relative}
+.divider-text::before,.divider-text::after{content:'';position:absolute;top:50%;width:42%;height:1px;background:var(--border)}
+.divider-text::before{left:0}.divider-text::after{right:0}
+.auth-switch{text-align:center;font-size:.82rem;color:var(--muted);margin-top:.85rem}
+.auth-switch a{color:var(--canopy-lt);font-weight:600;cursor:pointer}
+.auth-switch a:hover{color:var(--canopy)}
+.admin-note{background:rgba(126,184,201,.1);border:1px solid rgba(126,184,201,.3);border-radius:var(--r-sm);padding:.7rem;font-size:.78rem;color:#1A6A7A;margin-bottom:.9rem}
+
+/* ═══ CONTENT LIBRARY ═══ */
+#learn{background:var(--mist)}
+.content-toolbar{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;justify-content:space-between;margin:1.5rem 0}
+.filter-row{display:flex;gap:.45rem;flex-wrap:wrap}
+.ftag{padding:.36rem .88rem;border-radius:99px;border:1.5px solid var(--border);background:var(--white);color:var(--muted);font-size:.77rem;font-weight:600;cursor:pointer;transition:background var(--tr),color var(--tr),border-color var(--tr)}
+.ftag.active,.ftag:hover{background:var(--canopy);color:var(--white);border-color:var(--canopy)}
+.content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:1.2rem}
+.content-card{background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:transform var(--tr),box-shadow var(--tr)}
+.content-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
+.cc-thumb{height:150px;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.cc-type-badge{position:absolute;top:.7rem;left:.7rem;font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.18rem .52rem;border-radius:99px;backdrop-filter:blur(4px)}
+.badge-video{background:rgba(181,69,27,.85);color:#fff}
+.badge-pdf{background:rgba(11,38,24,.85);color:var(--gold-lt)}
+.badge-podcast{background:rgba(91,196,191,.85);color:var(--canopy)}
+.badge-article{background:rgba(200,168,75,.85);color:var(--canopy)}
+.badge-research{background:rgba(74,43,95,.85);color:#E4C9FF}
+.badge-documentary{background:rgba(30,60,30,.9);color:#A8E6B8}
+.cc-lock{position:absolute;inset:0;background:rgba(11,38,24,.75);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.35rem;font-size:.77rem;color:rgba(255,255,255,.85);font-weight:600;backdrop-filter:blur(2px)}
+.cc-lock-icon{font-size:1.6rem}
+.cc-body{padding:1.2rem}
+.cc-win-tag{font-size:.63rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:.17rem .5rem;border-radius:99px;background:rgba(45,106,79,.1);color:var(--canopy-lt);margin-bottom:.6rem;display:inline-block}
+.cc-title{font-family:var(--ff-d);font-size:.98rem;font-weight:700;color:var(--canopy);margin-bottom:.38rem;line-height:1.3}
+.cc-meta{font-size:.73rem;color:var(--muted);margin-bottom:.7rem;display:flex;gap:.7rem;flex-wrap:wrap}
+.cc-desc{font-size:.81rem;color:var(--muted);line-height:1.6;margin-bottom:.9rem;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.cc-actions{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:.8rem}
+.cc-reactions{display:flex;gap:.4rem}
+.react-btn{background:none;border:none;font-size:.77rem;cursor:pointer;padding:.28rem .45rem;border-radius:var(--r-sm);color:var(--muted);display:flex;align-items:center;gap:.28rem;transition:background var(--tr),color var(--tr)}
+.react-btn:hover{background:var(--mist);color:var(--text)}
+.react-btn.liked{color:var(--rust)}.react-btn.bookmarked{color:var(--gold-dk)}
+.cc-share{font-size:.73rem;color:var(--canopy-lt);font-weight:600;cursor:pointer;border:none;background:none;transition:color var(--tr)}
+.cc-share:hover{color:var(--canopy)}
+.comments-section{border-top:1px solid var(--border);padding:.9rem 1.2rem 1.2rem}
+.comments-section h5{font-size:.76rem;font-weight:700;color:var(--canopy);margin-bottom:.7rem;text-transform:uppercase;letter-spacing:.06em}
+.comment-list{display:flex;flex-direction:column;gap:.55rem;margin-bottom:.7rem;max-height:155px;overflow-y:auto}
+.comment-item{font-size:.77rem;color:var(--text);line-height:1.5;padding:.45rem .7rem;background:var(--mist);border-radius:var(--r-sm)}
+.comment-author{font-weight:700;color:var(--canopy-lt)}
+.comment-time{font-size:.66rem;color:var(--muted);margin-left:.38rem}
+.comment-input-row{display:flex;gap:.45rem}
+.comment-input-row input{flex:1;padding:.52rem .78rem;font-size:.78rem}
+.comment-input-row button{padding:.52rem .88rem;font-size:.76rem}
+
+/* ═══ UPLOAD MODAL ═══ */
+.upload-zone{border:2px dashed rgba(45,106,79,.35);border-radius:var(--r);padding:1.75rem;text-align:center;cursor:pointer;transition:border-color var(--tr),background var(--tr);margin-bottom:.9rem}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--canopy-lt);background:rgba(45,106,79,.04)}
+.upload-zone p{font-size:.82rem;color:var(--muted);margin-top:.45rem}
+.uz-icon{font-size:1.85rem;margin-bottom:.3rem}
+.file-preview{background:var(--mist);border-radius:var(--r-sm);padding:.7rem;font-size:.82rem;color:var(--text);display:flex;align-items:center;gap:.55rem;margin-bottom:.7rem}
+.fp-name{flex:1;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fp-remove{background:none;border:none;color:var(--muted);cursor:pointer;font-size:1rem;line-height:1}
+.fp-remove:hover{color:var(--rust)}
+
+/* ═══ ENROLL SECTION ═══ */
+#enroll{background:var(--canopy)}
+#enroll .sec-title{color:var(--white)}
+#enroll .sec-body{color:rgba(255,255,255,.6)}
+#enroll .eyebrow{color:var(--gold-lt)}
+.enroll-layout{display:grid;grid-template-columns:1.4fr 1fr;gap:2.5rem;margin-top:2.5rem;align-items:start}
+.form-shell{background:rgba(255,255,255,.06);border:1px solid rgba(200,168,75,.22);border-radius:var(--r);padding:2rem}
+.form-shell label{color:rgba(255,255,255,.55)}
+.form-shell input,.form-shell select,.form-shell textarea{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14);color:var(--white)}
+.form-shell input::placeholder,.form-shell textarea::placeholder{color:rgba(255,255,255,.3)}
+.form-shell input:focus,.form-shell select:focus,.form-shell textarea:focus{border-color:var(--gold);background:rgba(255,255,255,.12)}
+.form-shell select option{background:var(--canopy)}
+.tier-chosen{background:rgba(200,168,75,.1);border:1px solid rgba(200,168,75,.28);border-radius:var(--r-sm);padding:.82rem;margin-bottom:1.2rem;font-size:.84rem;color:var(--gold-lt);display:none}
+.enroll-sidebar{display:flex;flex-direction:column;gap:1.1rem}
+.sb-block{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:var(--r);padding:1.35rem}
+.sb-block h4{font-family:var(--ff-d);font-size:.93rem;color:var(--gold-lt);margin-bottom:.85rem}
+.sb-row{display:flex;gap:.62rem;align-items:flex-start;font-size:.81rem;color:rgba(255,255,255,.65);margin-bottom:.62rem}
+.sb-row .ico{font-size:.93rem;flex-shrink:0;margin-top:.04rem}
+.success-box{display:none;text-align:center;padding:2rem 1rem}
+.success-box .si{font-size:2.8rem;margin-bottom:.7rem}
+.success-box h3{font-family:var(--ff-d);font-size:1.35rem;color:var(--gold);margin-bottom:.38rem}
+.success-box p{font-size:.84rem;color:rgba(255,255,255,.6);line-height:1.6}
+
+/* ═══ WALL OF FAME ═══ */
+#wallfame{background:var(--white)}
+.fame-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(185px,1fr));gap:1rem;margin-top:2rem}
+.fame-card{background:var(--mist);border-radius:var(--r);padding:1.4rem;text-align:center;transition:transform var(--tr),box-shadow var(--tr)}
+.fame-card:hover{transform:translateY(-3px);box-shadow:var(--sh)}
+.fame-av{width:50px;height:50px;border-radius:50%;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1.05rem;font-weight:700;color:var(--gold);margin:0 auto .7rem}
+.fame-name{font-weight:600;font-size:.86rem;color:var(--canopy)}
+.fame-tier{font-size:.69rem;color:var(--muted);margin-top:.2rem}
+.fame-year{font-family:var(--ff-m);font-size:.66rem;color:var(--canopy-lt);margin-top:.18rem}
+
+/* ═══ MEMBER DASHBOARD ═══ */
+#view-member{background:var(--mist)}
+.member-hdr{background:linear-gradient(135deg,var(--canopy),var(--canopy-mid));padding:5.5rem 1.5rem 2.5rem;color:var(--white)}
+.member-hdr h1{font-family:var(--ff-d);font-size:1.55rem;color:var(--gold-lt);margin-bottom:.22rem}
+.member-hdr p{font-size:.84rem;color:rgba(255,255,255,.55)}
+.mem-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1rem;margin-top:1.7rem}
+.mem-mini{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:1.2rem;text-align:center}
+.mem-mini .val{font-family:var(--ff-d);font-size:1.55rem;font-weight:700;color:var(--gold-lt)}
+.mem-mini .lbl{font-size:.73rem;color:rgba(255,255,255,.5);margin-top:.22rem}
+.mem-content{padding:2rem 1.5rem;max-width:1100px;margin:0 auto}
+.perk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:1rem;margin-top:1rem}
+.perk-card{background:var(--white);border-radius:var(--r);padding:1.4rem;box-shadow:var(--sh);transition:transform var(--tr)}
+.perk-card:hover{transform:translateY(-2px)}
+.perk-card .pk-icon{font-size:1.7rem;margin-bottom:.55rem}
+.perk-card .pk-title{font-family:var(--ff-d);font-size:.97rem;font-weight:700;color:var(--canopy);margin-bottom:.3rem}
+.perk-card .pk-desc{font-size:.79rem;color:var(--muted);line-height:1.6}
+.announce-card{background:var(--white);border-radius:var(--r);padding:1.4rem;box-shadow:var(--sh);border-left:4px solid var(--canopy-lt);margin-bottom:.9rem}
+.announce-card .ac-type{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--canopy-lt);margin-bottom:.35rem}
+.announce-card .ac-title{font-family:var(--ff-d);font-size:.98rem;color:var(--canopy);margin-bottom:.28rem}
+.announce-card .ac-body{font-size:.82rem;color:var(--muted);line-height:1.6}
+.announce-card .ac-meta{font-size:.7rem;color:rgba(0,0,0,.32);margin-top:.45rem;display:flex;justify-content:space-between;align-items:center}
+
+/* ═══ ADMIN VIEW ═══ */
+#view-admin{background:var(--mist)}
+.admin-hdr-bar{background:var(--canopy);padding:5.5rem 1.5rem 2rem}
+.admin-hdr-bar h1{font-family:var(--ff-d);font-size:1.75rem;font-weight:700;color:var(--gold-lt);margin-bottom:.22rem}
+.admin-hdr-bar p{font-size:.84rem;color:rgba(255,255,255,.5)}
+.admin-tabs{display:flex;gap:.35rem;flex-wrap:wrap;padding:1rem 1.5rem;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:68px;z-index:50}
+.atab{padding:.52rem 1.05rem;border-radius:var(--r-sm);font-size:.8rem;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background var(--tr),color var(--tr)}
+.atab.active,.atab:hover{background:var(--canopy);color:var(--white)}
+.admin-panel{display:none;padding:2rem 1.5rem;max-width:1100px;margin:0 auto}.admin-panel.active{display:block}
+.admin-sec-title{font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:1.2rem;padding-bottom:.55rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.admin-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.admin-card{background:var(--white);border-radius:var(--r);padding:1.4rem;box-shadow:var(--sh)}
+.admin-card h4{font-weight:700;font-size:.88rem;color:var(--canopy);margin-bottom:.95rem}
+.data-table{width:100%;border-collapse:collapse;font-size:.8rem}
+.data-table th{text-align:left;padding:.58rem .72rem;background:var(--mist);color:var(--muted);font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;border-bottom:1px solid var(--border)}
+.data-table td{padding:.62rem .72rem;border-bottom:1px solid var(--border);vertical-align:middle;color:var(--text)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:rgba(45,106,79,.03)}
+.pill{display:inline-block;font-size:.63rem;font-weight:700;padding:.17rem .52rem;border-radius:99px;letter-spacing:.05em;text-transform:uppercase}
+.pill-gold{background:rgba(200,168,75,.15);color:var(--gold-dk)}
+.pill-plat{background:rgba(91,196,191,.15);color:#1A7A76}
+.pill-silver{background:rgba(144,144,144,.15);color:#555}
+.pill-diamond{background:rgba(126,184,201,.15);color:#1A6A7A}
+.pill-active{background:rgba(45,106,79,.15);color:var(--canopy-lt)}
+.pill-admin{background:rgba(30,60,120,.15);color:#2244AA}
+.prog-bar-sm{height:5px;background:rgba(0,0,0,.08);border-radius:99px;overflow:hidden;margin-top:.22rem}
+.prog-bar-fill{height:100%;background:linear-gradient(90deg,var(--canopy-lt),var(--gold));border-radius:99px;transition:width 1.2s ease}
+.email-prev{background:var(--mist);border-radius:var(--r-sm);padding:.95rem;border:1px solid var(--border);font-size:.8rem;color:var(--text);line-height:1.65;white-space:pre-line;max-height:210px;overflow-y:auto;margin-top:.7rem;font-family:var(--ff-b)}
+.toggle-wrap{display:flex;align-items:center;gap:.72rem;margin-top:.25rem}
+.toggle-sw{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.toggle-sw input{opacity:0;width:0;height:0}
+.ts-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#ccc;border-radius:99px;transition:.3s}
+.ts-slider:before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:white;border-radius:50%;transition:.3s}
+input:checked+.ts-slider{background:var(--canopy-lt)}
+input:checked+.ts-slider:before{transform:translateX(16px)}
+
+/* ═══ EMAIL POPUP ═══ */
+#email-popup{display:none;position:fixed;bottom:1.5rem;right:1.5rem;z-index:400;width:330px;background:var(--white);border-radius:var(--r);box-shadow:var(--sh-lg);border-top:4px solid var(--canopy-lt);overflow:hidden;animation:slideUp .4s ease}
+#email-popup.show{display:block}
+.ep-header{padding:.95rem 1.2rem .7rem;position:relative}
+.ep-header h4{font-family:var(--ff-d);font-size:.98rem;color:var(--canopy)}
+.ep-header p{font-size:.76rem;color:var(--muted);margin-top:.18rem}
+.ep-close{position:absolute;top:.72rem;right:.88rem;background:none;border:none;font-size:1.1rem;cursor:pointer;color:var(--muted)}
+.ep-body{padding:.2rem 1.2rem 1.2rem;display:flex;gap:.45rem}
+.ep-body input{flex:1;padding:.58rem .78rem;font-size:.8rem}
+.ep-body button{padding:.58rem .95rem;font-size:.8rem}
+
+/* ═══ FOOTER ═══ */
+footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);padding:3rem 1.5rem 1.5rem}
+.footer-inner{max-width:1200px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(255,255,255,.07)}
+.footer-brand p{font-size:.83rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:.88rem;max-width:275px}
+.footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:.88rem}
+.footer-col a{display:block;font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:.42rem;transition:color var(--tr)}
+.footer-col a:hover{color:var(--white)}
+.footer-btm{padding-top:1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.72rem}
+.footer-btm p{font-size:.73rem;color:rgba(255,255,255,.3)}
+.footer-logos{display:flex;gap:.7rem;align-items:center}
+
+/* ═══ TOAST ═══ */
+.toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(18px);background:var(--canopy);color:var(--white);border:1px solid var(--gold);border-radius:var(--r-sm);padding:.78rem 1.15rem;font-size:.84rem;z-index:600;opacity:0;transition:opacity var(--tr),transform var(--tr);pointer-events:none;white-space:nowrap;max-width:90vw}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ═══ REVEAL ═══ */
+.reveal{opacity:0;transform:translateY(22px);transition:opacity .65s ease,transform .65s ease}
+.reveal.visible{opacity:1;transform:none}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes scaleIn{from{transform:scale(.93);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes slideUp{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}
+
+/* ═══ RESPONSIVE ═══ */
+@media(max-width:900px){.enroll-layout{grid-template-columns:1fr}.footer-top{grid-template-columns:1fr 1fr}.admin-grid-2{grid-template-columns:1fr}}
+@media(max-width:640px){nav ul{display:none}.hamburger{display:flex}.form-row-2{grid-template-columns:1fr}.footer-top{grid-template-columns:1fr;gap:1.75rem}.footer-btm{flex-direction:column;text-align:center}section{padding:3.5rem 1rem}.brand-labels{display:none}#email-popup{width:calc(100vw - 2rem);right:1rem;left:1rem;bottom:1rem}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<!-- ══ HEADER ══ -->
+<header id="site-header">
+<div class="nav-inner">
+  <div class="brand-strip">
+    <div class="logo-ubf" title="Uganda Biodiversity Fund — For now & the future">
+      <svg viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:40px;height:40px">
+        <circle cx="22" cy="22" r="19" stroke="#C8A84B" stroke-width="1.5"/>
+        <path d="M22 7C22 7 13 13 13 22C13 29 17 33 22 35C27 33 31 29 31 22C31 13 22 7 22 7Z" fill="#2D6A4F" opacity=".85"/>
+        <line x1="22" y1="7" x2="22" y2="35" stroke="#C8A84B" stroke-width="1" opacity=".5"/>
+        <line x1="13" y1="22" x2="31" y2="22" stroke="#C8A84B" stroke-width="1" opacity=".5"/>
+        <circle cx="22" cy="22" r="2.5" fill="#C8A84B"/>
+      </svg>
+    </div>
+    <div class="logo-divider"></div>
+    <div class="logo-fob" title="Friends of Biodiversity — Demonstrating care for Uganda's biodiversity">
+      <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:28px;height:28px">
+        <path d="M16 3L8 10L8 20L16 29L24 20L24 10Z" fill="rgba(200,168,75,0.25)" stroke="#C8A84B" stroke-width="1.2"/>
+        <path d="M16 10C16 10 12 13 12 17C12 20 14 22 16 23C18 22 20 20 20 17C20 13 16 10 16 10Z" fill="#2D6A4F" opacity=".8"/>
+        <line x1="16" y1="3" x2="16" y2="29" stroke="#C8A84B" stroke-width=".8" opacity=".5"/>
+      </svg>
+    </div>
+    <div class="brand-labels">
+      <span class="brand-main">Friends of Biodiversity</span>
+      <span class="brand-sub">Uganda Biodiversity Fund</span>
+      <span class="brand-sub2">For now &amp; the future · Demonstrating care for Uganda's biodiversity</span>
+    </div>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="#" onclick="showView('main');return false">Home</a></li>
+      <li><a href="#themes">Programmes</a></li>
+      <li><a href="#learn">Learning Exchange</a></li>
+      <li><a href="#greencard">Green Card</a></li>
+      <li><a href="#wallfame">Wall of Fame</a></li>
+      <li id="nav-mem-li" style="display:none"><a href="#" onclick="showView('member');return false" id="nav-mem-name">Dashboard</a></li>
+      <li id="nav-adm-li" style="display:none"><a href="#" onclick="showView('admin');return false" class="nav-admin">⚙ Admin</a></li>
+      <li id="nav-login-li"><a href="#" onclick="openModal('modal-login');return false" class="nav-cta">Sign In / Join</a></li>
+      <li id="nav-logout-li" style="display:none"><a href="#" onclick="doLogout();return false">Sign Out</a></li>
+    </ul>
+  </nav>
+  <button class="hamburger" id="ham-btn" aria-label="Menu"><span></span><span></span><span></span></button>
+</div>
+</header>
+
+<div class="mob-menu" id="mob-menu">
+  <a href="#" onclick="showView('main');closeMob();return false">Home</a>
+  <a href="#themes" onclick="closeMob()">Programmes</a>
+  <a href="#learn" onclick="closeMob()">Learning Exchange</a>
+  <a href="#greencard" onclick="closeMob()">Green Card</a>
+  <a href="#wallfame" onclick="closeMob()">Wall of Fame</a>
+  <a href="#" id="mob-dash" style="display:none" onclick="showView('member');closeMob();return false">My Dashboard</a>
+  <a href="#" id="mob-adm" style="display:none" onclick="showView('admin');closeMob();return false">⚙ Admin Panel</a>
+  <a href="#" id="mob-login" onclick="openModal('modal-login');closeMob();return false" class="nav-cta">Sign In / Join</a>
+  <a href="#" id="mob-logout" style="display:none" onclick="doLogout();closeMob();return false">Sign Out</a>
+</div>
+
+<!-- ══════════ MAIN VIEW ══════════ -->
+<div id="view-main" class="view active">
+
+<!-- HERO -->
+<section class="hero">
+  <div class="slide sl1 active"></div>
+  <div class="slide sl2"></div>
+  <div class="slide sl3"></div>
+  <div class="slide sl4"></div>
+  <div class="slide sl5"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Uganda Biodiversity Fund · Green Card Programme 2026</p>
+    <h1 class="hero-title">Become a<br><em>Friend of Biodiversity.</em></h1>
+    <p class="hero-desc">Protecting Uganda's ecosystems across the Albertine Rift and Karamoja landscapes — through Nature Finance, Resilient Landscapes, and One Health.</p>
+    <div class="hero-acts">
+      <a href="#greencard" class="btn btn-gold">Choose Your Tier</a>
+      <a href="#" onclick="openModal('modal-login');return false" class="btn btn-outline">Member Sign In</a>
+    </div>
+  </div>
+  <div class="slide-dots" id="slide-dots"></div>
+</section>
+
+<!-- IMPACT STATS -->
+<section id="impact">
+  <div class="inner">
+    <p class="eyebrow reveal" style="color:var(--gold-lt)">Conservation Footprint</p>
+    <h2 class="sec-title reveal" style="color:var(--white)">Protecting Uganda's <em style="color:var(--gold-lt)">Natural Heritage</em></h2>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects — tracked through our accountability dashboard and audited annually.</p>
+    <div class="stats-strip reveal">
+      <div class="stat-cell"><span class="stat-n" data-t="847">0</span><span class="stat-l">Species monitored across both landscapes</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="23">0</span><span class="stat-l">Active community conservation projects</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="156">0</span><span class="stat-l">Friends of Biodiversity members</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="5">0</span><span class="stat-l">Strategic programme windows</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="94">0</span><span class="stat-l">% funds deployed to field</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- THEMATIC AREAS & PROGRAMME WINDOWS -->
+<section id="themes">
+  <div class="inner">
+    <p class="eyebrow reveal">Strategic Framework</p>
+    <h2 class="sec-title reveal">Three Themes. <em>Five Programme Windows.</em></h2>
+    <p class="sec-body reveal">UBF's work is anchored in three core thematic priorities, delivered through five strategic programme windows.</p>
+    <div class="theme-tabs reveal" id="theme-tabs"></div>
+    <div id="theme-panels"></div>
+  </div>
+</section>
+
+<!-- LEARNING EXCHANGE -->
+<section id="learn">
+  <div class="inner">
+    <p class="eyebrow reveal">Knowledge Hub</p>
+    <h2 class="sec-title reveal">Learning <em>Exchange</em></h2>
+    <p class="sec-body reveal">Interviews, podcasts, research, documentaries, and policy articles — organised by programme window. Full library access for registered members.</p>
+    <div class="content-toolbar reveal">
+      <div class="filter-row" id="content-filters"></div>
+      <div id="upload-btn-slot" style="display:none">
+        <button class="btn btn-canopy btn-sm" onclick="openModal('modal-upload')">⬆ Upload Content</button>
+      </div>
+    </div>
+    <div class="content-grid" id="content-grid"></div>
+  </div>
+</section>
+
+<!-- GREEN CARD TIERS -->
+<section id="greencard">
+  <div class="inner">
+    <p class="eyebrow reveal">UBF Green Card</p>
+    <h2 class="sec-title reveal">Select Your <em>Membership Tier</em></h2>
+    <p class="sec-body reveal">Annual contributions in Uganda Shillings (UGX). Select a tier to unlock your perks and pre-fill enrollment.</p>
+    <div class="tier-grid">
+      <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
+        <div class="tier-badge" style="background:rgba(144,144,144,.12)">🥈</div>
+        <div class="tier-name">Silver</div>
+        <div class="tier-range">Individual: <strong>500K–1M UGX</strong><br>Institution: <strong>2M–5M UGX</strong></div>
+        <ul class="tier-perks"><li>Eco-friendly welcome kit &amp; certificates</li><li>Contribution &amp; accountability dashboard</li><li>Learning Exchange platform access</li><li>Wall of Fame listing</li></ul>
+        <button class="tier-btn">Select Silver</button>
+      </div>
+      <div class="tier-card reveal" data-tier="gold" onclick="selectTier('gold')">
+        <div class="tier-badge" style="background:rgba(200,168,75,.12)">🥇</div>
+        <div class="tier-name">Gold</div>
+        <div class="tier-range">Individual: <strong>1.5M–2M UGX</strong><br>Institution: <strong>6M–10M UGX</strong></div>
+        <ul class="tier-perks"><li>All Silver benefits</li><li>Visibility in conservation projects</li><li>Exclusive networking events</li><li>Priority event invitations</li><li>Quarterly impact report</li></ul>
+        <button class="tier-btn">Select Gold</button>
+      </div>
+      <div class="tier-card reveal" data-tier="platinum" onclick="selectTier('platinum')">
+        <div class="tier-badge" style="background:rgba(91,196,191,.12)">💎</div>
+        <div class="tier-name">Platinum</div>
+        <div class="tier-range">Individual: <strong>2.5M–4.5M UGX</strong><br>Institution: <strong>20M–40M UGX</strong></div>
+        <ul class="tier-perks"><li>All Gold benefits</li><li>Co-branding on project materials</li><li>Strategic partnership access</li><li>Named in annual report</li><li>Private ED briefing</li></ul>
+        <button class="tier-btn">Select Platinum</button>
+      </div>
+      <div class="tier-card reveal" data-tier="diamond" onclick="selectTier('diamond')">
+        <div class="tier-badge" style="background:rgba(126,184,201,.12)">🔷</div>
+        <div class="tier-name">Diamond</div>
+        <div class="tier-range">Individual: <strong>5M+ UGX</strong><br>Institution: <strong>50M+ UGX</strong></div>
+        <ul class="tier-perks"><li>All Platinum benefits</li><li>Named conservation project/corridor</li><li>Board-level engagement</li><li>Bespoke ESG reporting package</li><li>Media &amp; PR recognition</li><li>Annual CEO briefing</li></ul>
+        <button class="tier-btn">Select Diamond</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ENROLLMENT -->
+<section id="enroll">
+  <div class="inner">
+    <p class="eyebrow reveal">Membership Registration</p>
+    <h2 class="sec-title reveal">Enroll in the <em style="color:var(--gold-lt)">Green Card Programme</em></h2>
+    <p class="sec-body reveal">Complete the form. Our team contacts you within 48 hours to confirm membership and dispatch your welcome kit.</p>
+    <div class="enroll-layout">
+      <div class="form-shell reveal">
+        <div class="tier-chosen" id="tier-chosen"></div>
+        <form id="enroll-form" novalidate>
+          <div class="form-row-2">
+            <div class="form-group"><label>Full Name *</label><input id="ef-name" placeholder="Jane Akello" required/></div>
+            <div class="form-group"><label>Organisation</label><input id="ef-org" placeholder="Company / NGO"/></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Phone *</label><input id="ef-tel" type="tel" placeholder="+256 700 000 000" required/></div>
+            <div class="form-group"><label>Email *</label><input id="ef-email" type="email" placeholder="jane@example.com" required/></div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Member Type *</label>
+              <select id="ef-type" required><option value="">Select...</option><option value="individual">Individual</option><option value="institution">Institution / Corporate</option></select>
+            </div>
+            <div class="form-group"><label>Green Card Tier *</label>
+              <select id="ef-tier" required><option value="">Select...</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+            </div>
+          </div>
+          <div class="form-row-2">
+            <div class="form-group"><label>Annual Commitment (UGX) *</label><input id="ef-amount" type="number" placeholder="e.g. 1500000" required/></div>
+            <div class="form-group"><label>Membership Year *</label><input id="ef-year" type="number" placeholder="2026" min="2024" max="2035" required/></div>
+          </div>
+          <div class="form-group"><label>Engagement Preferences</label><textarea id="ef-engage" rows="2" placeholder="e.g. Nature Finance, One Health, co-branding..."></textarea></div>
+          <div class="form-group"><label>Create Password *</label><input id="ef-pass" type="password" placeholder="Min 8 characters" required/><span class="field-note">Creates your member login</span></div>
+          <button type="submit" class="btn btn-gold btn-full" style="margin-top:.35rem">Submit Enrollment →</button>
+          <p style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.7rem">Your data is handled in confidence and used solely for membership administration.</p>
+        </form>
+        <div class="success-box" id="enroll-success">
+          <div class="si">🌿</div>
+          <h3>Welcome, Friend of Biodiversity!</h3>
+          <p>Enrollment received. Our team will reach out within 48 hours. You can now sign in and access member content.</p>
+          <button class="btn btn-gold" style="margin-top:1rem" onclick="openModal('modal-login')">Sign In Now →</button>
+        </div>
+      </div>
+      <div class="enroll-sidebar reveal">
+        <div class="sb-block">
+          <h4>📞 Contact UBF</h4>
+          <div class="sb-row"><span class="ico">✉</span><span>info@ugandabiodiversityfund.org</span></div>
+          <div class="sb-row"><span class="ico">🌐</span><span>www.ugandabiodiversityfund.org</span></div>
+          <div class="sb-row"><span class="ico">📱</span><span>+256 (039) 3216445<br>+256 (200) 916 445</span></div>
+        </div>
+        <div class="sb-block">
+          <h4>🌱 Membership Includes</h4>
+          <div class="sb-row"><span class="ico">📊</span><span>Contribution &amp; accountability dashboard</span></div>
+          <div class="sb-row"><span class="ico">🎓</span><span>Learning Exchange content library</span></div>
+          <div class="sb-row"><span class="ico">🏆</span><span>Wall of Fame listing</span></div>
+          <div class="sb-row"><span class="ico">🤝</span><span>Strategic Biodiversity Partnership visibility</span></div>
+        </div>
+        <div class="sb-block">
+          <h4>🔒 Transparent &amp; Audited</h4>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.65">94% of contributions deployed directly to field conservation. Annual audited accounts published on our website.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WALL OF FAME -->
+<section id="wallfame">
+  <div class="inner">
+    <p class="eyebrow reveal">Community Recognition</p>
+    <h2 class="sec-title reveal">Wall of <em>Fame</em></h2>
+    <p class="sec-body reveal">Every Friend of Biodiversity earns a permanent place on this wall.</p>
+    <div class="fame-grid reveal" id="fame-grid"></div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="brand-strip">
+          <div class="logo-ubf" style="width:40px;height:40px">
+            <svg viewBox="0 0 44 44" fill="none" style="width:34px;height:34px"><circle cx="22" cy="22" r="19" stroke="#C8A84B" stroke-width="1.5"/><path d="M22 7C22 7 13 13 13 22C13 29 17 33 22 35C27 33 31 29 31 22C31 13 22 7 22 7Z" fill="#2D6A4F" opacity=".85"/><circle cx="22" cy="22" r="2.5" fill="#C8A84B"/></svg>
+          </div>
+          <div class="logo-divider"></div>
+          <div class="logo-fob" style="width:40px;height:40px">
+            <svg viewBox="0 0 32 32" fill="none" style="width:26px;height:26px"><path d="M16 3L8 10L8 20L16 29L24 20L24 10Z" fill="rgba(200,168,75,0.25)" stroke="#C8A84B" stroke-width="1.2"/><path d="M16 10C16 10 12 13 12 17C12 20 14 22 16 23C18 22 20 20 20 17C20 13 16 10 16 10Z" fill="#2D6A4F" opacity=".8"/></svg>
+          </div>
+          <div><div class="brand-main" style="font-size:.86rem">Friends of Biodiversity</div><div class="brand-sub2" style="font-size:.56rem">Uganda Biodiversity Fund · For now &amp; the future</div></div>
+        </div>
+        <p>Protecting Uganda's rich biological heritage across the Albertine Rift and Karamoja landscapes — demonstrating care for Uganda's biodiversity.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Programme</h5>
+        <a href="#themes">Strategic Framework</a>
+        <a href="#greencard">Green Card Tiers</a>
+        <a href="#learn">Learning Exchange</a>
+        <a href="#wallfame">Wall of Fame</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>
+        <a href="https://www.ugandabiodiversityfund.org" target="_blank">ugandabiodiversityfund.org</a>
+        <a href="tel:+256393216445">+256 (039) 3216445</a>
+        <a href="tel:+256200916445">+256 (200) 916 445</a>
+      </div>
+    </div>
+    <div class="footer-btm">
+      <p>© 2026 Uganda Biodiversity Fund. All rights reserved.</p>
+      <div class="footer-logos">
+        <div class="logo-ubf" style="width:30px;height:30px"><svg viewBox="0 0 44 44" fill="none" style="width:24px;height:24px"><circle cx="22" cy="22" r="19" stroke="#C8A84B" stroke-width="1.5"/><path d="M22 7C22 7 13 13 13 22C13 29 17 33 22 35C27 33 31 29 31 22C31 13 22 7 22 7Z" fill="#2D6A4F" opacity=".85"/><circle cx="22" cy="22" r="2.5" fill="#C8A84B"/></svg></div>
+        <div class="logo-fob" style="width:30px;height:30px"><svg viewBox="0 0 32 32" fill="none" style="width:22px;height:22px"><path d="M16 3L8 10L8 20L16 29L24 20L24 10Z" fill="rgba(200,168,75,0.25)" stroke="#C8A84B" stroke-width="1.2"/><path d="M16 10C16 10 12 13 12 17C12 20 14 22 16 23C18 22 20 20 20 17C20 13 16 10 16 10Z" fill="#2D6A4F" opacity=".8"/></svg></div>
+      </div>
+    </div>
+  </div>
+</footer>
+</div><!-- /view-main -->
+
+<!-- ══════════ MEMBER DASHBOARD VIEW ══════════ -->
+<div id="view-member" class="view">
+  <div class="member-hdr">
+    <h1 id="mem-greeting">Welcome back</h1>
+    <p id="mem-sub">Your membership dashboard</p>
+    <div class="mem-strip" id="mem-strip"></div>
+  </div>
+  <div class="mem-content" id="mem-content"></div>
+</div>
+
+<!-- ══════════ ADMIN VIEW ══════════ -->
+<div id="view-admin" class="view">
+  <div class="admin-hdr-bar">
+    <h1>⚙ Admin Control Panel</h1>
+    <p id="admin-user-info">Authenticated as admin</p>
+  </div>
+  <div class="admin-tabs">
+    <button class="atab active" data-panel="ap-members">Members</button>
+    <button class="atab" data-panel="ap-content">Content Library</button>
+    <button class="atab" data-panel="ap-announce">Announcements</button>
+    <button class="atab" data-panel="ap-finance">Financial Reports</button>
+    <button class="atab" data-panel="ap-email">Email Campaigns</button>
+  </div>
+  <div id="ap-members" class="admin-panel active">
+    <div class="admin-sec-title"><span>Registered Members</span><button class="btn btn-canopy btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
+    <div class="admin-card" style="overflow-x:auto"><table class="data-table"><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Tier</th><th>Commitment (UGX)</th><th>Year</th><th>Role</th><th>Status</th></tr></thead><tbody id="members-tbody"></tbody></table></div>
+  </div>
+  <div id="ap-content" class="admin-panel">
+    <div class="admin-sec-title"><span>Content Library</span><button class="btn btn-canopy btn-sm" onclick="openModal('modal-upload')">⬆ Upload New</button></div>
+    <div class="admin-card" style="overflow-x:auto"><table class="data-table"><thead><tr><th>Title</th><th>Type</th><th>Window</th><th>Theme</th><th>Date</th><th>Access</th><th>Actions</th></tr></thead><tbody id="admin-content-tbody"></tbody></table></div>
+  </div>
+  <div id="ap-announce" class="admin-panel">
+    <div class="admin-sec-title"><span>Announcements &amp; Project Updates</span><button class="btn btn-canopy btn-sm" onclick="openModal('modal-announce')">+ New Announcement</button></div>
+    <div id="announce-list"></div>
+  </div>
+  <div id="ap-finance" class="admin-panel">
+    <div class="admin-sec-title"><span>Financial Accountability Reports</span><button class="btn btn-canopy btn-sm" onclick="openModal('modal-finance')">+ Add Report</button></div>
+    <div class="admin-grid-2">
+      <div class="admin-card"><h4>📊 Fund Deployment — FY 2025/26</h4><div id="fin-bars"></div></div>
+      <div class="admin-card"><h4>📋 Published Reports</h4><div id="fin-reports-list"></div></div>
+    </div>
+  </div>
+  <div id="ap-email" class="admin-panel">
+    <div class="admin-sec-title"><span>Email Campaign Manager</span></div>
+    <div class="admin-grid-2">
+      <div class="admin-card">
+        <h4>✉ Compose Campaign</h4>
+        <div class="form-group"><label>Subject</label><input id="em-subj" placeholder="UBF Update: ..."/></div>
+        <div class="form-group"><label>Audience</label>
+          <select id="em-audience"><option value="all">All Members</option><option value="silver">Silver+</option><option value="gold">Gold+</option><option value="platinum">Platinum+</option><option value="diamond">Diamond Only</option></select>
+        </div>
+        <div class="form-group"><label>Message</label><textarea id="em-body" rows="5" placeholder="Write your message..."></textarea></div>
+        <button class="btn btn-ghost btn-sm" onclick="previewEmail()">Preview</button>
+        <button class="btn btn-gold btn-sm" style="margin-left:.45rem" onclick="sendEmail()">Send Campaign</button>
+        <div class="email-prev" id="email-prev" style="display:none"></div>
+      </div>
+      <div class="admin-card"><h4>📬 Sent Campaigns</h4><div id="email-log-list"></div></div>
+    </div>
+  </div>
+</div><!-- /view-admin -->
+
+<!-- ══════════ MODALS ══════════ -->
+
+<!-- LOGIN -->
+<div class="overlay" id="modal-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-login')">✕</button>
+    <h2>Sign In</h2>
+    <p class="modal-sub">Access your member dashboard and the full Learning Exchange library.</p>
+    <div class="form-group"><label>Email Address</label><input id="li-email" type="email" placeholder="you@example.com"/></div>
+    <div class="form-group"><label>Password</label><input id="li-pass" type="password" placeholder="Your password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="doLogin()">Sign In</button>
+    <div class="divider-text">or</div>
+    <button class="btn btn-gold btn-full" onclick="closeModal('modal-login');document.getElementById('enroll').scrollIntoView({behavior:'smooth'})">Create a New Account →</button>
+    <div class="auth-switch">Admin? <a onclick="openModal('modal-admin-login');closeModal('modal-login')">Admin sign in →</a></div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="overlay" id="modal-admin-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-admin-login')">✕</button>
+    <h2>Admin Sign In</h2>
+    <div class="admin-note">🔒 Restricted to verified UBF work email accounts (@ugandabiodiversityfund.org)</div>
+    <p class="modal-sub">Enter your UBF credentials to access the admin control panel.</p>
+    <div class="form-group"><label>UBF Email</label><input id="al-email" type="email" placeholder="admin@ugandabiodiversityfund.org"/></div>
+    <div class="form-group"><label>Password</label><input id="al-pass" type="password" placeholder="Admin password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="doAdminLogin()">Sign In as Admin</button>
+    <div class="auth-switch"><a onclick="openModal('modal-login');closeModal('modal-admin-login')">← Member login</a></div>
+  </div>
+</div>
+
+<!-- UPLOAD CONTENT -->
+<div class="overlay" id="modal-upload">
+  <div class="modal" style="max-width:530px">
+    <button class="modal-close" onclick="closeModal('modal-upload')">✕</button>
+    <h2>Upload Content</h2>
+    <p class="modal-sub">Add interviews, podcasts, articles, research, videos or documentaries.</p>
+    <div class="form-group"><label>Title *</label><input id="up-title" placeholder="e.g. Albertine Rift Biodiversity Forum 2026"/></div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Content Type *</label>
+        <select id="up-type"><option value="">Select...</option><option value="video">Video</option><option value="documentary">Documentary</option><option value="podcast">Podcast</option><option value="article">Article</option><option value="research">Research</option><option value="pdf">PDF / Report</option></select>
+      </div>
+      <div class="form-group"><label>Programme Window *</label>
+        <select id="up-window"><option value="">Select...</option><option value="Nature Finance &amp; Markets">Nature Finance &amp; Markets</option><option value="Resilient Landscapes">Resilient Landscapes &amp; Catchments</option><option value="Nature-Positive Food">Nature-Positive Food Systems</option><option value="Circular Economy">Circular Economy &amp; Green Cities</option><option value="One Health">One Health &amp; Bioeconomy</option></select>
+      </div>
+    </div>
+    <div class="form-row-2">
+      <div class="form-group"><label>Thematic Area</label>
+        <select id="up-theme"><option value="Biodiversity">Reducing Biodiversity Degradation</option><option value="Climate">Climate Resilience &amp; Adaptation</option><option value="Livelihoods">Community Livelihoods</option></select>
+      </div>
+      <div class="form-group"><label>Access Level</label>
+        <select id="up-access"><option value="member">Members Only (Silver+)</option><option value="gold">Gold+ Members</option><option value="platinum">Platinum+ Members</option><option value="public">Public</option></select>
+      </div>
+    </div>
+    <div class="form-group"><label>Description</label><textarea id="up-desc" rows="2" placeholder="Brief description..."></textarea></div>
+    <div class="form-group"><label>Author / Organisation</label><input id="up-author" placeholder="Dr. Okello, UBF Research Team..."/></div>
+    <div class="form-group"><label>File Upload (PDF / Video)</label>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('up-file').click()" ondragover="onDragOver(event)" ondragleave="document.getElementById('upload-zone').classList.remove('drag')" ondrop="onDrop(event)">
+        <div class="uz-icon">📁</div>
+        <strong>Click to browse or drag &amp; drop</strong>
+        <p>PDF, MP4, MP3 accepted. For large videos, paste a URL below.</p>
+      </div>
+      <input type="file" id="up-file" accept=".pdf,.mp4,.mp3,.mov,.wav" style="display:none" onchange="onFileSelect(event)"/>
+      <div id="file-prev-wrap"></div>
+    </div>
+    <div class="form-group"><label>External URL (YouTube / Vimeo / Drive)</label><input id="up-url" placeholder="https://..."/></div>
+    <button class="btn btn-gold btn-full" onclick="submitUpload()">Publish to Learning Exchange →</button>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT MODAL -->
+<div class="overlay" id="modal-announce">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-announce')">✕</button>
+    <h2>New Announcement</h2>
+    <div class="form-group"><label>Type</label>
+      <select id="ann-type"><option value="Project Update">Project Update</option><option value="Event">Event</option><option value="Financial Report">Financial Report</option><option value="Conservation Alert">Conservation Alert</option><option value="Partnership">New Partnership</option></select>
+    </div>
+    <div class="form-group"><label>Title *</label><input id="ann-title" placeholder="Announcement title..."/></div>
+    <div class="form-group"><label>Body *</label><textarea id="ann-body" rows="4" placeholder="Full announcement text..."></textarea></div>
+    <div class="form-group">
+      <label>Notify Members by Email</label>
+      <div class="toggle-wrap"><label class="toggle-sw"><input type="checkbox" id="ann-notify" checked><span class="ts-slider"></span></label><span style="font-size:.8rem;color:var(--muted);text-transform:none;letter-spacing:0">Send email notification to all members</span></div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="postAnnouncement()">Post Announcement</button>
+  </div>
+</div>
+
+<!-- FINANCE REPORT MODAL -->
+<div class="overlay" id="modal-finance">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-finance')">✕</button>
+    <h2>Add Financial Report</h2>
+    <div class="form-group"><label>Report Title *</label><input id="fin-title" placeholder="e.g. Q2 2026 Financial Report"/></div>
+    <div class="form-group"><label>Period</label><input id="fin-period" placeholder="e.g. April–June 2026"/></div>
+    <div class="form-group"><label>Summary</label><textarea id="fin-summary" rows="3" placeholder="Key financial highlights..."></textarea></div>
+    <div class="form-group"><label>Report URL / File Link</label><input id="fin-url" placeholder="https://drive.google.com/..."/></div>
+    <button class="btn btn-canopy btn-full" onclick="addFinReport()">Publish Report</button>
+  </div>
+</div>
+
+<!-- CONTENT VIEWER MODAL -->
+<div class="overlay" id="modal-content">
+  <div class="modal" style="max-width:550px">
+    <button class="modal-close" onclick="closeModal('modal-content')">✕</button>
+    <div id="content-modal-body"></div>
+  </div>
+</div>
+
+<!-- EMAIL POPUP -->
+<div id="email-popup">
+  <div class="ep-header">
+    <h4>Stay Updated 🌿</h4>
+    <p>Get UBF conservation news, events &amp; impact reports.</p>
+    <button class="ep-close" onclick="dismissEP()">✕</button>
+  </div>
+  <div class="ep-body">
+    <input type="email" id="ep-email" placeholder="your@email.com"/>
+    <button class="btn btn-gold btn-sm" onclick="subscribeEP()">Subscribe</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+/* ═══════════════════════════════════════════
+   SEED / REFERENCE DATA
+═══════════════════════════════════════════ */
+const THEMES_DATA=[
+  {id:'biodiversity',label:'Reducing Biodiversity Degradation',icon:'🦋'},
+  {id:'climate',label:'Climate Resilience & Adaptation',icon:'🌊'},
+  {id:'livelihoods',label:'Community Livelihoods',icon:'🌾'},
+];
+const WINDOWS_DATA=[
+  {id:'nf',name:'Nature Finance & Markets',icon:'💰',theme:'biodiversity',desc:'Develops innovative financing mechanisms — carbon credits, biodiversity credits, green bonds, offsets, and public–private partnerships — to mobilise sustainable funding for conservation. Promotes ESG alignment and private sector engagement across Uganda\'s biodiversity-linked economic sectors.'},
+  {id:'rl',name:'Resilient Landscapes & Catchments',icon:'🏔',theme:'climate',desc:'Supports integrated landscape and catchment management in Key Biodiversity Areas and refugee-hosting landscapes. Focuses on ecosystem restoration, watershed protection, and climate resilience across forests, wetlands, rangelands, and watersheds in both the Albertine Rift and Karamoja.'},
+  {id:'fs',name:'Nature-Positive Food Systems',icon:'🌱',theme:'livelihoods',desc:'Supports transitions toward agroecological and biodiversity-friendly production systems that sustain food security while restoring ecosystems. Promotes sustainable land management, agrobiodiversity conservation, and responsible value chains enabling communities to benefit without compromising ecosystem health.'},
+  {id:'ce',name:'Circular Economy & Green Cities',icon:'♻',theme:'climate',desc:'Promotes circular economy models — plastic waste reduction, green urban planning, sustainable infrastructure — that reduce pressure on biodiversity. Positions nature at the heart of Uganda\'s green growth and urban sustainability agenda.'},
+  {id:'oh',name:'One Health & Bioeconomy',icon:'🧬',theme:'biodiversity',desc:'Strengthens cross-sectoral collaboration on zoonotic disease risks and ecosystem health. Promotes Uganda\'s emerging bioeconomy through research and value addition to biodiversity-based products — herbal medicines, pollination services, and genetic resources.'},
+];
+const TIERS_DATA={
+  silver:{r:1,c:'#909090',emoji:'🥈',label:'Silver'},
+  gold:{r:2,c:'#C8A84B',emoji:'🥇',label:'Gold'},
+  platinum:{r:3,c:'#5BC4BF',emoji:'💎',label:'Platinum'},
+  diamond:{r:4,c:'#7EB8C9',emoji:'🔷',label:'Diamond'},
+};
+const TIER_RANGES={
+  silver:{individual:'500K–1M UGX',institution:'2M–5M UGX'},
+  gold:{individual:'1.5M–2M UGX',institution:'6M–10M UGX'},
+  platinum:{individual:'2.5M–4.5M UGX',institution:'20M–40M UGX'},
+  diamond:{individual:'5M+ UGX',institution:'50M+ UGX'},
+};
+const PERKS_MAP={
+  silver:['📦 Eco-friendly welcome kit & personalised certificates','📊 Contribution & accountability dashboard access','🎓 Learning Exchange content library','🏆 Permanent Wall of Fame listing'],
+  gold:['All Silver perks','👁 Visibility in UBF conservation projects','🤝 Exclusive networking &amp; partnership events','📬 Priority invitations to UBF events','📋 Quarterly impact report'],
+  platinum:['All Gold perks','🎨 Co-branding on project materials &amp; publications','🤝 Strategic partnership access','📰 Named in UBF annual report','💼 Private Executive Director briefing'],
+  diamond:['All Platinum perks','🌟 Named conservation project or corridor','🏛 Board-level observer engagement','📈 Bespoke ESG biodiversity reporting package','📡 Media &amp; PR recognition campaign','👑 Annual CEO briefing'],
+};
+const ACCESS_RANK={public:0,member:1,gold:2,platinum:3,diamond:4};
+
+/* ═══ localStorage helpers ═══ */
+const LS={
+  get:(k,d)=>{try{const v=localStorage.getItem('ubf_'+k);return v?JSON.parse(v):d}catch{return d}},
+  set:(k,v)=>{try{localStorage.setItem('ubf_'+k,JSON.stringify(v))}catch{}}
+};
+
+/* ═══ APP STATE ═══ */
+let MEMBERS=LS.get('members',[
+  {name:'Nantongo Sylvia',email:'sylvia@example.com',pass:'demo1234',type:'individual',tier:'diamond',amount:6000000,year:2025,role:'member',status:'active',org:''},
+  {name:'Kato Enterprises Ltd',email:'kato@example.com',pass:'demo1234',type:'institution',tier:'diamond',amount:60000000,year:2025,role:'member',status:'active',org:'Kato Enterprises'},
+  {name:'Dr. Okello James',email:'okello@example.com',pass:'demo1234',type:'individual',tier:'platinum',amount:3000000,year:2025,role:'member',status:'active',org:'Makerere University'},
+  {name:'Amanya Rebecca',email:'amanya@example.com',pass:'demo1234',type:'individual',tier:'gold',amount:2000000,year:2025,role:'member',status:'active',org:''},
+  {name:'Rwenzori Safaris',email:'safaris@example.com',pass:'demo1234',type:'institution',tier:'gold',amount:8000000,year:2025,role:'member',status:'active',org:'Rwenzori Safaris Ltd'},
+  {name:'Admin UBF',email:'admin@ugandabiodiversityfund.org',pass:'UBFadmin2026!',type:'individual',tier:'diamond',amount:0,year:2026,role:'admin',status:'active',org:'Uganda Biodiversity Fund'},
+]);
+let CONTENT=LS.get('content',[
+  {id:'c1',title:'Financing Uganda\'s Biodiversity — Carbon Markets in the Albertine Rift',type:'video',window:'Nature Finance & Markets',theme:'Biodiversity',desc:'A comprehensive look at how carbon credit markets can unlock sustainable conservation finance in the Albertine Rift corridor.',author:'UBF Research Team',date:'2026-04-10',access:'member',url:'',reactions:{likes:14,bookmarks:6},comments:[{user:'Dr. Okello James',text:'Excellent overview — the financing gap analysis is particularly insightful.',time:'2026-04-11'}]},
+  {id:'c2',title:'Watershed Restoration in Karamoja — A Community Perspective',type:'documentary',window:'Resilient Landscapes',theme:'Climate',desc:'Documentary following community leaders in Karamoja as they restore degraded rangelands and protect critical water catchments.',author:'UBF Film Unit',date:'2026-03-22',access:'public',url:'',reactions:{likes:31,bookmarks:12},comments:[]},
+  {id:'c3',title:'Agroecology Transitions and Biodiversity — Research Findings 2025',type:'research',window:'Nature-Positive Food',theme:'Livelihoods',desc:'Peer-reviewed findings from a two-year study on the co-benefits of agroecological farming for biodiversity and food security in Western Uganda.',author:'Makerere University / UBF',date:'2026-02-18',access:'gold',url:'',reactions:{likes:22,bookmarks:9},comments:[]},
+  {id:'c4',title:'Podcast: One Health in Practice — Lessons from the Field',type:'podcast',window:'One Health',theme:'Biodiversity',desc:'A 45-minute conversation with field practitioners on integrating human, animal, and ecosystem health approaches in conservation programmes.',author:'UBF Podcast Series',date:'2026-05-01',access:'member',url:'',reactions:{likes:18,bookmarks:7},comments:[]},
+  {id:'c5',title:'Green Cities Uganda — Circular Economy Policy Brief',type:'pdf',window:'Circular Economy',theme:'Climate',desc:'Policy brief outlining recommendations for integrating circular economy principles into Kampala\'s urban development agenda.',author:'UBF Policy Unit',date:'2026-05-15',access:'member',url:'',reactions:{likes:9,bookmarks:4},comments:[]},
+  {id:'c6',title:'Bioeconomy Opportunities in Uganda — Investor Briefing',type:'article',window:'Nature Finance & Markets',theme:'Livelihoods',desc:'An investor-facing briefing on Uganda\'s growing bioeconomy — herbal medicines, genetic resources, and pollination service markets.',author:'UBF Finance Window',date:'2026-04-28',access:'platinum',url:'',reactions:{likes:11,bookmarks:5},comments:[]},
+]);
+let ANNOUNCES=LS.get('announces',[
+  {type:'Project Update',title:'Albertine Rift Landscape Restoration — Phase II Launched',body:'UBF has officially launched Phase II covering 3 new sub-counties in Bundibugyo, targeting 2,400 hectares of degraded forest over 18 months.',date:'2026-05-20'},
+  {type:'Event',title:'Annual Friends of Biodiversity Gala — July 2026',body:'Join us for the annual membership celebration at the Kampala Serena Hotel on 18 July 2026. Platinum and Diamond members receive complimentary invitations.',date:'2026-05-10'},
+]);
+let FIN_REPORTS=LS.get('fin_reports',[
+  {title:'Q1 2026 Financial Report',period:'Jan–Mar 2026',summary:'Total contributions: UGX 187M. Deployments: 94% field. Albertine Rift 52%, Karamoja 32%, Capacity Building 10%, Admin 6%.',url:'#',date:'2026-04-30'},
+]);
+let EMAIL_LOG=LS.get('email_log',[]);
+let FAME_LIST=LS.get('fame',MEMBERS.filter(m=>m.role==='member').map(m=>({name:m.name,tier:m.tier,year:m.year,initials:m.name.split(' ').slice(0,2).map(w=>w[0]||'').join('')})));
+
+let currentUser=null;
+let selectedTier_=null;
+let uploadedFile=null;
+let activeFilter='all';
+
+/* ═══ HERO SLIDESHOW ═══ */
+let curSlide=0;
+const slideEls=document.querySelectorAll('.slide');
+const dotsEl=document.getElementById('slide-dots');
+slideEls.forEach((_,i)=>{const d=document.createElement('div');d.className='dot'+(i===0?' active':'');d.onclick=()=>goSlide(i);dotsEl.appendChild(d)});
+function goSlide(n){slideEls[curSlide].classList.remove('active');dotsEl.children[curSlide].classList.remove('active');curSlide=((n%slideEls.length)+slideEls.length)%slideEls.length;slideEls[curSlide].classList.add('active');dotsEl.children[curSlide].classList.add('active')}
+setInterval(()=>goSlide(curSlide+1),5500);
+
+/* ═══ HEADER SCROLL ═══ */
+const HDR=document.getElementById('site-header');
+window.addEventListener('scroll',()=>HDR.classList.toggle('scrolled',scrollY>40),{passive:true});
+
+/* ═══ HAMBURGER ═══ */
+const hamBtn=document.getElementById('ham-btn');const mobMenu=document.getElementById('mob-menu');
+hamBtn.addEventListener('click',()=>{hamBtn.classList.toggle('open');mobMenu.classList.toggle('open')});
+function closeMob(){hamBtn.classList.remove('open');mobMenu.classList.remove('open')}
+
+/* ═══ VIEW ROUTER ═══ */
+function showView(v){
+  document.querySelectorAll('.view').forEach(e=>e.classList.remove('active'));
+  document.getElementById('view-'+v).classList.add('active');
+  window.scrollTo(0,0);
+  if(v==='member')renderMemberView();
+  if(v==='admin')renderAdminAll();
+}
+
+/* ═══ MODALS ═══ */
+function openModal(id){document.getElementById(id).classList.add('open')}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'))});
+
+/* ═══ AUTH ═══ */
+function doLogin(){
+  const em=document.getElementById('li-email').value.trim().toLowerCase();
+  const pw=document.getElementById('li-pass').value;
+  if(!em||!pw){toast('⚠ Enter your email and password.');return}
+  const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw);
+  if(!u){toast('⚠ Email or password incorrect.');return}
+  if(u.role==='admin'){toast('⚠ Admin accounts must use the admin sign-in.');return}
+  currentUser=u;closeModal('modal-login');updateNav();
+  toast('🌿 Welcome back, '+u.name.split(' ')[0]+'!');
+  showView('member');
+}
+function doAdminLogin(){
+  const em=document.getElementById('al-email').value.trim().toLowerCase();
+  const pw=document.getElementById('al-pass').value;
+  if(!em.endsWith('@ugandabiodiversityfund.org')){toast('⚠ Admin login requires a @ugandabiodiversityfund.org email.');return}
+  const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw&&m.role==='admin');
+  if(!u){toast('⚠ Invalid admin credentials.');return}
+  currentUser=u;closeModal('modal-admin-login');updateNav();
+  document.getElementById('admin-user-info').textContent='Authenticated as: '+u.name+' — '+u.email;
+  toast('⚙ Admin access granted.');
+  showView('admin');
+}
+function doLogout(){currentUser=null;updateNav();showView('main');toast('Signed out successfully.')}
+function updateNav(){
+  const in_=!!currentUser,adm=in_&&currentUser.role==='admin';
+  document.getElementById('nav-login-li').style.display=in_?'none':'';
+  document.getElementById('nav-logout-li').style.display=in_?'':'none';
+  document.getElementById('nav-mem-li').style.display=in_&&!adm?'':'none';
+  document.getElementById('nav-adm-li').style.display=adm?'':'none';
+  document.getElementById('mob-login').style.display=in_?'none':'';
+  document.getElementById('mob-logout').style.display=in_?'':'none';
+  document.getElementById('mob-dash').style.display=in_&&!adm?'':'none';
+  document.getElementById('mob-adm').style.display=adm?'':'none';
+  document.getElementById('upload-btn-slot').style.display=adm?'':'none';
+  if(in_)document.getElementById('nav-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
+  renderContent();
+}
+
+/* ═══ ENROLL ═══ */
+function selectTier(t){
+  selectedTier_=t;
+  document.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
+  document.querySelector('.tier-card[data-tier="'+t+'"]').classList.add('sel');
+  document.getElementById('ef-tier').value=t;
+  const tc=document.getElementById('tier-chosen');tc.style.display='block';
+  const mt=document.getElementById('ef-type').value||'individual';
+  tc.innerHTML='Selected: <strong>'+TIERS_DATA[t].emoji+' '+TIERS_DATA[t].label+'</strong> &nbsp;|&nbsp; '+(TIER_RANGES[t][mt]||TIER_RANGES[t].individual);
+  toast(TIERS_DATA[t].emoji+' '+TIERS_DATA[t].label+' tier selected — complete your enrollment below.');
+  setTimeout(()=>document.getElementById('enroll').scrollIntoView({behavior:'smooth'}),500);
+}
+document.getElementById('ef-type').addEventListener('change',()=>{
+  if(!selectedTier_)return;
+  const mt=document.getElementById('ef-type').value;
+  document.getElementById('tier-chosen').innerHTML='Selected: <strong>'+TIERS_DATA[selectedTier_].emoji+' '+TIERS_DATA[selectedTier_].label+'</strong> &nbsp;|&nbsp; '+(TIER_RANGES[selectedTier_][mt]||TIER_RANGES[selectedTier_].individual);
+});
+document.getElementById('enroll-form').addEventListener('submit',function(e){
+  e.preventDefault();
+  const name=document.getElementById('ef-name').value.trim();
+  const email=document.getElementById('ef-email').value.trim().toLowerCase();
+  const tel=document.getElementById('ef-tel').value.trim();
+  const type=document.getElementById('ef-type').value;
+  const tier=document.getElementById('ef-tier').value;
+  const amount=parseInt(document.getElementById('ef-amount').value)||0;
+  const year=parseInt(document.getElementById('ef-year').value)||2026;
+  const pass=document.getElementById('ef-pass').value;
+  if(!name||!email||!tel||!type||!tier||!amount||!pass){toast('⚠ Please fill in all required fields.');return}
+  if(pass.length<8){toast('⚠ Password must be at least 8 characters.');return}
+  if(MEMBERS.find(m=>m.email.toLowerCase()===email)){toast('⚠ This email is already registered. Please sign in.');return}
+  const nm={name,email,pass,tel,type,tier,amount,year,org:document.getElementById('ef-org').value.trim(),engage:document.getElementById('ef-engage').value,role:'member',status:'active'};
+  MEMBERS.push(nm);LS.set('members',MEMBERS);
+  FAME_LIST.push({name,tier,year,initials:name.split(' ').slice(0,2).map(w=>w[0]||'').join('')});
+  LS.set('fame',FAME_LIST);renderFame();
+  this.style.display='none';document.getElementById('enroll-success').style.display='block';
+  logEmail('Welcome to Friends of Biodiversity','New member: '+email+' ('+tier+') · '+new Date().toLocaleDateString());
+  toast('🌿 Welcome, '+name.split(' ')[0]+'! Enrollment registered.');
+  showEP(false);
+});
+
+/* ═══ THEMES + WINDOWS ═══ */
+function renderThemes(){
+  const tabsEl=document.getElementById('theme-tabs');
+  const panelsEl=document.getElementById('theme-panels');
+  tabsEl.innerHTML='';panelsEl.innerHTML='';
+  THEMES_DATA.forEach((th,i)=>{
+    const btn=document.createElement('button');btn.className='ttab'+(i===0?' active':'');
+    btn.textContent=th.icon+' '+th.label;btn.dataset.id=th.id;
+    btn.onclick=()=>{
+      document.querySelectorAll('.ttab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+      document.querySelectorAll('.theme-panel').forEach(p=>p.classList.remove('active'));
+      document.getElementById('tp-'+th.id).classList.add('active');
+    };
+    tabsEl.appendChild(btn);
+    const panel=document.createElement('div');panel.className='theme-panel'+(i===0?' active':'');panel.id='tp-'+th.id;
+    const wins=WINDOWS_DATA.filter(w=>w.theme===th.id);
+    panel.innerHTML='<p style="font-size:.87rem;color:var(--muted);line-height:1.72;margin-bottom:1.2rem;max-width:680px">'+th.icon+' <strong style="color:var(--canopy)">'+th.label+'</strong> — one of three core thematic investment priorities anchoring all UBF programme windows.</p><div class="prog-grid">'+wins.map(w=>'<div class="prog-card"><div class="prog-icon">'+w.icon+'</div><span class="prog-tag">Programme Window</span><div class="prog-title">'+w.name+'</div><p class="prog-desc">'+w.desc+'</p></div>').join('')+'</div>';
+    panelsEl.appendChild(panel);
+  });
+}
+renderThemes();
+
+/* ═══ CONTENT / LEARNING EXCHANGE ═══ */
+const TYPE_BADGE={video:'badge-video',documentary:'badge-documentary',podcast:'badge-podcast',article:'badge-article',research:'badge-research',pdf:'badge-pdf'};
+
+function renderFilters(){
+  const el=document.getElementById('content-filters');
+  const types=['All','Video','Documentary','Podcast','Article','Research','PDF'];
+  el.innerHTML=types.map((t,i)=>'<button class="ftag'+(i===0?' active':'')+'" data-cf="'+(t==='All'?'all':t.toLowerCase())+'" onclick="setFilter(this)">'+t+'</button>').join('');
+}
+renderFilters();
+
+function setFilter(btn){
+  document.querySelectorAll('[data-cf]').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');activeFilter=btn.dataset.cf;renderContent();
+}
+
+function userRank(){
+  if(!currentUser)return 0;
+  return TIERS_DATA[currentUser.tier]?.r||1;
+}
+
+function renderContent(){
+  const grid=document.getElementById('content-grid');if(!grid)return;
+  const ur=userRank();
+  let items=CONTENT;
+  if(activeFilter!=='all')items=items.filter(c=>c.type===activeFilter||c.type.includes(activeFilter));
+  if(!items.length){grid.innerHTML='<p style="color:var(--muted);font-size:.9rem;padding:1.5rem 0;grid-column:1/-1">No content for this filter yet.</p>';return}
+  grid.innerHTML=items.map(c=>{
+    const ar=ACCESS_RANK[c.access]||0;
+    const locked=ar>0&&ur<ar;
+    const tb=TYPE_BADGE[c.type]||'badge-article';
+    const liked=(LS.get('liked',[])).includes(c.id);
+    const bkd=(LS.get('bookmarked',[])).includes(c.id);
+    const typeLabel=c.type.charAt(0).toUpperCase()+c.type.slice(1);
+    return '<div class="content-card" id="card-'+c.id+'">'+
+      '<div class="cc-thumb">'+
+        '<span class="cc-type-badge '+tb+'">'+typeLabel+'</span>'+
+        (locked?'<div class="cc-lock"><div class="cc-lock-icon">🔒</div><span>'+c.access.charAt(0).toUpperCase()+c.access.slice(1)+'+ Members</span></div>':'')+
+      '</div>'+
+      '<div class="cc-body">'+
+        '<span class="cc-win-tag">'+c.window+'</span>'+
+        '<div class="cc-title">'+c.title+'</div>'+
+        '<div class="cc-meta"><span>📅 '+c.date+'</span><span>👤 '+c.author+'</span>'+(c.theme?'<span>🏷 '+c.theme+'</span>':'')+'</div>'+
+        '<p class="cc-desc">'+c.desc+'</p>'+
+        '<div class="cc-actions">'+
+          '<div class="cc-reactions">'+
+            '<button class="react-btn'+(liked?' liked':'')+'" onclick="toggleReact(\''+c.id+'\',\'like\',this)">❤ '+c.reactions.likes+'</button>'+
+            '<button class="react-btn'+(bkd?' bookmarked':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+c.reactions.bookmarks+'</button>'+
+          '</div>'+
+          '<button class="cc-share" onclick="openContent(\''+c.id+'\')">'+(locked?'🔒 Unlock':'▶ Open')+' →</button>'+
+        '</div>'+
+      '</div>'+
+      '<div class="comments-section">'+
+        '<h5>Comments ('+c.comments.length+')</h5>'+
+        (locked
+          ?'<div style="font-size:.76rem;color:var(--muted)"><a href="#" onclick="openModal(\'modal-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in as a member</a> to read and post comments.</div>'
+          :'<div class="comment-list" id="cl-'+c.id+'">'+
+            (c.comments.length?c.comments.map(cm=>'<div class="comment-item"><span class="comment-author">'+cm.user+'</span><span class="comment-time">'+cm.time+'</span><br>'+cm.text+'</div>').join('')
+              :'<div style="font-size:.76rem;color:var(--muted)">No comments yet — be the first!</div>')+
+          '</div>'+
+          (currentUser
+            ?'<div class="comment-input-row"><input id="ci-'+c.id+'" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')postComment(\''+c.id+'\')"/><button class="btn btn-ghost btn-sm" onclick="postComment(\''+c.id+'\')">Post</button></div>'
+            :'<div style="font-size:.76rem;color:var(--muted);margin-top:.38rem"><a href="#" onclick="openModal(\'modal-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment.</div>')
+        )+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+renderContent();
+
+function toggleReact(id,type,btn){
+  if(!currentUser){toast('Sign in to react to content.');return}
+  const key=type==='like'?'liked':'bookmarked';
+  let arr=LS.get(key,[]);
+  const item=CONTENT.find(c=>c.id===id);if(!item)return;
+  const field=type==='like'?'likes':'bookmarks';
+  if(arr.includes(id)){arr=arr.filter(x=>x!==id);item.reactions[field]--;btn.classList.remove(type==='like'?'liked':'bookmarked')}
+  else{arr.push(id);item.reactions[field]++;btn.classList.add(type==='like'?'liked':'bookmarked')}
+  btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+item.reactions[field];
+  LS.set(key,arr);LS.set('content',CONTENT);
+}
+function postComment(cid){
+  if(!currentUser){toast('Sign in to comment.');return}
+  const inp=document.getElementById('ci-'+cid);if(!inp)return;
+  const text=inp.value.trim();if(!text)return;
+  const item=CONTENT.find(c=>c.id===cid);if(!item)return;
+  const cm={user:currentUser.name,text,time:new Date().toISOString().slice(0,10)};
+  item.comments.push(cm);LS.set('content',CONTENT);inp.value='';
+  const list=document.getElementById('cl-'+cid);if(!list)return;
+  const d=document.createElement('div');d.className='comment-item';
+  d.innerHTML='<span class="comment-author">'+cm.user+'</span><span class="comment-time">'+cm.time+'</span><br>'+cm.text;
+  const placeholder=list.querySelector('[style]');if(placeholder)list.innerHTML='';
+  list.appendChild(d);list.scrollTop=list.scrollHeight;
+  const h5=list.closest('.comments-section').querySelector('h5');
+  if(h5)h5.textContent='Comments ('+item.comments.length+')';
+  toast('Comment posted.');
+}
+function openContent(cid){
+  const item=CONTENT.find(c=>c.id===cid);if(!item)return;
+  const ur=userRank();const ar=ACCESS_RANK[item.access]||0;
+  if(ar>0&&ur<ar){
+    const needed=item.access;
+    document.getElementById('content-modal-body').innerHTML=
+      '<div style="text-align:center;padding:1rem 0">'+
+        '<div style="font-size:2.5rem;margin-bottom:.85rem">🔒</div>'+
+        '<h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy);margin-bottom:.45rem">Members Only Content</h3>'+
+        '<p style="font-size:.85rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.65">This resource is available to <strong>'+needed.charAt(0).toUpperCase()+needed.slice(1)+'+ members</strong>. Join the Friends of Biodiversity programme to access the full Learning Exchange library.</p>'+
+        '<button class="btn btn-gold btn-full" onclick="closeModal(\'modal-content\');document.getElementById(\'greencard\').scrollIntoView({behavior:\'smooth\'})">View Green Card Tiers →</button>'+
+        '<button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="openModal(\'modal-login\');closeModal(\'modal-content\')">Sign In →</button>'+
+      '</div>';
+    openModal('modal-content');return;
+  }
+  const tb=TYPE_BADGE[item.type]||'badge-article';
+  document.getElementById('content-modal-body').innerHTML=
+    '<span class="cc-type-badge '+tb+'" style="display:inline-block;margin-bottom:.9rem">'+item.type+'</span>'+
+    '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.45rem">'+item.title+'</h3>'+
+    '<p style="font-size:.76rem;color:var(--muted);margin-bottom:.9rem">By '+item.author+' · '+item.date+' · '+item.window+'</p>'+
+    '<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1.2rem">'+item.desc+'</p>'+
+    (item.url&&item.url.length>1
+      ?'<a href="'+item.url+'" target="_blank" class="btn btn-canopy btn-full" style="margin-bottom:.7rem">Open / Download →</a>'
+      :'<div style="background:var(--mist);border-radius:var(--r-sm);padding:1.1rem;text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.7rem">📁 Asset will appear here once the admin uploads the file or URL.</div>')+
+    '<button class="btn btn-ghost btn-full btn-sm" onclick="shareItem(\''+cid+'\')">🔗 Share This Content</button>';
+  openModal('modal-content');
+}
+function shareItem(cid){
+  const item=CONTENT.find(c=>c.id===cid);if(!item)return;
+  if(navigator.share){navigator.share({title:item.title,text:item.desc.slice(0,100)+'...',url:location.href}).catch(()=>{})}
+  else{navigator.clipboard.writeText(location.href+' — '+item.title).then(()=>toast('🔗 Link copied to clipboard!')).catch(()=>toast('Copy: '+location.href))}
+}
+
+/* ═══ UPLOAD ═══ */
+function onDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag')}
+function onDrop(e){e.preventDefault();document.getElementById('upload-zone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f)}
+function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f)}
+function processFile(f){
+  uploadedFile=f;
+  document.getElementById('file-prev-wrap').innerHTML=
+    '<div class="file-preview"><span>📄</span><span class="fp-name">'+f.name+'</span><span style="font-size:.7rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(2)+' MB</span><button class="fp-remove" onclick="uploadedFile=null;document.getElementById(\'file-prev-wrap\').innerHTML=\'\'">✕</button></div>';
+}
+function submitUpload(){
+  if(!currentUser){toast('⚠ You must be logged in to upload content.');return}
+  const title=document.getElementById('up-title').value.trim();
+  const type=document.getElementById('up-type').value;
+  const win=document.getElementById('up-window').value;
+  if(!title||!type||!win){toast('⚠ Title, type, and programme window are required.');return}
+  const item={
+    id:'c'+Date.now(),title,type,window:win,
+    theme:document.getElementById('up-theme').value||'Biodiversity',
+    desc:document.getElementById('up-desc').value||'—',
+    author:document.getElementById('up-author').value||currentUser.name,
+    date:new Date().toISOString().slice(0,10),
+    access:document.getElementById('up-access').value||'member',
+    url:document.getElementById('up-url').value||'',
+    reactions:{likes:0,bookmarks:0},comments:[],
+    fileName:uploadedFile?uploadedFile.name:'',
+  };
+  CONTENT.unshift(item);LS.set('content',CONTENT);
+  uploadedFile=null;document.getElementById('file-prev-wrap').innerHTML='';
+  ['up-title','up-type','up-window','up-theme','up-desc','up-author','up-url'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  closeModal('modal-upload');renderContent();renderAdminContent();
+  toast('✅ Content published to Learning Exchange.');
+}
+
+/* ═══ FAME ═══ */
+function renderFame(){
+  const el=document.getElementById('fame-grid');if(!el)return;
+  const list=LS.get('fame',FAME_LIST);
+  el.innerHTML=list.slice(0,16).map(m=>{
+    const td=TIERS_DATA[m.tier];
+    return '<div class="fame-card"><div class="fame-av">'+m.initials+'</div><div class="fame-name">'+m.name+'</div><div class="fame-tier">'+(td?td.emoji:'')+' '+(m.tier?m.tier.charAt(0).toUpperCase()+m.tier.slice(1):m.tier||'')+'</div><div class="fame-year">'+m.year+'</div></div>';
+  }).join('');
+}
+renderFame();
+
+/* ═══ MEMBER DASHBOARD ═══ */
+function renderMemberView(){
+  if(!currentUser)return;
+  const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  document.getElementById('mem-greeting').textContent='Welcome back, '+u.name.split(' ')[0]+' '+td.emoji;
+  document.getElementById('mem-sub').textContent=td.label+' Member · '+u.year+(u.org?' · '+u.org:'');
+  const accessible=CONTENT.filter(c=>ACCESS_RANK[c.access]<=(td.r||1));
+  document.getElementById('mem-strip').innerHTML=
+    '<div class="mem-mini"><div class="val">'+td.emoji+'</div><div class="lbl">'+td.label+' Tier</div></div>'+
+    '<div class="mem-mini"><div class="val">'+(u.amount?u.amount.toLocaleString():'—')+'</div><div class="lbl">UGX Commitment '+u.year+'</div></div>'+
+    '<div class="mem-mini"><div class="val">'+accessible.length+'</div><div class="lbl">Content Items Unlocked</div></div>'+
+    '<div class="mem-mini"><div class="val">'+((PERKS_MAP[u.tier]||[]).length)+'</div><div class="lbl">Active Perks</div></div>';
+  const perks=PERKS_MAP[u.tier]||[];
+  document.getElementById('mem-content').innerHTML=
+    '<h3 style="font-family:var(--ff-d);font-size:1.25rem;color:var(--canopy);margin:1.5rem 0 .9rem">Your Perks</h3>'+
+    '<div class="perk-grid">'+perks.map(p=>'<div class="perk-card"><div class="pk-icon">'+p.split(' ')[0]+'</div><div class="pk-title">'+p.replace(/^[^\s]+\s/,'')+'</div></div>').join('')+'</div>'+
+    '<h3 style="font-family:var(--ff-d);font-size:1.25rem;color:var(--canopy);margin:2rem 0 .9rem">Announcements</h3>'+
+    (ANNOUNCES.length?ANNOUNCES.slice(0,3).map(a=>'<div class="announce-card"><div class="ac-type">'+a.type+'</div><div class="ac-title">'+a.title+'</div><p class="ac-body">'+a.body+'</p><div class="ac-meta">'+a.date+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>')+
+    '<h3 style="font-family:var(--ff-d);font-size:1.25rem;color:var(--canopy);margin:2rem 0 .9rem">Financial Reports</h3>'+
+    (FIN_REPORTS.length?FIN_REPORTS.map(r=>'<div class="announce-card"><div class="ac-type">Financial Report · '+r.period+'</div><div class="ac-title">'+r.title+'</div><p class="ac-body">'+r.summary+'</p><div class="ac-meta">'+r.date+(r.url&&r.url!=='#'?'<a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm" style="display:inline-flex">⬇ Download</a>':'')+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No reports published yet.</p>')+
+    '<div style="margin-top:1.75rem;display:flex;gap:.75rem;flex-wrap:wrap">'+
+      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),200)">Go to Learning Exchange →</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'wallfame\').scrollIntoView({behavior:\'smooth\'}),200)">View Wall of Fame →</button>'+
+    '</div>';
+}
+
+/* ═══ ADMIN ═══ */
+function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAnnounces();renderFinancials();renderEmailLog()}
+function renderAdminMembers(){
+  const tb=document.getElementById('members-tbody');if(!tb)return;
+  tb.innerHTML=MEMBERS.map(m=>'<tr><td>'+m.name+'</td><td style="font-size:.76rem">'+m.email+'</td><td>'+(m.type||'—')+'</td><td><span class="pill pill-'+(m.tier||'silver')+'">'+((m.tier||'').charAt(0).toUpperCase()+(m.tier||'').slice(1)||'—')+'</span></td><td>'+(m.amount?m.amount.toLocaleString():'—')+'</td><td>'+(m.year||'—')+'</td><td><span class="pill '+(m.role==='admin'?'pill-admin':'pill-active')+'">'+m.role+'</span></td><td><span class="pill pill-active">'+(m.status||'active')+'</span></td></tr>').join('');
+}
+function renderAdminContent(){
+  const tb=document.getElementById('admin-content-tbody');if(!tb)return;
+  tb.innerHTML=CONTENT.map(c=>'<tr><td style="font-size:.78rem;max-width:190px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.title+'</td><td><span class="pill" style="background:rgba(45,106,79,.1);color:var(--canopy-lt)">'+c.type+'</span></td><td style="font-size:.74rem">'+c.window+'</td><td style="font-size:.74rem">'+(c.theme||'—')+'</td><td style="font-size:.74rem">'+c.date+'</td><td><span class="pill '+(c.access==='public'?'pill-active':'pill-gold')+'">'+c.access+'</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteContent(\''+c.id+'\')">Delete</button></td></tr>').join('');
+}
+function deleteContent(id){
+  if(!confirm('Delete this content item?'))return;
+  CONTENT=CONTENT.filter(c=>c.id!==id);LS.set('content',CONTENT);
+  renderAdminContent();renderContent();toast('Content deleted.');
+}
+function renderAnnounces(){
+  const el=document.getElementById('announce-list');if(!el)return;
+  el.innerHTML=ANNOUNCES.length?ANNOUNCES.map((a,i)=>'<div class="announce-card"><div class="ac-type">'+a.type+'</div><div class="ac-title">'+a.title+'</div><p class="ac-body">'+a.body+'</p><div class="ac-meta">'+a.date+' <button class="btn btn-danger btn-sm" onclick="delAnnounce('+i+')">Delete</button></div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>';
+}
+function delAnnounce(i){ANNOUNCES.splice(i,1);LS.set('announces',ANNOUNCES);renderAnnounces();toast('Announcement deleted.')}
+function postAnnouncement(){
+  const type=document.getElementById('ann-type').value;
+  const title=document.getElementById('ann-title').value.trim();
+  const body=document.getElementById('ann-body').value.trim();
+  const notify=document.getElementById('ann-notify').checked;
+  if(!title||!body){toast('⚠ Title and body required.');return}
+  ANNOUNCES.unshift({type,title,body,date:new Date().toISOString().slice(0,10)});
+  LS.set('announces',ANNOUNCES);
+  closeModal('modal-announce');
+  document.getElementById('ann-title').value='';document.getElementById('ann-body').value='';
+  renderAnnounces();
+  if(notify)logEmail('['+type+'] '+title,'Broadcast to all members · '+new Date().toLocaleDateString());
+  toast('✅ Announcement published.'+(notify?' Email notification queued.':''));
+}
+function renderFinancials(){
+  const barsEl=document.getElementById('fin-bars');const listEl=document.getElementById('fin-reports-list');
+  if(!barsEl||!listEl)return;
+  [['Albertine Rift Landscape',52],['Karamoja Landscape',32],['Capacity Building',10],['Admin & Operations',6]].forEach(([label,pct])=>{
+    const d=document.createElement('div');d.style.cssText='padding:.5rem 0;border-bottom:1px solid var(--border)';
+    d.innerHTML='<div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">'+label+'</span><strong style="color:var(--canopy)">'+pct+'%</strong></div><div class="prog-bar-sm"><div class="prog-bar-fill" style="width:'+pct+'%"></div></div>';
+    barsEl.appendChild(d);
+  });
+  listEl.innerHTML=FIN_REPORTS.length?FIN_REPORTS.map((r,i)=>'<div style="padding:.72rem 0;border-bottom:1px solid var(--border)"><div style="font-weight:700;font-size:.87rem;color:var(--canopy)">'+r.title+'</div><div style="font-size:.73rem;color:var(--muted);margin:.18rem 0">'+r.period+'</div><div style="font-size:.77rem;color:var(--text);line-height:1.55;margin-bottom:.38rem">'+r.summary+'</div><div style="display:flex;gap:.45rem"><a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm">View</a><button class="btn btn-danger btn-sm" onclick="delReport('+i+')">Delete</button></div></div>').join(''):'<p style="font-size:.82rem;color:var(--muted)">No reports yet.</p>';
+}
+function delReport(i){FIN_REPORTS.splice(i,1);LS.set('fin_reports',FIN_REPORTS);document.getElementById('fin-reports-list').innerHTML='';document.getElementById('fin-bars').innerHTML='';renderFinancials();toast('Report removed.')}
+function addFinReport(){
+  const title=document.getElementById('fin-title').value.trim();
+  const period=document.getElementById('fin-period').value.trim();
+  const summary=document.getElementById('fin-summary').value.trim();
+  const url=document.getElementById('fin-url').value.trim();
+  if(!title){toast('⚠ Report title required.');return}
+  FIN_REPORTS.unshift({title,period,summary,url:url||'#',date:new Date().toISOString().slice(0,10)});
+  LS.set('fin_reports',FIN_REPORTS);closeModal('modal-finance');
+  ['fin-title','fin-period','fin-summary','fin-url'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fin-reports-list').innerHTML='';document.getElementById('fin-bars').innerHTML='';
+  renderFinancials();toast('✅ Financial report published.');
+}
+function previewEmail(){
+  const subj=document.getElementById('em-subj').value;
+  const body=document.getElementById('em-body').value;
+  const aud=document.getElementById('em-audience').value;
+  const el=document.getElementById('email-prev');el.style.display='block';
+  el.textContent='FROM: info@ugandabiodiversityfund.org\nTO: '+(aud==='all'?'All Members':aud.charAt(0).toUpperCase()+aud.slice(1)+' Members')+'\nSUBJECT: '+(subj||'(no subject)')+'\n\n'+body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org';
+}
+function sendEmail(){
+  const subj=document.getElementById('em-subj').value.trim();
+  const body=document.getElementById('em-body').value.trim();
+  const aud=document.getElementById('em-audience').value;
+  if(!subj||!body){toast('⚠ Subject and message required.');return}
+  logEmail(subj,'Audience: '+aud+' · '+new Date().toLocaleString());
+  document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
+  document.getElementById('email-prev').style.display='none';
+  toast('✅ Campaign queued for delivery to '+aud+' members.');
+}
+function logEmail(subj,meta){EMAIL_LOG.unshift({subj,meta});LS.set('email_log',EMAIL_LOG);renderEmailLog()}
+function renderEmailLog(){
+  const el=document.getElementById('email-log-list');if(!el)return;
+  el.innerHTML=EMAIL_LOG.slice(0,10).map(e=>'<div style="padding:.58rem 0;border-bottom:1px solid var(--border)"><div style="font-size:.82rem;font-weight:600;color:var(--canopy)">'+e.subj+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:.14rem">'+e.meta+'</div></div>').join('')||'<p style="font-size:.82rem;color:var(--muted)">No campaigns sent yet.</p>';
+}
+function exportCSV(){
+  const rows=['Name,Email,Type,Tier,Amount (UGX),Year,Role,Status',...MEMBERS.map(m=>'"'+m.name+'","'+m.email+'","'+(m.type||'')+'","'+(m.tier||'')+'","'+(m.amount||'')+'","'+(m.year||'')+'","'+(m.role||'')+'","'+(m.status||'')+'"')];
+  const blob=new Blob([rows.join('\n')],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ubf_members_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
+}
+
+/* ═══ ADMIN TABS ═══ */
+document.querySelectorAll('.atab').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+    const p=btn.dataset.panel;
+    document.querySelectorAll('.admin-panel').forEach(ap=>ap.classList.remove('active'));
+    document.getElementById(p).classList.add('active');
+  });
+});
+
+/* ═══ COUNTER ANIMATION ═══ */
+function animCounters(){
+  document.querySelectorAll('[data-t]').forEach(el=>{
+    const target=+el.dataset.t;let cur=0;const step=target/55;
+    const t=setInterval(()=>{cur=Math.min(cur+step,target);el.textContent=Math.round(cur);if(cur>=target)clearInterval(t)},22);
+  });
+}
+const cntObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){animCounters();cntObs.disconnect()}})},{threshold:.3});
+const impEl=document.getElementById('impact');if(impEl)cntObs.observe(impEl);
+
+/* ═══ SCROLL REVEAL ═══ */
+const revObs=new IntersectionObserver(entries=>{entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revObs.unobserve(e.target)}})},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
+
+/* ═══ EMAIL POPUP ═══ */
+function showEP(auto){
+  if(LS.get('ep_dismissed',false)||currentUser)return;
+  setTimeout(()=>document.getElementById('email-popup').classList.add('show'),auto?20000:800);
+}
+function dismissEP(){document.getElementById('email-popup').classList.remove('show');LS.set('ep_dismissed',true)}
+function subscribeEP(){
+  const em=document.getElementById('ep-email').value.trim();
+  if(!em||!em.includes('@')){toast('⚠ Enter a valid email address.');return}
+  logEmail('Newsletter Subscription','New subscriber: '+em+' · '+new Date().toLocaleDateString());
+  dismissEP();toast('✅ Subscribed! You will receive UBF conservation news and updates.');
+}
+showEP(true);
+
+/* ═══ TOAST ═══ */
+let _tt;
+function toast(msg){
+  const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
+  clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),4200);
+}
+</script>
+</body>
+</html>
