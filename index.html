@@ -7,8 +7,8 @@
 <meta name="description" content="Join the UBF Friends of Biodiversity Green Card Programme. Protecting Uganda's ecosystems for now and the future."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="assets/styles.css"/>
-<link rel="icon" href="assets/logos/fob-logo.png" type="image/png"/>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="icon" href="fob-logo.png" type="image/png"/>
 </head>
 <body>
 
@@ -18,13 +18,13 @@
   <div class="brand-strip">
     <!-- UBF Logo: blue diamond + green globe, "For now & the future" -->
     <div class="logo-ubf-wrap">
-      <img src="assets/logos/ubf-logo.png" alt="Uganda Biodiversity Fund logo" title="Uganda Biodiversity Fund — For now & the future"/>
+      <img src="ubf-logo.png" alt="Uganda Biodiversity Fund logo" title="Uganda Biodiversity Fund — For now & the future"/>
       <span class="logo-ubf-sub">For now &amp; the future</span>
     </div>
     <div class="logo-divider"></div>
     <!-- FoB Logo: hand holding trees, "Friends of Biodiversity" -->
     <div class="logo-fob-wrap">
-      <img src="assets/logos/fob-logo.png" alt="Friends of Biodiversity logo" title="Friends of Biodiversity — Demonstrating care for Uganda's biodiversity"/>
+      <img src="fob-logo.png" alt="Friends of Biodiversity logo" title="Friends of Biodiversity — Demonstrating care for Uganda's biodiversity"/>
       <span class="logo-fob-sub">Demonstrating care for biodiversity</span>
     </div>
     <div class="brand-name">
@@ -296,9 +296,9 @@
     <div class="footer-top">
       <div class="footer-brand">
         <div class="footer-logo-strip">
-          <img src="assets/logos/ubf-logo.png" alt="Uganda Biodiversity Fund"/>
+          <img src="ubf-logo.png" alt="Uganda Biodiversity Fund"/>
           <div class="footer-logo-divider"></div>
-          <img src="assets/logos/fob-logo.png" alt="Friends of Biodiversity"/>
+          <img src="fob-logo.png" alt="Friends of Biodiversity"/>
         </div>
         <p>Protecting Uganda's rich biological heritage across the Albertine Rift and Karamoja landscapes — demonstrating care for Uganda's biodiversity.</p>
       </div>
@@ -316,14 +316,15 @@
         <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">ugandabiodiversityfund.org</a>
         <a href="tel:+256393216445">+256 (039) 3216445</a>
         <a href="tel:+256200916445">+256 (200) 916 445</a>
+        <a href="#" onclick="openSubscribePopup();return false">🌿 Subscribe for Updates</a>
       </div>
     </div>
     <div class="footer-btm">
       <p>© 2026 Uganda Biodiversity Fund. All rights reserved.</p>
       <div class="footer-logo-strip">
-        <img src="assets/logos/ubf-logo.png" alt="UBF" style="height:30px;width:30px"/>
+        <img src="ubf-logo.png" alt="UBF" style="height:30px;width:30px"/>
         <div class="footer-logo-divider" style="height:22px"></div>
-        <img src="assets/logos/fob-logo.png" alt="FoB" style="height:30px;width:30px"/>
+        <img src="fob-logo.png" alt="FoB" style="height:30px;width:30px"/>
       </div>
     </div>
   </div>
@@ -422,7 +423,7 @@
     <div class="adm-sec"><span>Hero Slideshow Images</span></div>
     <div class="adm-card">
       <h4>Upload Additional Slide Images</h4>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">Upload new images to add to the hero slideshow for this session. Currently <strong id="slide-count-adm">13 slides</strong> loaded from <code>assets/images/</code>.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">Upload new images to add to the hero slideshow for this session. Currently <strong id="slide-count-adm">13 slides</strong> loaded.</p>
       <div class="fame-uploader" onclick="document.getElementById('slide-file-input').click()">
         <div style="font-size:2rem;margin-bottom:.5rem">🏞</div>
         <strong>Click to upload slide images</strong>
@@ -430,7 +431,7 @@
       </div>
       <input type="file" id="slide-file-input" accept="image/*" multiple style="display:none" onchange="handleSlideUpload(event)"/>
       <div id="slide-preview-list"></div>
-      <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;line-height:1.55">For permanent additions, upload image files to the <code>assets/images/</code> folder in the GitHub repo and add the filename to the <code>SLIDE_IMAGES</code> array in <code>assets/app.js</code>.</p>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;line-height:1.55">For permanent additions, upload new image files (e.g. <code>slide-14.jpg</code>) to the repo root alongside index.html, then update the count in the <code>SLIDE_IMAGES</code> line in <code>app.js</code>.</p>
     </div>
   </div>
 </div><!-- /view-admin -->
@@ -491,16 +492,26 @@
     </div>
     <div class="fg"><label>Description</label><textarea id="up-desc" rows="2" placeholder="Brief description..."></textarea></div>
     <div class="fg"><label>Author / Organisation</label><input id="up-author" placeholder="Dr. Okello, UBF Research Team..."/></div>
-    <div class="fg"><label>File Upload (Video or document)</label>
+    <div class="fg"><label>Cover Thumbnail Image</label>
+      <div class="upload-zone" id="thumb-zone" onclick="document.getElementById('up-thumb').click()">
+        <div class="uz-icon">🖼</div>
+        <strong>Click to upload a cover image</strong>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">Shown on the content card. JPG or PNG, landscape ideal.</p>
+      </div>
+      <input type="file" id="up-thumb" accept="image/*" style="display:none" onchange="onThumbSelect(event)"/>
+      <div id="thumb-prev-wrap"></div>
+    </div>
+    <div class="fg"><label>Video / Audio File (plays inline in the app)</label>
       <div class="upload-zone" id="upload-zone" onclick="document.getElementById('up-file').click()" ondragover="onDragOver(event)" ondragleave="document.getElementById('upload-zone').classList.remove('drag')" ondrop="onDrop(event)">
         <div class="uz-icon">📁</div>
         <strong>Click to browse or drag &amp; drop</strong>
-        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">MP4, MOV, MP3, WAV, DOCX accepted.</p>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">MP4, MOV, MP3, WAV — plays directly in the Learning Exchange, no external link needed.</p>
       </div>
-      <input type="file" id="up-file" accept=".mp4,.mov,.mp3,.wav,.docx,.doc" style="display:none" onchange="onFileSelect(event)"/>
+      <input type="file" id="up-file" accept=".mp4,.mov,.mp3,.wav" style="display:none" onchange="onFileSelect(event)"/>
       <div id="file-prev-wrap"></div>
     </div>
-    <div class="fg"><label>External URL (YouTube / Vimeo / Drive)</label><input id="up-url" placeholder="https://..."/></div>
+    <div class="fg"><label>Article / Research Full Text (for Article or Research types — read in-app)</label><textarea id="up-fulltext" rows="4" placeholder="Paste the full article or research text here so members can read it directly in the app..."></textarea></div>
+    <div class="fg"><label>External URL (optional — YouTube / Vimeo / Drive, only if not uploading a file directly)</label><input id="up-url" placeholder="https://..."/></div>
     <button class="btn btn-gold btn-full" onclick="submitUpload()">Publish to Learning Exchange →</button>
   </div>
 </div>
@@ -577,9 +588,9 @@
     <button class="modal-close" onclick="closeModal('m-cert')">✕</button>
     <div class="cert-preview" id="cert-preview">
       <div class="cert-logo">
-        <img src="assets/logos/ubf-logo.png" alt="UBF"/>
+        <img src="ubf-logo.png" alt="UBF"/>
         <div style="width:1px;height:36px;background:rgba(200,168,75,.3)"></div>
-        <img src="assets/logos/fob-logo.png" alt="FoB"/>
+        <img src="fob-logo.png" alt="FoB"/>
       </div>
       <h2>Certificate of Membership</h2>
       <p style="font-size:.75rem;color:rgba(255,255,255,.5)">Uganda Biodiversity Fund — Friends of Biodiversity Programme</p>
@@ -608,6 +619,7 @@
 
 <div class="toast" id="toast"></div>
 
-<script src="assets/app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
 </body>
 </html>
