@@ -129,6 +129,7 @@ async function loadPayment(){
 
 /* ═══ INIT ADMIN ACCOUNTS IF MISSING (runs once against Supabase) ═══ */
 async function initAdmins(){
+  let failCount=0;
   for(const email of ADMIN_EMAILS){
     const exists=MEMBERS.find(m=>m.email.toLowerCase()===email);
     if(!exists){
@@ -138,8 +139,11 @@ async function initAdmins(){
         amount:0,year:new Date().getFullYear(),org:'Uganda Biodiversity Fund',
         role:'admin',status:'active',payref:''
       });
-      if(error)console.error('initAdmins insert',email,error);
+      if(error){console.error('initAdmins insert',email,error);failCount++}
     }
+  }
+  if(failCount>0){
+    toast('⚠ Could not create '+failCount+' admin account(s) — check Supabase RLS policies on the members table.');
   }
 }
 
@@ -266,11 +270,12 @@ async function doAdminLogin(){
   if(!ADMIN_EMAILS.includes(em)){toast('⚠ This email is not authorised for admin access.');return}
   if(!em.endsWith('@ugandabiodiversityfund.org')){toast('⚠ Admin login requires a @ugandabiodiversityfund.org email.');return}
   await loadMembers();
-  const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw&&m.role==='admin');
-  if(!u){toast('⚠ Invalid admin credentials. Default password: '+ADMIN_DEFAULT_PASS);return}
-  currentUser=u;closeModal('m-admin-login');updateNav();
-  document.getElementById('adm-user-info').textContent=u.name+' ('+ADMIN_NAMES[em]+') — '+em;
-  toast('⚙ Admin access granted. Welcome, '+u.name+'.');showView('admin');
+  const acct=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.role==='admin');
+  if(!acct){toast('⚠ No admin account found for this email in the database — ask your developer to check the members table.');return}
+  if(acct.pass!==pw){toast('⚠ Incorrect password. Default for first login: '+ADMIN_DEFAULT_PASS);return}
+  currentUser=acct;closeModal('m-admin-login');updateNav();
+  document.getElementById('adm-user-info').textContent=acct.name+' ('+ADMIN_NAMES[em]+') — '+em;
+  toast('⚙ Admin access granted. Welcome, '+acct.name+'.');showView('admin');
 }
 function doLogout(){currentUser=null;updateNav();showView('main');toast('Signed out successfully.')}
 function updateNav(){
