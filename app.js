@@ -23,6 +23,7 @@ const WINDOWS_DATA=[
   {id:'oh',name:'One Health & Bioeconomy',icon:'🧬',theme:'biodiversity',desc:'Strengthens cross-sectoral collaboration on zoonotic disease risks and ecosystem health. Promotes Uganda\'s bioeconomy through research and value addition to biodiversity-based products — herbal medicines, pollination services, and genetic resources.'},
 ];
 const TIERS_DATA={
+  student:{r:1,emoji:'🎓',label:'Student',color:'#2D6A4F'},
   silver:{r:1,emoji:'🥈',label:'Silver',color:'#909090'},
   gold:{r:2,emoji:'🥇',label:'Gold',color:'#C8A84B'},
   platinum:{r:3,emoji:'💎',label:'Platinum',color:'#5BC4BF'},
@@ -30,16 +31,18 @@ const TIERS_DATA={
   partner:{r:2,emoji:'🤝',label:'Partner',color:'#C8A84B'},
 };
 const TIER_RANGES={
+  student:{individual:'In-kind / Youth Project Work',institution:'N/A'},
   silver:{individual:'500K–1M UGX',institution:'2M–5M UGX'},
   gold:{individual:'1.5M–2M UGX',institution:'6M–10M UGX'},
   platinum:{individual:'2.5M–4.5M UGX',institution:'20M–40M UGX'},
   diamond:{individual:'5M+ UGX',institution:'50M+ UGX'},
 };
 const PERKS_MAP={
+  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','🎓 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🌍 Exposure visits to project sites'],
   silver:['📦 Eco-friendly welcome kit & personalised certificates','📊 Contribution & accountability dashboard','🎓 Learning Exchange content library access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate'],
   gold:['All Silver perks','👁 Visibility in UBF conservation projects','🤝 Exclusive networking & partnership events','📬 Priority invitations to UBF events','📋 Quarterly impact report'],
   platinum:['All Gold perks','🎨 Co-branding on project materials & publications','🤝 Strategic partnership access','📰 Named in UBF annual report','💼 Private Executive Director briefing'],
-  diamond:['All Platinum perks','🌟 Named conservation project or corridor','🏛 Board-level observer engagement','📈 Bespoke ESG biodiversity reporting package','📡 Media & PR recognition campaign','👑 Annual CEO briefing'],
+  diamond:['All Platinum perks','🌟 Named conservation project or corridor','🏛 Board-level observer engagement','📈 Bespoke ESG biodiversity reporting package','📡 Media & PR recognition campaign','👑 Annual CEO briefing','🌍 Exposure visits to project sites'],
 };
 const ACCESS_RANK={public:0,member:1,gold:2,platinum:3,diamond:4};
 
@@ -392,8 +395,20 @@ function renderContent(){
     const ico=TYPE_ICONS[c.type]||'📄';
     const typeLabel=c.type?c.type.charAt(0).toUpperCase()+c.type.slice(1):'';
     const thumbCls='thumb-'+(c.type||'article');
+    // Auto-extract YouTube/Vimeo thumbnail if URL provided
+    let ytThumb='';
+    if(c.url){
+      const ytMatch=c.url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      const vimeoMatch=c.url.match(/vimeo\.com\/(\d+)/);
+      if(ytMatch)ytThumb=`https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
+    }
+    const thumbContent=ytThumb
+      ?`<img src="${ytThumb}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.classList.add('thumb-fallback');this.remove()"/>`
+      :(c.mediaUrl&&c.mediaType==='video'
+        ?`<video src="${c.mediaUrl}" style="width:100%;height:100%;object-fit:cover" preload="metadata" muted></video>`
+        :`<div class="cc-thumb-icon">${ico}</div>`);
     return '<div class="content-card" id="card-'+c.id+'">'+
-      '<div class="cc-thumb '+thumbCls+'"><div class="cc-thumb-icon">'+ico+'</div>'+
+      '<div class="cc-thumb '+thumbCls+(ytThumb||c.mediaUrl?' cc-has-media':'')+'" onclick="openContent(\''+c.id+'\')">'+thumbContent+
       '<span class="cc-badge '+bc+'">'+typeLabel+'</span>'+
       (locked?'<div class="cc-lock"><span style="font-size:1.6rem">🔒</span><span>'+c.access.charAt(0).toUpperCase()+c.access.slice(1)+'+ Members</span></div>':'')+
       '</div>'+
@@ -862,10 +877,19 @@ async function sendEmail(){
   const body=document.getElementById('em-body').value.trim();
   const aud=document.getElementById('em-audience').value;
   if(!subj||!body){toast('⚠ Subject and message required.');return}
-  await logEmail(subj,'Audience: '+aud+' · '+new Date().toLocaleString());
+  // Build recipient list filtered by tier
+  const tierRank={all:0,student:1,silver:1,gold:2,platinum:3,diamond:4};
+  const minRank=tierRank[aud]||0;
+  const recipients=MEMBERS.filter(m=>m.role!=='admin'&&(minRank===0||(TIERS_DATA[m.tier]?.r||0)>=minRank));
+  const emails=recipients.map(m=>m.email).join(',');
+  if(!emails){toast('⚠ No members match the selected audience.');return}
+  // Open default email client with pre-filled recipients, subject, body
+  const mailtoLink=`mailto:${encodeURIComponent(emails)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445')}`;
+  window.open(mailtoLink,'_blank');
+  await logEmail(subj,'Audience: '+aud+' ('+recipients.length+' members) · '+new Date().toLocaleString());
   document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
   document.getElementById('email-prev').style.display='none';
-  toast('✅ Campaign queued for delivery.');
+  toast('✅ Email client opened with '+recipients.length+' recipients.');
 }
 async function logEmail(subj,meta){
   EMAIL_LOG.unshift({subj,meta});
