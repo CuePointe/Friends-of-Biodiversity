@@ -8,7 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
-<link rel="icon" href="fob-logo.png" type="image/png"/>
+<link rel="icon" href="fob-logo.png?v=2" type="image/png"/>
+<link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
+<link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
 </head>
 <body>
 
@@ -91,11 +93,11 @@
     <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Impact</em></h2>
     <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects — tracked through our accountability dashboard and audited annually.</p>
     <div class="stats-strip reveal">
-      <div class="stat-cell"><span class="stat-n" data-t="847">0</span><span class="stat-l">Species monitored across both landscapes</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="23">0</span><span class="stat-l">Active community conservation projects</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="156">0</span><span class="stat-l">Friends of Biodiversity members</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="5">0</span><span class="stat-l">Strategic programme windows</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="94">0</span><span class="stat-l">% funds deployed to field</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="14" data-suffix="M+" data-prefix="$">0</span><span class="stat-l">Raised in endowments (USD)</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Restored woodlands &amp; forests (combined)</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
     </div>
   </div>
 </section>
@@ -492,15 +494,6 @@
     </div>
     <div class="fg"><label>Description</label><textarea id="up-desc" rows="2" placeholder="Brief description..."></textarea></div>
     <div class="fg"><label>Author / Organisation</label><input id="up-author" placeholder="Dr. Okello, UBF Research Team..."/></div>
-    <div class="fg"><label>Cover Thumbnail Image</label>
-      <div class="upload-zone" id="thumb-zone" onclick="document.getElementById('up-thumb').click()">
-        <div class="uz-icon">🖼</div>
-        <strong>Click to upload a cover image</strong>
-        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">Shown on the content card. JPG or PNG, landscape ideal.</p>
-      </div>
-      <input type="file" id="up-thumb" accept="image/*" style="display:none" onchange="onThumbSelect(event)"/>
-      <div id="thumb-prev-wrap"></div>
-    </div>
     <div class="fg"><label>Video / Audio File (plays inline in the app)</label>
       <div class="upload-zone" id="upload-zone" onclick="document.getElementById('up-file').click()" ondragover="onDragOver(event)" ondragleave="document.getElementById('upload-zone').classList.remove('drag')" ondrop="onDrop(event)">
         <div class="uz-icon">📁</div>
