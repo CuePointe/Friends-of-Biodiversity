@@ -1,13 +1,13 @@
 /* ═══════════════════════════════════════════
    FRIENDS OF BIODIVERSITY — APPLICATION LOGIC
    Uganda Biodiversity Fund
-   
-   NOTE FOR DEVELOPER: This file currently uses localStorage
-   for data persistence (browser-only demo mode). To connect
-   to Supabase, replace the LS.get/LS.set calls in the marked
-   sections below with Supabase client calls. See comments
-   tagged [SUPABASE] throughout this file.
+   Backend: Supabase (live, shared database across all users)
 ═══════════════════════════════════════════ */
+
+/* ═══ SUPABASE CLIENT ═══ */
+const SUPABASE_URL='https://tqvuulubivabhnjauhsi.supabase.co';
+const SUPABASE_ANON_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRxdnV1bHViaXZhYmhuamF1aHNpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE2MTUwMjEsImV4cCI6MjA5NzE5MTAyMX0.2b4HBgDFPigQajinPRbcMrwV1LWH21YFnXDi-abJ1vE';
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 
 /* ═══ REFERENCE DATA ═══ */
 const THEMES_DATA=[
@@ -43,15 +43,15 @@ const PERKS_MAP={
 };
 const ACCESS_RANK={public:0,member:1,gold:2,platinum:3,diamond:4};
 
-/* ═══ ADMIN TEAM — UBF Staff Accounts ═══
-   [SUPABASE] Move this to a 'staff' table with role-based access (RLS policy:
-   email LIKE '%@ugandabiodiversityfund.org' AND role='admin') */
+/* ═══ ADMIN TEAM — UBF Staff Accounts ═══ */
 const ADMIN_EMAILS=[
   'i.amani@ugandabiodiversityfund.org',
   'o.atuhaire@ugandabiodiversityfund.org',
   't.otieno@ugandabiodiversityfund.org',
   'p.musiime@ugandabiodiversityfund.org',
   'd.okullu@ugandabiodiversityfund.org',
+  'w.nabantanzi@ugandabiodiversityfund.org',
+  's.abonyo@ugandabiodiversityfund.org',
 ];
 const ADMIN_NAMES={
   'i.amani@ugandabiodiversityfund.org':'Executive Director',
@@ -59,70 +59,134 @@ const ADMIN_NAMES={
   't.otieno@ugandabiodiversityfund.org':'Digital Marketing Analyst & Systems Developer',
   'p.musiime@ugandabiodiversityfund.org':'Programs Officer',
   'd.okullu@ugandabiodiversityfund.org':'M&E Officer',
+  'w.nabantanzi@ugandabiodiversityfund.org':'Finance Manager',
+  's.abonyo@ugandabiodiversityfund.org':'Administration Officer',
 };
-/* Default password for all admin accounts on first run. CHANGE IMMEDIATELY after first login
-   by editing your member record, or once Supabase auth is wired, use password-reset emails. */
 const ADMIN_DEFAULT_PASS='UBF@2026!';
 
-/* ═══ HERO SLIDESHOW IMAGES — real UBF/Pexels conservation photography ═══
-   [SUPABASE] When you add Supabase Storage, swap this array to fetch
-   filenames from a 'slides' storage bucket dynamically. */
-const SLIDE_IMAGES=Array.from({length:13},(_,i)=>`assets/images/slide-${i+1}.jpg`);
+/* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
+const SLIDE_IMAGES=Array.from({length:13},(_,i)=>`slide-${i+1}.jpg`);
 
-/* ═══ localStorage helpers ═══
-   [SUPABASE] Replace LS.get/LS.set with supabase.from('table').select()/.insert()/.update()
-   Keep the same function names so the rest of the app code does not need to change —
-   just make LS.get and LS.set async-aware wrappers around Supabase calls. */
+/* ═══ LOCAL UI-ONLY STATE (not shared data — just this browser's session/cache) ═══ */
 const LS={
   get:(k,d)=>{try{const v=localStorage.getItem('ubf_'+k);return v!==null?JSON.parse(v):d}catch{return d}},
   set:(k,v)=>{try{localStorage.setItem('ubf_'+k,JSON.stringify(v))}catch{}},
 };
 
-/* ═══ APP STATE ═══ */
-let MEMBERS=LS.get('members',[]);
-let CONTENT=LS.get('content',[]);
-let ANNOUNCES=LS.get('announces',[]);
-let FIN_REPORTS=LS.get('fin_reports',[]);
-let EMAIL_LOG=LS.get('email_log',[]);
-let FAME=LS.get('fame',[]);
-let PAYMENT=LS.get('payment',{});
+/* ═══ APP STATE — populated from Supabase on load, kept live ═══ */
+let MEMBERS=[];
+let CONTENT=[];
+let ANNOUNCES=[];
+let FIN_REPORTS=[];
+let EMAIL_LOG=[];
+let FAME=[];
+let PAYMENT={};
 let currentUser=null;
 let selectedTier_=null;
 let uploadedFile=null;
+let uploadedThumb=null;
 let famePhotoData=null;
 let activeFilter='all';
 
-/* ═══ INIT ADMIN ACCOUNTS IF MISSING ═══
-   [SUPABASE] Run this once as a seed migration/SQL script instead of client-side init. */
-function initAdmins(){
-  let changed=false;
-  ADMIN_EMAILS.forEach(email=>{
-    if(!MEMBERS.find(m=>m.email.toLowerCase()===email)){
-      MEMBERS.push({
+/* ═══ DATA LOADERS — pull live shared data from Supabase ═══ */
+async function loadMembers(){
+  const {data,error}=await sb.from('members').select('*').order('created_at',{ascending:true});
+  if(error){console.error('loadMembers',error);return}
+  MEMBERS=data||[];
+}
+async function loadContent(){
+  const {data,error}=await sb.from('content').select('*,comments(*)').order('created_at',{ascending:false});
+  if(error){console.error('loadContent',error);return}
+  CONTENT=(data||[]).map(c=>({
+    id:c.id,title:c.title,type:c.type,window:c.window_name,theme:c.theme,
+    desc:c.description,author:c.author,date:(c.created_at||'').slice(0,10),
+    access:c.access,url:c.url||'',thumb:c.thumb_url||'',mediaUrl:c.media_url||'',
+    mediaType:c.media_type||'',fullText:c.full_text||'',
+    reactions:c.reactions||{likes:0,bookmarks:0},
+    comments:(c.comments||[]).map(cm=>({user:cm.user_name,text:cm.text,time:(cm.created_at||'').slice(0,10)})),
+  }));
+}
+async function loadAnnouncements(){
+  const {data,error}=await sb.from('announcements').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadAnnouncements',error);return}
+  ANNOUNCES=(data||[]).map(a=>({type:a.type,title:a.title,body:a.body,date:(a.created_at||'').slice(0,10),id:a.id}));
+}
+async function loadFinReports(){
+  const {data,error}=await sb.from('fin_reports').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadFinReports',error);return}
+  FIN_REPORTS=(data||[]).map(r=>({title:r.title,period:r.period,summary:r.summary,url:r.url,date:(r.created_at||'').slice(0,10),id:r.id}));
+}
+async function loadFame(){
+  const {data,error}=await sb.from('wall_of_fame').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadFame',error);return}
+  FAME=(data||[]).map(m=>({id:m.id,name:m.name,caption:m.caption,tier:m.tier,year:m.year,photo:m.photo_url}));
+}
+async function loadPayment(){
+  const {data,error}=await sb.from('payment_details').select('*').eq('id',1).maybeSingle();
+  if(error){console.error('loadPayment',error);return}
+  PAYMENT=data||{};
+}
+
+/* ═══ INIT ADMIN ACCOUNTS IF MISSING (runs once against Supabase) ═══ */
+async function initAdmins(){
+  let failCount=0;
+  for(const email of ADMIN_EMAILS){
+    const exists=MEMBERS.find(m=>m.email.toLowerCase()===email);
+    if(!exists){
+      const {error}=await sb.from('members').insert({
         name:ADMIN_NAMES[email]||'Admin',
         email,pass:ADMIN_DEFAULT_PASS,type:'staff',tier:'diamond',
         amount:0,year:new Date().getFullYear(),org:'Uganda Biodiversity Fund',
         role:'admin',status:'active',payref:''
       });
-      changed=true;
+      if(error){console.error('initAdmins insert',email,error);failCount++}
     }
-  });
-  if(changed)LS.set('members',MEMBERS);
+  }
+  if(failCount>0){
+    toast('⚠ Could not create '+failCount+' admin account(s) — check Supabase RLS policies on the members table.');
+  }
 }
-initAdmins();
 
-/* ═══ PAYMENT DETAILS — load saved values into public page ═══ */
-function loadPaymentUI(){
-  const pd=LS.get('payment',{});
+/* ═══ PAYMENT DETAILS — render saved values into public page ═══ */
+function renderPaymentUI(){
   const map={
-    'pay-bank-name':pd.bank,'pay-acc-no':pd.accno,'pay-branch':pd.branch,
-    'pay-swift':pd.swift,'pay-mtn':pd.mtn,'pay-airtel':pd.airtel,
+    'pay-bank-name':PAYMENT.bank,'pay-acc-no':PAYMENT.accno,'pay-branch':PAYMENT.branch,
+    'pay-swift':PAYMENT.swift,'pay-mtn':PAYMENT.mtn,'pay-airtel':PAYMENT.airtel,
   };
   Object.entries(map).forEach(([id,val])=>{
     if(val){const el=document.getElementById(id);if(el)el.textContent=val}
   });
 }
-loadPaymentUI();
+
+/* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
+async function bootstrapApp(){
+  showLoadingToast();
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment()]);
+  await initAdmins();
+  await loadMembers(); // refresh in case admins were just inserted
+  renderPaymentUI();
+  initSlideshow();
+  renderThemes();
+  renderFilters();
+  renderContent();
+  renderFame();
+  renderPublicAnnounces();
+  hideLoadingToast();
+  subscribeRealtime();
+}
+function showLoadingToast(){toast('🌿 Loading live data...')}
+function hideLoadingToast(){/* toast auto-clears */}
+
+/* ═══ REALTIME — auto-refresh when any user changes shared data ═══ */
+function subscribeRealtime(){
+  sb.channel('public:content').on('postgres_changes',{event:'*',schema:'public',table:'content'},async()=>{await loadContent();renderContent();renderAdminContent()}).subscribe();
+  sb.channel('public:comments').on('postgres_changes',{event:'*',schema:'public',table:'comments'},async()=>{await loadContent();renderContent()}).subscribe();
+  sb.channel('public:wall_of_fame').on('postgres_changes',{event:'*',schema:'public',table:'wall_of_fame'},async()=>{await loadFame();renderFame();renderAdminFame()}).subscribe();
+  sb.channel('public:announcements').on('postgres_changes',{event:'*',schema:'public',table:'announcements'},async()=>{await loadAnnouncements();renderPublicAnnounces();renderAdminAnnounces()}).subscribe();
+  sb.channel('public:fin_reports').on('postgres_changes',{event:'*',schema:'public',table:'fin_reports'},async()=>{await loadFinReports();renderFinancials()}).subscribe();
+  sb.channel('public:members').on('postgres_changes',{event:'*',schema:'public',table:'members'},async()=>{await loadMembers();renderAdminMembers()}).subscribe();
+  sb.channel('public:payment_details').on('postgres_changes',{event:'*',schema:'public',table:'payment_details'},async()=>{await loadPayment();renderPaymentUI()}).subscribe();
+}
 
 /* ═══ HERO SLIDESHOW ═══ */
 let curSlide=0;
@@ -132,8 +196,7 @@ function initSlideshow(){
   const countEl=document.getElementById('slide-count');
   if(!track)return;
   track.innerHTML='';dots.innerHTML='';
-  const extras=LS.get('extra_slides',[]);
-  const imgs=[...SLIDE_IMAGES,...extras];
+  const imgs=[...SLIDE_IMAGES];
   imgs.forEach((src,i)=>{
     const d=document.createElement('div');
     d.className='slide'+(i===0?' active':'');
@@ -159,7 +222,6 @@ function goSlide(n){
   if(dots[curSlide])dots[curSlide].classList.add('active');
   if(countEl)countEl.textContent=`${curSlide+1} / ${slides.length}`;
 }
-initSlideshow();
 setInterval(()=>goSlide(curSlide+1),5500);
 
 /* ═══ HEADER SCROLL ═══ */
@@ -187,29 +249,33 @@ document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'))});
 
 /* ═══ AUTH ═══
-   [SUPABASE] Replace doLogin/doAdminLogin body with:
-   const {data,error}=await supabase.auth.signInWithPassword({email,password:pw})
-   then fetch the matching row from 'members' table by user id. */
-function doLogin(){
+   NOTE: This uses a simple custom 'members' table check (matching your existing
+   schema with plaintext pass column) rather than full Supabase Auth, so it keeps
+   working with the tables you already created. Data is now shared and live —
+   only the credential check itself stays app-side. */
+async function doLogin(){
   const em=document.getElementById('li-email').value.trim().toLowerCase();
   const pw=document.getElementById('li-pass').value;
   if(!em||!pw){toast('⚠ Enter your email and password.');return}
+  await loadMembers();
   const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw);
   if(!u){toast('⚠ Email or password incorrect.');return}
   if(u.role==='admin'){toast('⚠ Admin accounts must use the admin sign-in.');return}
   currentUser=u;closeModal('m-login');updateNav();
   toast('🌿 Welcome back, '+u.name.split(' ')[0]+'!');showView('member');
 }
-function doAdminLogin(){
+async function doAdminLogin(){
   const em=document.getElementById('al-email').value.trim().toLowerCase();
   const pw=document.getElementById('al-pass').value;
   if(!ADMIN_EMAILS.includes(em)){toast('⚠ This email is not authorised for admin access.');return}
   if(!em.endsWith('@ugandabiodiversityfund.org')){toast('⚠ Admin login requires a @ugandabiodiversityfund.org email.');return}
-  const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw&&m.role==='admin');
-  if(!u){toast('⚠ Invalid admin credentials. Default password: '+ADMIN_DEFAULT_PASS);return}
-  currentUser=u;closeModal('m-admin-login');updateNav();
-  document.getElementById('adm-user-info').textContent=u.name+' ('+ADMIN_NAMES[em]+') — '+em;
-  toast('⚙ Admin access granted. Welcome, '+u.name+'.');showView('admin');
+  await loadMembers();
+  const acct=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.role==='admin');
+  if(!acct){toast('⚠ No admin account found for this email in the database — ask your developer to check the members table.');return}
+  if(acct.pass!==pw){toast('⚠ Incorrect password. Default for first login: '+ADMIN_DEFAULT_PASS);return}
+  currentUser=acct;closeModal('m-admin-login');updateNav();
+  document.getElementById('adm-user-info').textContent=acct.name+' ('+ADMIN_NAMES[em]+') — '+em;
+  toast('⚙ Admin access granted. Welcome, '+acct.name+'.');showView('admin');
 }
 function doLogout(){currentUser=null;updateNav();showView('main');toast('Signed out successfully.')}
 function updateNav(){
@@ -227,9 +293,7 @@ function updateNav(){
   renderContent();
 }
 
-/* ═══ ENROLL ═══
-   [SUPABASE] On submit: await supabase.auth.signUp({email,password:pass})
-   then await supabase.from('members').insert({...}) with the returned user id. */
+/* ═══ ENROLL ═══ */
 function selectTier(t){
   selectedTier_=t;
   document.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
@@ -248,7 +312,7 @@ document.getElementById('ef-type').addEventListener('change',()=>{
   const td=TIERS_DATA[selectedTier_];
   document.getElementById('tier-chosen').innerHTML='Selected: <strong>'+td.emoji+' '+td.label+'</strong> &nbsp;|&nbsp; '+(TIER_RANGES[selectedTier_][mt]||TIER_RANGES[selectedTier_].individual);
 });
-document.getElementById('enroll-form').addEventListener('submit',function(e){
+document.getElementById('enroll-form').addEventListener('submit',async function(e){
   e.preventDefault();
   const name=document.getElementById('ef-name').value.trim();
   const email=document.getElementById('ef-email').value.trim().toLowerCase();
@@ -261,14 +325,17 @@ document.getElementById('enroll-form').addEventListener('submit',function(e){
   const payref=document.getElementById('ef-payref').value.trim();
   if(!name||!email||!tel||!type||!tier||!amount||!pass){toast('⚠ Please fill in all required fields.');return}
   if(pass.length<8){toast('⚠ Password must be at least 8 characters.');return}
+  await loadMembers();
   if(MEMBERS.find(m=>m.email.toLowerCase()===email)){toast('⚠ This email is already registered. Please sign in.');return}
   const nm={name,email,pass,tel,type,tier,amount,year,payref,
     org:document.getElementById('ef-org').value.trim(),
     engage:document.getElementById('ef-engage').value,
     role:'member',status:'active'};
-  MEMBERS.push(nm);LS.set('members',MEMBERS);
+  const {error}=await sb.from('members').insert(nm);
+  if(error){toast('⚠ Could not register — please try again.');console.error(error);return}
+  await loadMembers();
   this.style.display='none';document.getElementById('enroll-success').style.display='block';
-  logEmail('Welcome to Friends of Biodiversity','New member: '+email+' ('+tier+') · '+new Date().toLocaleDateString());
+  await logEmail('Welcome to Friends of Biodiversity','New member: '+email+' ('+tier+') · '+new Date().toLocaleDateString());
   toast('🌿 Welcome, '+name.split(' ')[0]+'! Enrollment registered.');
   showEP(false);
 });
@@ -277,6 +344,7 @@ document.getElementById('enroll-form').addEventListener('submit',function(e){
 function renderThemes(){
   const tabsEl=document.getElementById('theme-tabs');
   const panelsEl=document.getElementById('theme-panels');
+  if(!tabsEl)return;
   tabsEl.innerHTML='';panelsEl.innerHTML='';
   THEMES_DATA.forEach((th,i)=>{
     const btn=document.createElement('button');btn.className='ttab'+(i===0?' active':'');
@@ -294,20 +362,17 @@ function renderThemes(){
     panelsEl.appendChild(panel);
   });
 }
-renderThemes();
 
-/* ═══ LEARNING EXCHANGE CONTENT ═══
-   [SUPABASE] CONTENT array becomes a 'content' table. Replace renderContent's
-   data source with: const {data}=await supabase.from('content').select('*').order('date',{ascending:false}) */
+/* ═══ LEARNING EXCHANGE CONTENT — real thumbnails, inline media ═══ */
 const TYPE_ICONS={video:'🎬',documentary:'🎥',podcast:'🎙',interview:'🎤',article:'📰',research:'🔬'};
 const TYPE_BADGE_CLS={video:'badge-video',documentary:'badge-documentary',podcast:'badge-podcast',interview:'badge-interview',article:'badge-article',research:'badge-research'};
 
 function renderFilters(){
   const el=document.getElementById('content-filters');
+  if(!el)return;
   const types=['All','Video','Documentary','Podcast','Interview','Article','Research'];
   el.innerHTML=types.map((t,i)=>'<button class="ftag'+(i===0?' active':'')+'" data-cf="'+(t==='All'?'all':t.toLowerCase())+'" onclick="setFilter(this)">'+t+'</button>').join('');
 }
-renderFilters();
 function setFilter(btn){document.querySelectorAll('[data-cf]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeFilter=btn.dataset.cf;renderContent()}
 
 function uRank(){
@@ -327,8 +392,9 @@ function renderContent(){
     const bc=TYPE_BADGE_CLS[c.type]||'badge-article';
     const ico=TYPE_ICONS[c.type]||'📄';
     const typeLabel=c.type?c.type.charAt(0).toUpperCase()+c.type.slice(1):'';
+    const thumbStyle=c.thumb?`background-image:url('${c.thumb}');background-size:cover;background-position:center`:'';
     return '<div class="content-card" id="card-'+c.id+'">'+
-      '<div class="cc-thumb"><div class="cc-thumb-icon">'+ico+'</div>'+
+      '<div class="cc-thumb" style="'+thumbStyle+'">'+(c.thumb?'':'<div class="cc-thumb-icon">'+ico+'</div>')+
       '<span class="cc-badge '+bc+'">'+typeLabel+'</span>'+
       (locked?'<div class="cc-lock"><span style="font-size:1.6rem">🔒</span><span>'+c.access.charAt(0).toUpperCase()+c.access.slice(1)+'+ Members</span></div>':'')+
       '</div>'+
@@ -339,8 +405,8 @@ function renderContent(){
         '<p class="cc-desc">'+c.desc+'</p>'+
         '<div class="cc-actions">'+
           '<div class="cc-reacts">'+
-            '<button class="rbt'+(liked.includes(c.id)?' liked':'')+'" onclick="toggleReact(\''+c.id+'\',\'like\',this)">❤ '+c.reactions.likes+'</button>'+
-            '<button class="rbt'+(bkd.includes(c.id)?' bkd':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+c.reactions.bookmarks+'</button>'+
+            '<button class="rbt'+(liked.includes(c.id)?' liked':'')+'" onclick="toggleReact(\''+c.id+'\',\'like\',this)">❤ '+(c.reactions.likes||0)+'</button>'+
+            '<button class="rbt'+(bkd.includes(c.id)?' bkd':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+(c.reactions.bookmarks||0)+'</button>'+
           '</div>'+
           '<button class="cc-open" onclick="openContent(\''+c.id+'\')">'+(locked?'🔒 Unlock':'▶ Open')+' →</button>'+
         '</div>'+
@@ -361,33 +427,29 @@ function renderContent(){
     '</div>';
   }).join('');
 }
-renderContent();
 
-function toggleReact(id,type,btn){
+async function toggleReact(id,type,btn){
   if(!currentUser){toast('Sign in to react.');return}
   const key=type==='like'?'liked':'bookmarked';
   let arr=LS.get(key,[]);
   const item=CONTENT.find(c=>c.id===id);if(!item)return;
   const field=type==='like'?'likes':'bookmarks';
-  if(arr.includes(id)){arr=arr.filter(x=>x!==id);item.reactions[field]--;btn.classList.remove(type==='like'?'liked':'bkd')}
-  else{arr.push(id);item.reactions[field]++;btn.classList.add(type==='like'?'liked':'bkd')}
-  btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+item.reactions[field];
-  LS.set(key,arr);LS.set('content',CONTENT);
+  const reactions={...item.reactions};
+  if(arr.includes(id)){arr=arr.filter(x=>x!==id);reactions[field]=Math.max(0,(reactions[field]||0)-1);btn.classList.remove(type==='like'?'liked':'bkd')}
+  else{arr.push(id);reactions[field]=(reactions[field]||0)+1;btn.classList.add(type==='like'?'liked':'bkd')}
+  item.reactions=reactions;
+  btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+reactions[field];
+  LS.set(key,arr);
+  await sb.from('content').update({reactions}).eq('id',id);
 }
-function postComment(cid){
+async function postComment(cid){
   if(!currentUser){toast('Sign in to comment.');return}
   const inp=document.getElementById('ci-'+cid);if(!inp)return;
   const text=inp.value.trim();if(!text)return;
-  const item=CONTENT.find(c=>c.id===cid);if(!item)return;
-  const cm={user:currentUser.name,text,time:new Date().toISOString().slice(0,10)};
-  item.comments.push(cm);LS.set('content',CONTENT);inp.value='';
-  const list=document.getElementById('cl-'+cid);if(!list)return;
-  const d=document.createElement('div');d.className='comment-item';
-  d.innerHTML='<span class="comment-author">'+cm.user+'</span><span class="comment-time">'+cm.time+'</span><br>'+cm.text;
-  const ph=list.querySelector('p');if(ph)list.innerHTML='';
-  list.appendChild(d);list.scrollTop=list.scrollHeight;
-  const h5=list.closest('.comments-wrap').querySelector('h5');
-  if(h5)h5.textContent='Comments ('+item.comments.length+')';
+  inp.value='';
+  const {error}=await sb.from('comments').insert({content_id:cid,user_name:currentUser.name,text});
+  if(error){toast('⚠ Could not post comment.');console.error(error);return}
+  await loadContent();renderContent();
   toast('Comment posted.');
 }
 function openContent(cid){
@@ -406,14 +468,27 @@ function openContent(cid){
   }
   const bc=TYPE_BADGE_CLS[item.type]||'badge-article';
   const typeLabel=item.type?item.type.charAt(0).toUpperCase()+item.type.slice(1):'';
+  let mediaBlock='';
+  if(item.mediaUrl&&item.mediaType==='video'){
+    mediaBlock='<video controls style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem;background:#000" src="'+item.mediaUrl+'"></video>';
+  }else if(item.mediaUrl&&item.mediaType==='audio'){
+    mediaBlock='<audio controls style="width:100%;margin-bottom:1rem" src="'+item.mediaUrl+'"></audio>';
+  }else if(item.url&&item.url.length>5){
+    mediaBlock='<a href="'+item.url+'" target="_blank" rel="noopener" class="btn btn-canopy btn-full" style="margin-bottom:1rem">▶ Open External Link →</a>';
+  }
+  let bodyBlock='';
+  if(item.fullText&&item.fullText.length>0){
+    bodyBlock='<div style="font-size:.87rem;color:var(--text);line-height:1.8;max-height:340px;overflow-y:auto;padding:1rem;background:var(--mist);border-radius:var(--r-sm);margin-bottom:1rem;white-space:pre-line">'+item.fullText+'</div>';
+  }
+  if(!mediaBlock&&!bodyBlock){
+    mediaBlock='<div style="background:var(--mist);border-radius:var(--r-sm);padding:1.1rem;text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.7rem">Content will be available once the admin adds the file or text.</div>';
+  }
   document.getElementById('content-modal-body').innerHTML=
     '<span class="cc-badge '+bc+'" style="display:inline-block;margin-bottom:.9rem">'+typeLabel+'</span>'+
     '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.45rem">'+item.title+'</h3>'+
     '<p style="font-size:.76rem;color:var(--muted);margin-bottom:.9rem">By '+item.author+' · '+item.date+' · '+item.window+'</p>'+
-    '<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1.2rem">'+item.desc+'</p>'+
-    (item.url&&item.url.length>5
-      ?'<a href="'+item.url+'" target="_blank" rel="noopener" class="btn btn-canopy btn-full" style="margin-bottom:.7rem">▶ Open / Watch →</a>'
-      :'<div style="background:var(--mist);border-radius:var(--r-sm);padding:1.1rem;text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.7rem">Content will be available once the admin adds the file link.</div>')+
+    mediaBlock+bodyBlock+
+    (!bodyBlock?'<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1.2rem">'+item.desc+'</p>':'')+
     '<button class="btn btn-ghost btn-full btn-sm" onclick="shareItem(\''+cid+'\')">🔗 Share This Content</button>';
   openModal('m-content');
 }
@@ -424,9 +499,7 @@ function shareItem(cid){
   else{navigator.clipboard.writeText(url+' — '+item.title).then(()=>toast('🔗 Link copied!')).catch(()=>toast('Copy link: '+url))}
 }
 
-/* ═══ UPLOAD CONTENT ═══
-   [SUPABASE] For files, use supabase.storage.from('content-files').upload(path,file)
-   then store the returned public URL in the 'url' field of the content row. */
+/* ═══ FILE/THUMBNAIL HANDLING — admin upload ═══ */
 function onDragOver(e){e.preventDefault();document.getElementById('upload-zone').classList.add('drag')}
 function onDrop(e){e.preventDefault();document.getElementById('upload-zone').classList.remove('drag');const f=e.dataTransfer.files[0];if(f)processFile(f)}
 function onFileSelect(e){const f=e.target.files[0];if(f)processFile(f)}
@@ -435,33 +508,71 @@ function processFile(f){
   document.getElementById('file-prev-wrap').innerHTML=
     '<div class="file-prev"><span>📄</span><span class="fp-name">'+f.name+'</span><span style="font-size:.7rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(2)+' MB</span><button class="fp-rm" onclick="uploadedFile=null;document.getElementById(\'file-prev-wrap\').innerHTML=\'\'">✕</button></div>';
 }
-function submitUpload(){
+function onThumbSelect(e){
+  const f=e.target.files[0];if(!f)return;
+  uploadedThumb=f;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    document.getElementById('thumb-prev-wrap').innerHTML=
+      '<div class="file-prev"><img src="'+ev.target.result+'" style="width:36px;height:36px;border-radius:4px;object-fit:cover"/><span class="fp-name">'+f.name+'</span><button class="fp-rm" onclick="uploadedThumb=null;document.getElementById(\'thumb-prev-wrap\').innerHTML=\'\'">✕</button></div>';
+  };
+  reader.readAsDataURL(f);
+}
+
+/* ═══ UPLOAD CONTENT — files go to Supabase Storage, row goes to 'content' table ═══ */
+async function submitUpload(){
   if(!currentUser){toast('⚠ You must be logged in to upload content.');return}
   const title=document.getElementById('up-title').value.trim();
   const type=document.getElementById('up-type').value;
   const win=document.getElementById('up-window').value;
   if(!title||!type||!win){toast('⚠ Title, type, and programme window are required.');return}
-  const item={
-    id:'c'+Date.now(),title,type,window:win,
+  toast('⬆ Uploading...');
+
+  let thumbUrl='';
+  if(uploadedThumb){
+    const path='thumbs/'+Date.now()+'_'+uploadedThumb.name.replace(/\s+/g,'_');
+    const {error:upErr}=await sb.storage.from('content-files').upload(path,uploadedThumb);
+    if(!upErr){
+      const {data}=sb.storage.from('content-files').getPublicUrl(path);
+      thumbUrl=data.publicUrl;
+    }else{console.error('thumb upload',upErr);}
+  }
+
+  let mediaUrl='';let mediaType='';
+  if(uploadedFile){
+    const path='media/'+Date.now()+'_'+uploadedFile.name.replace(/\s+/g,'_');
+    const {error:upErr}=await sb.storage.from('content-files').upload(path,uploadedFile);
+    if(!upErr){
+      const {data}=sb.storage.from('content-files').getPublicUrl(path);
+      mediaUrl=data.publicUrl;
+      mediaType=uploadedFile.type.startsWith('video')?'video':uploadedFile.type.startsWith('audio')?'audio':'';
+    }else{console.error('media upload',upErr);toast('⚠ Media upload failed — check Storage bucket permissions.');}
+  }
+
+  const row={
+    title,type,window_name:win,
     theme:document.getElementById('up-theme').value||'Biodiversity',
-    desc:document.getElementById('up-desc').value||'',
+    description:document.getElementById('up-desc').value||'',
     author:document.getElementById('up-author').value||currentUser.name,
-    date:new Date().toISOString().slice(0,10),
     access:document.getElementById('up-access').value||'member',
     url:document.getElementById('up-url').value||'',
-    reactions:{likes:0,bookmarks:0},comments:[],
-    fileName:uploadedFile?uploadedFile.name:'',
+    thumb_url:thumbUrl,media_url:mediaUrl,media_type:mediaType,
+    full_text:document.getElementById('up-fulltext').value||'',
+    reactions:{likes:0,bookmarks:0},
   };
-  CONTENT.unshift(item);LS.set('content',CONTENT);
-  uploadedFile=null;document.getElementById('file-prev-wrap').innerHTML='';
-  ['up-title','up-type','up-window','up-theme','up-desc','up-author','up-url'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
-  closeModal('m-upload');renderContent();renderAdminContent();
+  const {error}=await sb.from('content').insert(row);
+  if(error){toast('⚠ Could not publish content.');console.error(error);return}
+
+  uploadedFile=null;uploadedThumb=null;
+  document.getElementById('file-prev-wrap').innerHTML='';
+  document.getElementById('thumb-prev-wrap').innerHTML='';
+  ['up-title','up-type','up-window','up-theme','up-desc','up-author','up-url','up-fulltext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
+  closeModal('m-upload');
+  await loadContent();renderContent();renderAdminContent();
   toast('✅ Content published to Learning Exchange.');
 }
 
-/* ═══ WALL OF FAME — admin-curated, no placeholders ═══
-   [SUPABASE] FAME array becomes a 'wall_of_fame' table. Photos go to
-   supabase.storage.from('fame-photos').upload(...) and store the public URL. */
+/* ═══ WALL OF FAME — shared via Supabase, photos go to Storage ═══ */
 function renderFame(){
   const el=document.getElementById('fame-grid');if(!el)return;
   if(!FAME.length){
@@ -484,34 +595,45 @@ function renderFame(){
     '</div>';
   }).join('');
 }
-renderFame();
 
 function handleFamePhoto(e){
   const f=e.target.files[0];if(!f)return;
+  famePhotoData=f;
   const reader=new FileReader();
   reader.onload=ev=>{
-    famePhotoData=ev.target.result;
     document.getElementById('fame-photo-prev').innerHTML=
       '<div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--mist);border-radius:var(--r-sm)">'+
-        '<img src="'+famePhotoData+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover"/>'+
+        '<img src="'+ev.target.result+'" style="width:48px;height:48px;border-radius:50%;object-fit:cover"/>'+
         '<span style="font-size:.82rem;color:var(--text)">'+f.name+'</span>'+
         '<button onclick="famePhotoData=null;document.getElementById(\'fame-photo-prev\').innerHTML=\'\'" style="margin-left:auto;background:none;border:none;cursor:pointer;color:var(--muted)">✕</button>'+
       '</div>';
   };
   reader.readAsDataURL(f);
 }
-function addFameChampion(){
+async function addFameChampion(){
   const name=document.getElementById('fame-name').value.trim();
   const caption=document.getElementById('fame-caption').value.trim();
   const tier=document.getElementById('fame-tier').value;
   const year=parseInt(document.getElementById('fame-year').value)||new Date().getFullYear();
   if(!name||!caption){toast('⚠ Name and caption required.');return}
-  FAME.push({name,caption,tier,year,photo:famePhotoData||null});
-  LS.set('fame',FAME);famePhotoData=null;
+  toast('⬆ Adding champion...');
+  let photoUrl='';
+  if(famePhotoData){
+    const path='fame/'+Date.now()+'_'+famePhotoData.name.replace(/\s+/g,'_');
+    const {error:upErr}=await sb.storage.from('fame-photos').upload(path,famePhotoData);
+    if(!upErr){
+      const {data}=sb.storage.from('fame-photos').getPublicUrl(path);
+      photoUrl=data.publicUrl;
+    }else{console.error('fame photo upload',upErr);}
+  }
+  const {error}=await sb.from('wall_of_fame').insert({name,caption,tier,year,photo_url:photoUrl||null});
+  if(error){toast('⚠ Could not add champion.');console.error(error);return}
+  famePhotoData=null;
   closeModal('m-fame-add');
   document.getElementById('fame-name').value='';document.getElementById('fame-caption').value='';
   document.getElementById('fame-photo-prev').innerHTML='';
-  renderFame();renderAdminFame();toast('✅ Champion added to Wall of Fame.');
+  await loadFame();renderFame();renderAdminFame();
+  toast('✅ Champion added to Wall of Fame.');
 }
 
 /* ═══ ANNOUNCEMENTS — public strip ═══ */
@@ -522,7 +644,6 @@ function renderPublicAnnounces(){
     '<div class="announce-pub-card"><div class="apc-type">'+a.type+'</div><div class="apc-title">'+a.title+'</div><p class="apc-body">'+a.body+'</p><div class="apc-date">'+a.date+'</div></div>'
   ).join('');
 }
-renderPublicAnnounces();
 
 /* ═══ MEMBER DASHBOARD ═══ */
 function renderMemberView(){
@@ -551,7 +672,7 @@ function renderMemberView(){
     '</div>';
 }
 
-/* ═══ CERTIFICATE — restored ═══ */
+/* ═══ CERTIFICATE ═══ */
 function openCertModal(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -598,59 +719,75 @@ function downloadCert(){
 
 /* ═══ ADMIN PANEL ═══ */
 function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin()}
+
 function renderAdminMembers(){
   const tb=document.getElementById('members-tbody');if(!tb)return;
   tb.innerHTML=MEMBERS.map(m=>'<tr><td>'+m.name+'</td><td style="font-size:.76rem">'+m.email+'</td><td>'+(m.type||'—')+'</td><td><span class="pill pill-'+((m.tier||'silver'))+'">'+((m.tier||'').charAt(0).toUpperCase()+(m.tier||'').slice(1)||'—')+'</span></td><td>'+(m.amount?m.amount.toLocaleString():'—')+'</td><td>'+(m.year||'—')+'</td><td style="font-size:.74rem">'+(m.payref||'—')+'</td><td><span class="pill '+(m.role==='admin'?'pill-admin':'pill-ok')+'">'+m.role+'</span></td></tr>').join('');
 }
+
 function renderAdminContent(){
   const tb=document.getElementById('adm-content-tbody');if(!tb)return;
   tb.innerHTML=CONTENT.map(c=>'<tr><td style="font-size:.78rem;max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+c.title+'</td><td><span class="pill" style="background:rgba(45,106,79,.1);color:var(--canopy-lt)">'+c.type+'</span></td><td style="font-size:.74rem">'+c.window+'</td><td style="font-size:.74rem">'+c.date+'</td><td><span class="pill '+(c.access==='public'?'pill-ok':'pill-gold')+'">'+c.access+'</span></td><td><button class="btn btn-danger btn-sm" onclick="deleteContent(\''+c.id+'\')">Delete</button></td></tr>').join('');
 }
-function deleteContent(id){
+async function deleteContent(id){
   if(!confirm('Delete this content item?'))return;
-  CONTENT=CONTENT.filter(c=>c.id!==id);LS.set('content',CONTENT);renderAdminContent();renderContent();toast('Content deleted.');
+  const {error}=await sb.from('content').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadContent();renderAdminContent();renderContent();toast('Content deleted.');
 }
+
 function renderAdminFame(){
   const el=document.getElementById('adm-fame-list');if(!el)return;
-  if(!FAME.length){el.innerHTML='<p style="color:var(--muted);font-size:.87rem">No champions yet. Add your first conservation champion using the button above.</p>';return}
+  if(!FAME.length){el.innerHTML='<p style="color:var(--muted);font-size:.87rem">No champions yet. Add your first conservation champion.</p>';return}
   el.innerHTML='<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Photo</th><th>Name</th><th>Caption</th><th>Tier</th><th>Year</th><th>Actions</th></tr></thead><tbody>'+
-    FAME.map((m,i)=>'<tr>'+
+    FAME.map(m=>'<tr>'+
       '<td>'+(m.photo?'<img src="'+m.photo+'" style="width:36px;height:36px;border-radius:50%;object-fit:cover"/>':'<div style="width:36px;height:36px;border-radius:50%;background:var(--canopy);display:flex;align-items:center;justify-content:center;color:var(--gold);font-size:.7rem">'+m.name.charAt(0)+'</div>')+'</td>'+
       '<td>'+m.name+'</td>'+
       '<td style="font-size:.75rem;max-width:200px">'+m.caption+'</td>'+
       '<td><span class="pill pill-'+(m.tier||'silver')+'">'+(m.tier||'silver')+'</span></td>'+
       '<td>'+m.year+'</td>'+
-      '<td><button class="btn btn-danger btn-sm" onclick="removeFame('+i+')">Remove</button></td>'+
+      '<td><button class="btn btn-danger btn-sm" onclick="removeFame(\''+m.id+'\')">Remove</button></td>'+
     '</tr>').join('')+
   '</tbody></table></div>';
 }
-function removeFame(i){FAME.splice(i,1);LS.set('fame',FAME);renderAdminFame();renderFame();toast('Champion removed.')}
+async function removeFame(id){
+  const {error}=await sb.from('wall_of_fame').delete().eq('id',id);
+  if(error){toast('⚠ Could not remove.');console.error(error);return}
+  await loadFame();renderAdminFame();renderFame();toast('Champion removed.');
+}
+
 function renderAdminAnnounces(){
   const el=document.getElementById('announce-admin-list');if(!el)return;
   if(!ANNOUNCES.length){el.innerHTML='<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>';return}
-  el.innerHTML=ANNOUNCES.map((a,i)=>
+  el.innerHTML=ANNOUNCES.map(a=>
     '<div class="adm-card" style="border-left:4px solid var(--canopy-lt)">'+
       '<div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--canopy-lt);margin-bottom:.3rem">'+a.type+'</div>'+
       '<div style="font-family:var(--ff-d);font-size:.98rem;color:var(--canopy);margin-bottom:.28rem">'+a.title+'</div>'+
       '<p style="font-size:.82rem;color:var(--muted);line-height:1.6">'+a.body+'</p>'+
-      '<div style="font-size:.7rem;color:rgba(0,0,0,.32);margin-top:.45rem;display:flex;justify-content:space-between">'+a.date+'<button class="btn btn-danger btn-sm" onclick="delAnnounce('+i+')">Delete</button></div>'+
+      '<div style="font-size:.7rem;color:rgba(0,0,0,.32);margin-top:.45rem;display:flex;justify-content:space-between">'+a.date+'<button class="btn btn-danger btn-sm" onclick="delAnnounce(\''+a.id+'\')">Delete</button></div>'+
     '</div>'
   ).join('');
 }
-function delAnnounce(i){ANNOUNCES.splice(i,1);LS.set('announces',ANNOUNCES);renderAdminAnnounces();renderPublicAnnounces();toast('Announcement deleted.')}
-function postAnnouncement(){
+async function delAnnounce(id){
+  const {error}=await sb.from('announcements').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();toast('Announcement deleted.');
+}
+async function postAnnouncement(){
   const type=document.getElementById('ann-type').value;
   const title=document.getElementById('ann-title').value.trim();
   const body=document.getElementById('ann-body').value.trim();
   const notify=document.getElementById('ann-notify').checked;
   if(!title||!body){toast('⚠ Title and body required.');return}
-  ANNOUNCES.unshift({type,title,body,date:new Date().toISOString().slice(0,10)});
-  LS.set('announces',ANNOUNCES);closeModal('m-announce');
+  const {error}=await sb.from('announcements').insert({type,title,body});
+  if(error){toast('⚠ Could not publish.');console.error(error);return}
+  closeModal('m-announce');
   document.getElementById('ann-title').value='';document.getElementById('ann-body').value='';
-  renderAdminAnnounces();renderPublicAnnounces();
-  if(notify)logEmail('['+type+'] '+title,'Broadcast to all members · '+new Date().toLocaleDateString());
+  await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();
+  if(notify)await logEmail('['+type+'] '+title,'Broadcast to all members · '+new Date().toLocaleDateString());
   toast('✅ Announcement published.'+(notify?' Email notification queued.':''));
 }
+
 function renderFinancials(){
   const bEl=document.getElementById('fin-bars');const lEl=document.getElementById('fin-list');
   if(!bEl||!lEl)return;
@@ -658,31 +795,37 @@ function renderFinancials(){
   [['Albertine Rift Landscape',52],['Karamoja Landscape',32],['Capacity Building',10],['Admin & Operations',6]].forEach(([label,pct])=>{
     bEl.innerHTML+='<div style="padding:.5rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">'+label+'</span><strong style="color:var(--canopy)">'+pct+'%</strong></div><div class="bar-wrap"><div class="bar-fill" style="width:'+pct+'%"></div></div></div>';
   });
-  lEl.innerHTML=FIN_REPORTS.length?FIN_REPORTS.map((r,i)=>
+  lEl.innerHTML=FIN_REPORTS.length?FIN_REPORTS.map(r=>
     '<div style="padding:.72rem 0;border-bottom:1px solid var(--border)">'+
       '<div style="font-weight:700;font-size:.87rem;color:var(--canopy)">'+r.title+'</div>'+
       '<div style="font-size:.73rem;color:var(--muted);margin:.18rem 0">'+r.period+'</div>'+
       '<div style="font-size:.77rem;color:var(--text);line-height:1.55;margin-bottom:.38rem">'+r.summary+'</div>'+
-      '<div style="display:flex;gap:.45rem"><a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm">View</a><button class="btn btn-danger btn-sm" onclick="delReport('+i+')">Delete</button></div>'+
+      '<div style="display:flex;gap:.45rem"><a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm">View</a><button class="btn btn-danger btn-sm" onclick="delReport(\''+r.id+'\')">Delete</button></div>'+
     '</div>'
   ).join(''):'<p style="font-size:.82rem;color:var(--muted)">No reports yet.</p>';
 }
-function delReport(i){FIN_REPORTS.splice(i,1);LS.set('fin_reports',FIN_REPORTS);renderFinancials();toast('Report removed.')}
-function addFinReport(){
+async function delReport(id){
+  const {error}=await sb.from('fin_reports').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadFinReports();renderFinancials();toast('Report removed.');
+}
+async function addFinReport(){
   const title=document.getElementById('fin-title').value.trim();
   const period=document.getElementById('fin-period').value.trim();
   const summary=document.getElementById('fin-summary').value.trim();
   const url=document.getElementById('fin-url').value.trim();
   if(!title){toast('⚠ Report title required.');return}
-  FIN_REPORTS.unshift({title,period,summary,url:url||'#',date:new Date().toISOString().slice(0,10)});
-  LS.set('fin_reports',FIN_REPORTS);closeModal('m-finance');
+  const {error}=await sb.from('fin_reports').insert({title,period,summary,url:url||'#'});
+  if(error){toast('⚠ Could not publish report.');console.error(error);return}
+  closeModal('m-finance');
   ['fin-title','fin-period','fin-summary','fin-url'].forEach(id=>document.getElementById(id).value='');
-  renderFinancials();toast('✅ Financial report published.');
+  await loadFinReports();renderFinancials();toast('✅ Financial report published.');
 }
 
-/* ═══ PAYMENT DETAILS — admin-editable, drives public Payment section ═══ */
-function savePaymentDetails(){
+/* ═══ PAYMENT DETAILS — single row (id=1), admin-editable, drives public Payment section ═══ */
+async function savePaymentDetails(){
   const pd={
+    id:1,
     bank:document.getElementById('pd-bank').value.trim(),
     accno:document.getElementById('pd-accno').value.trim(),
     branch:document.getElementById('pd-branch').value.trim(),
@@ -690,17 +833,18 @@ function savePaymentDetails(){
     mtn:document.getElementById('pd-mtn').value.trim(),
     airtel:document.getElementById('pd-airtel').value.trim(),
   };
-  LS.set('payment',pd);loadPaymentUI();toast('✅ Payment details saved and updated on the public site.');
+  const {error}=await sb.from('payment_details').upsert(pd);
+  if(error){toast('⚠ Could not save payment details.');console.error(error);return}
+  await loadPayment();renderPaymentUI();toast('✅ Payment details saved and updated on the public site.');
 }
 function loadPaymentAdmin(){
-  const pd=LS.get('payment',{});
-  const map={'pd-bank':pd.bank,'pd-accno':pd.accno,'pd-branch':pd.branch,'pd-swift':pd.swift,'pd-mtn':pd.mtn,'pd-airtel':pd.airtel};
+  const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-swift':PAYMENT.swift,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel};
   Object.entries(map).forEach(([id,val])=>{if(val){const el=document.getElementById(id);if(el)el.value=val}});
 }
 
 /* ═══ EMAIL CAMPAIGNS ═══
-   [SUPABASE] Wire sendEmail() to a Supabase Edge Function that calls
-   SendGrid/Brevo/Resend's API with the audience list filtered by tier. */
+   NOTE: This logs campaigns for record-keeping. Actual delivery requires a
+   Supabase Edge Function wired to an email provider (SendGrid/Resend/Brevo). */
 function previewEmail(){
   const subj=document.getElementById('em-subj').value;
   const body=document.getElementById('em-body').value;
@@ -708,17 +852,22 @@ function previewEmail(){
   const el=document.getElementById('email-prev');el.style.display='block';
   el.textContent='FROM: info@ugandabiodiversityfund.org\nTO: '+(aud==='all'?'All Members':aud.charAt(0).toUpperCase()+aud.slice(1)+' Members')+'\nSUBJECT: '+(subj||'(no subject)')+'\n\n'+body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445';
 }
-function sendEmail(){
+async function sendEmail(){
   const subj=document.getElementById('em-subj').value.trim();
   const body=document.getElementById('em-body').value.trim();
   const aud=document.getElementById('em-audience').value;
   if(!subj||!body){toast('⚠ Subject and message required.');return}
-  logEmail(subj,'Audience: '+aud+' · '+new Date().toLocaleString());
+  await logEmail(subj,'Audience: '+aud+' · '+new Date().toLocaleString());
   document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
   document.getElementById('email-prev').style.display='none';
   toast('✅ Campaign queued for delivery.');
 }
-function logEmail(subj,meta){EMAIL_LOG.unshift({subj,meta});LS.set('email_log',EMAIL_LOG);renderEmailLog()}
+async function logEmail(subj,meta){
+  EMAIL_LOG.unshift({subj,meta});
+  if(EMAIL_LOG.length>50)EMAIL_LOG=EMAIL_LOG.slice(0,50);
+  LS.set('email_log',EMAIL_LOG);
+  renderEmailLog();
+}
 function renderEmailLog(){
   const el=document.getElementById('email-log-list');if(!el)return;
   el.innerHTML=EMAIL_LOG.slice(0,12).map(e=>'<div style="padding:.58rem 0;border-bottom:1px solid var(--border)"><div style="font-size:.82rem;font-weight:600;color:var(--canopy)">'+e.subj+'</div><div style="font-size:.7rem;color:var(--muted);margin-top:.14rem">'+e.meta+'</div></div>').join('')||'<p style="font-size:.82rem;color:var(--muted)">No campaigns sent yet.</p>';
@@ -729,21 +878,14 @@ function exportCSV(){
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ubf_members_'+new Date().toISOString().slice(0,10)+'.csv';a.click();URL.revokeObjectURL(a.href);
 }
 
-/* ═══ SLIDE IMAGE UPLOADS (admin) ═══
-   [SUPABASE] Replace with supabase.storage.from('slides').upload(filename,file) */
+/* ═══ SLIDE IMAGE UPLOADS (admin) — session-only unless pushed to repo ═══ */
 function handleSlideUpload(e){
   const files=Array.from(e.target.files);
-  const extras=LS.get('extra_slides',[]);
-  let pending=files.length;
   files.forEach(f=>{
     const reader=new FileReader();
     reader.onload=ev=>{
-      extras.push(ev.target.result);
-      LS.set('extra_slides',extras);
-      initSlideshow();
       const prev=document.getElementById('slide-preview-list');
-      prev.innerHTML+='<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem;background:var(--mist);border-radius:var(--r-sm);margin-top:.4rem"><img src="'+ev.target.result+'" style="width:40px;height:30px;object-fit:cover;border-radius:4px"/><span style="font-size:.8rem">'+f.name+' added to slideshow</span></div>';
-      document.getElementById('slide-count-adm').textContent=document.querySelectorAll('#slide-track .slide').length+' slides';
+      prev.innerHTML+='<div style="display:flex;align-items:center;gap:.5rem;padding:.4rem;background:var(--mist);border-radius:var(--r-sm);margin-top:.4rem"><img src="'+ev.target.result+'" style="width:40px;height:30px;object-fit:cover;border-radius:4px"/><span style="font-size:.8rem">'+f.name+' — add this file to the repo root as slide-'+(SLIDE_IMAGES.length+1)+'.jpg to make it permanent</span></div>';
     };
     reader.readAsDataURL(f);
   });
@@ -773,19 +915,21 @@ const impEl=document.getElementById('impact');if(impEl)cntObs.observe(impEl);
 const revObs=new IntersectionObserver(en=>{en.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');revObs.unobserve(e.target)}})},{threshold:.1});
 document.querySelectorAll('.reveal').forEach(el=>revObs.observe(el));
 
-/* ═══ EMAIL POPUP ═══ */
+/* ═══ EMAIL POPUP (subscribe) — local dismiss flag only, not shared data ═══ */
 function showEP(auto){
   if(LS.get('ep_dismissed',false)||currentUser)return;
   setTimeout(()=>document.getElementById('ep').classList.add('show'),auto?20000:800);
 }
+function openSubscribePopup(){
+  document.getElementById('ep').classList.add('show');
+}
 function dismissEP(){document.getElementById('ep').classList.remove('show');LS.set('ep_dismissed',true)}
-function subscribeEP(){
+async function subscribeEP(){
   const em=document.getElementById('ep-email').value.trim();
   if(!em||!em.includes('@')){toast('⚠ Enter a valid email address.');return}
-  logEmail('Newsletter Subscription','New subscriber: '+em+' · '+new Date().toLocaleDateString());
+  await logEmail('Newsletter Subscription','New subscriber: '+em+' · '+new Date().toLocaleDateString());
   dismissEP();toast('✅ Subscribed! You will receive UBF updates.');
 }
-showEP(true);
 
 /* ═══ TOAST ═══ */
 let _tt;
@@ -793,3 +937,7 @@ function toast(msg){
   const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');
   clearTimeout(_tt);_tt=setTimeout(()=>t.classList.remove('show'),4200);
 }
+
+/* ═══ GO ═══ */
+bootstrapApp();
+showEP(true);
