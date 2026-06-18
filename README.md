@@ -150,7 +150,7 @@ record (or, once Supabase Auth is connected, use the password-reset flow).
 |---|---|
 | Executive Director | i.amani@ugandabiodiversityfund.org |
 | Projects Officer | o.atuhaire@ugandabiodiversityfund.org |
-| Digital Marketing Analyst & Systems Developer | t.otieno@ugandabiodiversityfund.org |
+| Office Assistant | t.otieno@ugandabiodiversityfund.org |
 | Programs Officer | p.musiime@ugandabiodiversityfund.org |
 | M&E Officer | d.okullu@ugandabiodiversityfund.org |
 
