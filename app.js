@@ -56,7 +56,7 @@ const ADMIN_EMAILS=[
 const ADMIN_NAMES={
   'i.amani@ugandabiodiversityfund.org':'Executive Director',
   'o.atuhaire@ugandabiodiversityfund.org':'Projects Officer',
-  't.otieno@ugandabiodiversityfund.org':'Digital Marketing Analyst & Systems Developer',
+  't.otieno@ugandabiodiversityfund.org':'Office Assistant',
   'p.musiime@ugandabiodiversityfund.org':'Programs Officer',
   'd.okullu@ugandabiodiversityfund.org':'M&E Officer',
   'w.nabantanzi@ugandabiodiversityfund.org':'Finance Manager',
@@ -84,7 +84,6 @@ let PAYMENT={};
 let currentUser=null;
 let selectedTier_=null;
 let uploadedFile=null;
-let uploadedThumb=null;
 let famePhotoData=null;
 let activeFilter='all';
 
@@ -100,7 +99,7 @@ async function loadContent(){
   CONTENT=(data||[]).map(c=>({
     id:c.id,title:c.title,type:c.type,window:c.window_name,theme:c.theme,
     desc:c.description,author:c.author,date:(c.created_at||'').slice(0,10),
-    access:c.access,url:c.url||'',thumb:c.thumb_url||'',mediaUrl:c.media_url||'',
+    access:c.access,url:c.url||'',mediaUrl:c.media_url||'',
     mediaType:c.media_type||'',fullText:c.full_text||'',
     reactions:c.reactions||{likes:0,bookmarks:0},
     comments:(c.comments||[]).map(cm=>({user:cm.user_name,text:cm.text,time:(cm.created_at||'').slice(0,10)})),
@@ -385,16 +384,16 @@ function renderContent(){
   let items=CONTENT;
   if(activeFilter!=='all')items=items.filter(c=>c.type===activeFilter);
   if(!items.length){grid.innerHTML='<p style="color:var(--muted);font-size:.9rem;padding:1.5rem 0;grid-column:1/-1">No content published yet. Admins can upload videos, documentaries, podcasts, interviews, articles and research via the Admin panel.</p>';return}
-  const liked=LS.get('liked',[]);const bkd=LS.get('bookmarked',[]);
+  const bkd=LS.get('bookmarked',[]);const myReactions=LS.get('my_reactions',{});
   grid.innerHTML=items.map(c=>{
     const ar=ACCESS_RANK[c.access]||0;
     const locked=ar>0&&ur<ar;
     const bc=TYPE_BADGE_CLS[c.type]||'badge-article';
     const ico=TYPE_ICONS[c.type]||'📄';
     const typeLabel=c.type?c.type.charAt(0).toUpperCase()+c.type.slice(1):'';
-    const thumbStyle=c.thumb?`background-image:url('${c.thumb}');background-size:cover;background-position:center`:'';
+    const thumbCls='thumb-'+(c.type||'article');
     return '<div class="content-card" id="card-'+c.id+'">'+
-      '<div class="cc-thumb" style="'+thumbStyle+'">'+(c.thumb?'':'<div class="cc-thumb-icon">'+ico+'</div>')+
+      '<div class="cc-thumb '+thumbCls+'"><div class="cc-thumb-icon">'+ico+'</div>'+
       '<span class="cc-badge '+bc+'">'+typeLabel+'</span>'+
       (locked?'<div class="cc-lock"><span style="font-size:1.6rem">🔒</span><span>'+c.access.charAt(0).toUpperCase()+c.access.slice(1)+'+ Members</span></div>':'')+
       '</div>'+
@@ -403,11 +402,12 @@ function renderContent(){
         '<div class="cc-title">'+c.title+'</div>'+
         '<div class="cc-meta"><span>📅 '+c.date+'</span><span>👤 '+c.author+'</span>'+(c.theme?'<span>🏷 '+c.theme+'</span>':'')+'</div>'+
         '<p class="cc-desc">'+c.desc+'</p>'+
+        '<div class="cc-reactbar">'+REACTION_EMOJIS.map(r=>
+          '<button class="ebt'+(myReactions[c.id]===r.key?' picked':'')+'" onclick="toggleEmoji(\''+c.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' <span>'+(c.reactions[r.key]||0)+'</span></button>'
+        ).join('')+'</div>'+
         '<div class="cc-actions">'+
-          '<div class="cc-reacts">'+
-            '<button class="rbt'+(liked.includes(c.id)?' liked':'')+'" onclick="toggleReact(\''+c.id+'\',\'like\',this)">❤ '+(c.reactions.likes||0)+'</button>'+
-            '<button class="rbt'+(bkd.includes(c.id)?' bkd':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+(c.reactions.bookmarks||0)+'</button>'+
-          '</div>'+
+          '<button class="rbt'+(bkd.includes(c.id)?' bkd':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+(c.reactions.bookmarks||0)+' Save</button>'+
+          '<button class="rbt" onclick="shareItem(\''+c.id+'\')">🔗 Share</button>'+
           '<button class="cc-open" onclick="openContent(\''+c.id+'\')">'+(locked?'🔒 Unlock':'▶ Open')+' →</button>'+
         '</div>'+
       '</div>'+
@@ -428,6 +428,32 @@ function renderContent(){
   }).join('');
 }
 
+const REACTION_EMOJIS=[
+  {key:'likes',emoji:'❤️',label:'Love this'},
+  {key:'thumbsup',emoji:'👍',label:'Helpful'},
+  {key:'wow',emoji:'😮',label:'Wow'},
+  {key:'sad',emoji:'😢',label:'Sad'},
+  {key:'celebrate',emoji:'🎉',label:'Celebrate'},
+];
+async function toggleEmoji(id,key,btn){
+  if(!currentUser){toast('Sign in to react.');return}
+  const item=CONTENT.find(c=>c.id===id);if(!item)return;
+  const myR=LS.get('my_reactions',{});
+  const reactions={...item.reactions};
+  const prev=myR[id];
+  if(prev===key){
+    reactions[key]=Math.max(0,(reactions[key]||0)-1);
+    delete myR[id];
+  }else{
+    if(prev)reactions[prev]=Math.max(0,(reactions[prev]||0)-1);
+    reactions[key]=(reactions[key]||0)+1;
+    myR[id]=key;
+  }
+  item.reactions=reactions;
+  LS.set('my_reactions',myR);
+  await sb.from('content').update({reactions}).eq('id',id);
+  renderContent();
+}
 async function toggleReact(id,type,btn){
   if(!currentUser){toast('Sign in to react.');return}
   const key=type==='like'?'liked':'bookmarked';
@@ -438,7 +464,7 @@ async function toggleReact(id,type,btn){
   if(arr.includes(id)){arr=arr.filter(x=>x!==id);reactions[field]=Math.max(0,(reactions[field]||0)-1);btn.classList.remove(type==='like'?'liked':'bkd')}
   else{arr.push(id);reactions[field]=(reactions[field]||0)+1;btn.classList.add(type==='like'?'liked':'bkd')}
   item.reactions=reactions;
-  btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+reactions[field];
+  btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+reactions[field]+(type==='bookmark'?' Save':'');
   LS.set(key,arr);
   await sb.from('content').update({reactions}).eq('id',id);
 }
@@ -508,16 +534,6 @@ function processFile(f){
   document.getElementById('file-prev-wrap').innerHTML=
     '<div class="file-prev"><span>📄</span><span class="fp-name">'+f.name+'</span><span style="font-size:.7rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(2)+' MB</span><button class="fp-rm" onclick="uploadedFile=null;document.getElementById(\'file-prev-wrap\').innerHTML=\'\'">✕</button></div>';
 }
-function onThumbSelect(e){
-  const f=e.target.files[0];if(!f)return;
-  uploadedThumb=f;
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    document.getElementById('thumb-prev-wrap').innerHTML=
-      '<div class="file-prev"><img src="'+ev.target.result+'" style="width:36px;height:36px;border-radius:4px;object-fit:cover"/><span class="fp-name">'+f.name+'</span><button class="fp-rm" onclick="uploadedThumb=null;document.getElementById(\'thumb-prev-wrap\').innerHTML=\'\'">✕</button></div>';
-  };
-  reader.readAsDataURL(f);
-}
 
 /* ═══ UPLOAD CONTENT — files go to Supabase Storage, row goes to 'content' table ═══ */
 async function submitUpload(){
@@ -527,16 +543,6 @@ async function submitUpload(){
   const win=document.getElementById('up-window').value;
   if(!title||!type||!win){toast('⚠ Title, type, and programme window are required.');return}
   toast('⬆ Uploading...');
-
-  let thumbUrl='';
-  if(uploadedThumb){
-    const path='thumbs/'+Date.now()+'_'+uploadedThumb.name.replace(/\s+/g,'_');
-    const {error:upErr}=await sb.storage.from('content-files').upload(path,uploadedThumb);
-    if(!upErr){
-      const {data}=sb.storage.from('content-files').getPublicUrl(path);
-      thumbUrl=data.publicUrl;
-    }else{console.error('thumb upload',upErr);}
-  }
 
   let mediaUrl='';let mediaType='';
   if(uploadedFile){
@@ -556,16 +562,15 @@ async function submitUpload(){
     author:document.getElementById('up-author').value||currentUser.name,
     access:document.getElementById('up-access').value||'member',
     url:document.getElementById('up-url').value||'',
-    thumb_url:thumbUrl,media_url:mediaUrl,media_type:mediaType,
+    media_url:mediaUrl,media_type:mediaType,
     full_text:document.getElementById('up-fulltext').value||'',
-    reactions:{likes:0,bookmarks:0},
+    reactions:{likes:0,bookmarks:0,love:0,wow:0,sad:0},
   };
   const {error}=await sb.from('content').insert(row);
   if(error){toast('⚠ Could not publish content.');console.error(error);return}
 
-  uploadedFile=null;uploadedThumb=null;
+  uploadedFile=null;
   document.getElementById('file-prev-wrap').innerHTML='';
-  document.getElementById('thumb-prev-wrap').innerHTML='';
   ['up-title','up-type','up-window','up-theme','up-desc','up-author','up-url','up-fulltext'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=''});
   closeModal('m-upload');
   await loadContent();renderContent();renderAdminContent();
@@ -905,7 +910,13 @@ document.querySelectorAll('.atab').forEach(btn=>{
 function animCounters(){
   document.querySelectorAll('[data-t]').forEach(el=>{
     const target=+el.dataset.t;let cur=0;const step=target/55;
-    const t=setInterval(()=>{cur=Math.min(cur+step,target);el.textContent=Math.round(cur);if(cur>=target)clearInterval(t)},22);
+    const prefix=el.dataset.prefix||'';const suffix=el.dataset.suffix||'';
+    const t=setInterval(()=>{
+      cur=Math.min(cur+step,target);
+      const n=Math.round(cur).toLocaleString();
+      el.textContent=prefix+n+suffix;
+      if(cur>=target)clearInterval(t);
+    },22);
   });
 }
 const cntObs=new IntersectionObserver(en=>{en.forEach(e=>{if(e.isIntersecting){animCounters();cntObs.disconnect()}})},{threshold:.3});
