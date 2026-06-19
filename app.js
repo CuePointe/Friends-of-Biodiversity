@@ -682,6 +682,7 @@ function renderMemberView(){
     '<div class="mem-sec-title">Your Perks</div>'+
     '<div class="perk-grid">'+perks.map(p=>'<div class="perk-card"><div class="pk-icon">'+p.split(' ')[0]+'</div><div class="pk-title">'+p.replace(/^[^\s]+\s/,'')+'</div></div>').join('')+'</div>'+
     '<div class="mem-sec-title" style="display:flex;justify-content:space-between;align-items:center">Your Certificate <button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download Certificate</button></div>'+
+    '<div style="margin-bottom:1.5rem"><button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Change My Password</button></div>'+
     '<div class="mem-sec-title">Announcements</div>'+
     (ANNOUNCES.length?ANNOUNCES.slice(0,5).map(a=>'<div class="mem-announce-card"><div class="mac-type">'+a.type+'</div><div class="mac-title">'+a.title+'</div><p class="mac-body">'+a.body+'</p><div class="mac-meta">'+a.date+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>')+
     '<div class="mem-sec-title">Financial Reports</div>'+
@@ -693,6 +694,34 @@ function renderMemberView(){
 }
 
 /* ═══ CERTIFICATE ═══ */
+/* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
+async function changePassword(){
+  if(!currentUser){toast('⚠ You must be signed in.');return}
+  const current=document.getElementById('cp-current').value;
+  const newPass=document.getElementById('cp-new').value;
+  const confirm=document.getElementById('cp-confirm').value;
+
+  if(!current||!newPass||!confirm){toast('⚠ All three fields are required.');return}
+  if(current!==currentUser.pass){toast('⚠ Current password is incorrect.');return}
+  if(newPass.length<8){toast('⚠ New password must be at least 8 characters.');return}
+  if(newPass!==confirm){toast('⚠ New passwords do not match.');return}
+  if(newPass===current){toast('⚠ New password must be different from your current one.');return}
+
+  const {error}=await sb.from('members').update({pass:newPass}).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not update password. Try again.');console.error(error);return}
+
+  // Update local session so current user doesn't get logged out
+  currentUser.pass=newPass;
+
+  // Clear fields
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+
+  closeModal('m-change-pass');
+  toast('✅ Password updated successfully. Use your new password next time you sign in.');
+}
+
 function openCertModal(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;

@@ -358,6 +358,7 @@
   <div class="adm-hdr">
     <h1>⚙ Admin Control Panel</h1>
     <p id="adm-user-info">Authenticated</p>
+    <button class="btn btn-outline btn-sm" style="margin-top:.75rem" onclick="openModal('m-change-pass')">🔑 Change My Password</button>
   </div>
   <div class="adm-tabs">
     <button class="atab active" data-ap="ap-members">Members</button>
@@ -625,5 +626,18 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script>
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="m-change-pass">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('m-change-pass')">✕</button>
+    <h2>Change Password</h2>
+    <p class="msub">Set a new password for your account. Minimum 8 characters.</p>
+    <div class="fg"><label>Current Password *</label><input id="cp-current" type="password" placeholder="Your current password"/></div>
+    <div class="fg"><label>New Password *</label><input id="cp-new" type="password" placeholder="Minimum 8 characters"/></div>
+    <div class="fg"><label>Confirm New Password *</label><input id="cp-confirm" type="password" placeholder="Repeat new password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
 </body>
 </html>
