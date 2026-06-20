@@ -162,6 +162,7 @@ function renderPaymentUI(){
 
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
+  preloadSlides(); // start downloading all slide images immediately in background
   showLoadingToast();
   await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment()]);
   await initAdmins();
@@ -192,6 +193,14 @@ function subscribeRealtime(){
 
 /* ═══ HERO SLIDESHOW ═══ */
 let curSlide=0;
+/* ═══ PRELOAD ALL SLIDE IMAGES — ensures instant transitions, no delay ═══ */
+function preloadSlides(){
+  SLIDE_IMAGES.forEach(src=>{
+    const img=new Image();
+    img.src=src;
+  });
+}
+
 function initSlideshow(){
   const track=document.getElementById('slide-track');
   const dots=document.getElementById('slide-dots');
@@ -906,26 +915,28 @@ async function sendEmail(){
   const body=document.getElementById('em-body').value.trim();
   const aud=document.getElementById('em-audience').value;
   if(!subj||!body){toast('⚠ Subject and message required.');return}
-  // Build recipient list filtered by tier
   const tierRank={all:0,student:1,silver:1,gold:2,platinum:3,diamond:4};
   const minRank=tierRank[aud]||0;
   const recipients=MEMBERS.filter(m=>m.role!=='admin'&&(minRank===0||(TIERS_DATA[m.tier]?.r||0)>=minRank));
-  const emails=recipients.map(m=>m.email).join(',');
+  const emails=recipients.map(m=>m.email).join('; ');
   if(!emails){toast('⚠ No members match the selected audience.');return}
 
-  // Build Gmail compose URL — forces Gmail to open with admin's work account
-  // authuser= tells Gmail which account to use (matches logged-in admin email)
-  const adminEmail=currentUser.email;
-  const gmailUrl='https://mail.google.com/mail/u/0/?authuser='+encodeURIComponent(adminEmail)+'#compose?'+
-    'to='+encodeURIComponent(emails)+
-    '&su='+encodeURIComponent(subj)+
-    '&body='+encodeURIComponent(body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445\ninfo@ugandabiodiversityfund.org');
+  const fullBody=body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445\ninfo@ugandabiodiversityfund.org';
 
-  window.open(gmailUrl,'_blank');
+  // Show a copy-ready panel — works for Outlook, Gmail, or any platform
+  const panel=document.getElementById('email-send-panel');
+  document.getElementById('esp-to').value=emails;
+  document.getElementById('esp-subj').value=subj;
+  document.getElementById('esp-body').value=fullBody;
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth'});
+
   await logEmail(subj,'Audience: '+aud+' ('+recipients.length+' members) · '+new Date().toLocaleString());
-  document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
-  document.getElementById('email-prev').style.display='none';
-  toast('✅ Email client opened with '+recipients.length+' recipients.');
+  toast('✅ Campaign ready — copy each field into your email (Outlook or Gmail).');
+}
+function copyField(id,label){
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(()=>toast('✅ '+label+' copied — paste into your email.')).catch(()=>{el.select();document.execCommand('copy');toast('✅ '+label+' copied.');});
 }
 async function logEmail(subj,meta){
   EMAIL_LOG.unshift({subj,meta});

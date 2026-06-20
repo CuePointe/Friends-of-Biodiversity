@@ -11,6 +11,14 @@
 <link rel="icon" href="fob-logo.png?v=2" type="image/png"/>
 <link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
 <link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
+<!-- Preload critical images so hero and logos render instantly -->
+<link rel="preload" as="image" href="slide-1.jpg"/>
+<link rel="preload" as="image" href="slide-2.jpg"/>
+<link rel="preload" as="image" href="slide-3.jpg"/>
+<link rel="preload" as="image" href="fob-logo.png"/>
+<link rel="preload" as="image" href="ubf-logo.png"/>
+<link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
+<link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
 </head>
 <body>
 
@@ -102,7 +110,7 @@
       <div class="stat-cell"><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span></div>
       <div class="stat-cell"><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span></div>
       <div class="stat-cell"><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span></div>
+      <div class="stat-cell"><span class="stat-n" data-t="10000">0</span><span class="stat-l">Kg biodegradable packaging supported</span></div>
     </div>
   </div>
 </section>
@@ -418,7 +426,7 @@
       <div class="adm-card">
         <h4>✉ Compose Campaign</h4>
         <div style="background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:.85rem;font-size:.78rem;color:var(--canopy);margin-bottom:1rem;line-height:1.6">
-          <strong>How it works:</strong> Compose your message, select your audience, then click <em>Send Campaign</em>. Gmail will open in a new tab with your UBF work email pre-selected, and all matching member emails pre-filled as recipients. Review and click Send from there. Make sure you are signed into your UBF Google account (<strong>@ugandabiodiversityfund.org</strong>) in your browser for best results.
+          <strong>How it works:</strong> Compose your message and select your audience, then click <em>Send Campaign</em>. A ready-to-send panel will appear with the recipient list, subject, and message body — each with a <em>Copy</em> button. Open your UBF email (Outlook or Gmail), create a new email, and paste each field in. This ensures the email comes directly from your official UBF address.
         </div>
         <div class="fg"><label>Subject</label><input id="em-subj" placeholder="UBF Update: ..."/></div>
         <div class="fg"><label>Audience</label>
@@ -430,6 +438,24 @@
         <div class="email-prev" id="email-prev" style="display:none"></div>
       </div>
       <div class="adm-card"><h4>📬 Sent Campaigns</h4><div id="email-log-list"></div></div>
+    </div>
+    <!-- COPY-READY SEND PANEL — appears after clicking Send Campaign -->
+    <div id="email-send-panel" style="display:none" class="adm-card">
+      <h4>📋 Ready to Send — Copy each field into your email (Outlook / Gmail / any platform)</h4>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6">Open your UBF email (<strong>Outlook, Gmail, or any client</strong>), create a new email, then copy and paste each field below into the matching field in your email. This ensures the email comes from your official UBF address.</p>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">To (Recipients) <button class="btn btn-gold btn-sm" onclick="copyField('esp-to','Recipients')">Copy</button></label>
+        <textarea id="esp-to" rows="3" style="font-size:.75rem;font-family:monospace;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">Subject <button class="btn btn-gold btn-sm" onclick="copyField('esp-subj','Subject')">Copy</button></label>
+        <input id="esp-subj" style="background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;font-size:.84rem" readonly/>
+      </div>
+      <div class="fg">
+        <label style="display:flex;justify-content:space-between;align-items:center">Message Body <button class="btn btn-gold btn-sm" onclick="copyField('esp-body','Message body')">Copy</button></label>
+        <textarea id="esp-body" rows="7" style="font-size:.8rem;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.5rem" onclick="document.getElementById('email-send-panel').style.display='none'">✕ Close</button>
     </div>
   </div>
 
