@@ -87,7 +87,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 #impact{background:var(--canopy)}
 .stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1.5px;background:rgba(200,168,75,.18);border-radius:var(--r);overflow:hidden;margin-top:2.5rem}
 .stat-cell{background:var(--canopy-mid);padding:1.75rem 1.25rem;text-align:center}
-.stat-n{font-family:var(--ff-d);font-size:2.2rem;font-weight:900;color:var(--gold);display:block}
+.stat-n{font-family:var(--ff-d);font-size:clamp(1.3rem,3vw,2.2rem);font-weight:900;color:var(--gold);display:block;word-break:break-word;line-height:1.1}
 .stat-l{font-size:.77rem;color:rgba(255,255,255,.55);margin-top:.2rem;line-height:1.4}
 
 /* THEMES/PROGRAMMES */

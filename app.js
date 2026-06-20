@@ -38,7 +38,7 @@ const TIER_RANGES={
   diamond:{individual:'5M+ UGX',institution:'50M+ UGX'},
 };
 const PERKS_MAP={
-  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','🎓 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🌍 Exposure visits to project sites'],
+  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','📚 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🧭 Professional mentorship programme','🌱 Leadership development packages'],
   silver:['📦 Eco-friendly welcome kit & personalised certificates','📊 Contribution & accountability dashboard','🎓 Learning Exchange content library access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate'],
   gold:['All Silver perks','👁 Visibility in UBF conservation projects','🤝 Exclusive networking & partnership events','📬 Priority invitations to UBF events','📋 Quarterly impact report'],
   platinum:['All Gold perks','🎨 Co-branding on project materials & publications','🤝 Strategic partnership access','📰 Named in UBF annual report','💼 Private Executive Director briefing'],
@@ -912,9 +912,16 @@ async function sendEmail(){
   const recipients=MEMBERS.filter(m=>m.role!=='admin'&&(minRank===0||(TIERS_DATA[m.tier]?.r||0)>=minRank));
   const emails=recipients.map(m=>m.email).join(',');
   if(!emails){toast('⚠ No members match the selected audience.');return}
-  // Open default email client with pre-filled recipients, subject, body
-  const mailtoLink=`mailto:${encodeURIComponent(emails)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445')}`;
-  window.open(mailtoLink,'_blank');
+
+  // Build Gmail compose URL — forces Gmail to open with admin's work account
+  // authuser= tells Gmail which account to use (matches logged-in admin email)
+  const adminEmail=currentUser.email;
+  const gmailUrl='https://mail.google.com/mail/u/0/?authuser='+encodeURIComponent(adminEmail)+'#compose?'+
+    'to='+encodeURIComponent(emails)+
+    '&su='+encodeURIComponent(subj)+
+    '&body='+encodeURIComponent(body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445\ninfo@ugandabiodiversityfund.org');
+
+  window.open(gmailUrl,'_blank');
   await logEmail(subj,'Audience: '+aud+' ('+recipients.length+' members) · '+new Date().toLocaleString());
   document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
   document.getElementById('email-prev').style.display='none';
