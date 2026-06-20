@@ -38,7 +38,7 @@ const TIER_RANGES={
   diamond:{individual:'5M+ UGX',institution:'50M+ UGX'},
 };
 const PERKS_MAP={
-  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','📚 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🧭 Professional mentorship programme','🌱 Leadership development packages'],
+  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','📚 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🧭 Professional mentorship & leadership development package'],
   silver:['📦 Eco-friendly welcome kit & personalised certificates','📊 Contribution & accountability dashboard','🎓 Learning Exchange content library access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate'],
   gold:['All Silver perks','👁 Visibility in UBF conservation projects','🤝 Exclusive networking & partnership events','📬 Priority invitations to UBF events','📋 Quarterly impact report'],
   platinum:['All Gold perks','🎨 Co-branding on project materials & publications','🤝 Strategic partnership access','📰 Named in UBF annual report','💼 Private Executive Director briefing'],
@@ -928,6 +928,11 @@ async function sendEmail(){
   document.getElementById('esp-to').value=emails;
   document.getElementById('esp-subj').value=subj;
   document.getElementById('esp-body').value=fullBody;
+
+  // Also build Gmail compose link as a quick option
+  const gmailUrl='https://mail.google.com/mail/?view=cm&to='+encodeURIComponent(emails)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(fullBody);
+  document.getElementById('esp-gmail-btn').href=gmailUrl;
+
   panel.style.display='block';
   panel.scrollIntoView({behavior:'smooth'});
 

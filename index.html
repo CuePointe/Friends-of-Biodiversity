@@ -97,20 +97,64 @@
 <!-- OUR IMPACT -->
 <section id="impact">
   <div class="inner">
+    <!-- Footprint graphic: SVG leaf/footprint composition -->
+    <div class="footprint-graphic reveal">
+      <svg viewBox="0 0 420 160" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <!-- Left footprint -->
+        <ellipse cx="80" cy="110" rx="28" ry="42" fill="rgba(45,106,79,.35)" rx="28"/>
+        <ellipse cx="62" cy="65" rx="8" ry="10" fill="rgba(45,106,79,.28)"/>
+        <ellipse cx="76" cy="60" rx="7" ry="9" fill="rgba(45,106,79,.28)"/>
+        <ellipse cx="91" cy="61" rx="7" ry="9" fill="rgba(45,106,79,.28)"/>
+        <ellipse cx="105" cy="66" rx="6" ry="8" fill="rgba(45,106,79,.28)"/>
+        <!-- Right footprint -->
+        <ellipse cx="165" cy="100" rx="28" ry="42" fill="rgba(45,106,79,.25)" transform="rotate(-8,165,100)"/>
+        <ellipse cx="148" cy="55" rx="8" ry="10" fill="rgba(45,106,79,.2)"/>
+        <ellipse cx="163" cy="50" rx="7" ry="9" fill="rgba(45,106,79,.2)"/>
+        <ellipse cx="178" cy="51" rx="7" ry="9" fill="rgba(45,106,79,.2)"/>
+        <ellipse cx="192" cy="57" rx="6" ry="8" fill="rgba(45,106,79,.2)"/>
+        <!-- Central leaf cluster -->
+        <g transform="translate(240,80)">
+          <!-- Large centre leaf -->
+          <path d="M0,60 C-25,30 -20,-20 0,-50 C20,-20 25,30 0,60Z" fill="rgba(45,106,79,.55)"/>
+          <line x1="0" y1="55" x2="0" y2="-45" stroke="rgba(200,168,75,.6)" stroke-width="1.5"/>
+          <line x1="0" y1="20" x2="-16" y2="5" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+          <line x1="0" y1="20" x2="16" y2="5" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+          <line x1="0" y1="0" x2="-14" y2="-12" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+          <line x1="0" y1="0" x2="14" y2="-12" stroke="rgba(200,168,75,.4)" stroke-width="1"/>
+          <!-- Left leaf -->
+          <path d="M-5,15 C-35,5 -45,-25 -25,-45 C-10,-30 -5,-5 -5,15Z" fill="rgba(45,106,79,.38)"/>
+          <!-- Right leaf -->
+          <path d="M5,15 C35,5 45,-25 25,-45 C10,-30 5,-5 5,15Z" fill="rgba(45,106,79,.38)"/>
+          <!-- Small sprout -->
+          <circle cx="0" cy="-55" r="6" fill="rgba(200,168,75,.5)"/>
+        </g>
+        <!-- Globe outline -->
+        <circle cx="340" cy="80" r="55" fill="none" stroke="rgba(45,106,79,.3)" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <ellipse cx="340" cy="80" rx="25" ry="55" fill="none" stroke="rgba(45,106,79,.2)" stroke-width="1"/>
+        <line x1="285" y1="80" x2="395" y2="80" stroke="rgba(45,106,79,.2)" stroke-width="1"/>
+        <line x1="285" y1="60" x2="395" y2="60" stroke="rgba(45,106,79,.12)" stroke-width="1"/>
+        <line x1="285" y1="100" x2="395" y2="100" stroke="rgba(45,106,79,.12)" stroke-width="1"/>
+        <!-- Uganda dot on globe -->
+        <circle cx="350" cy="73" r="5" fill="rgba(200,168,75,.8)"/>
+        <circle cx="350" cy="73" r="9" fill="none" stroke="rgba(200,168,75,.4)" stroke-width="1.5"/>
+        <!-- Connecting line from footprint to globe -->
+        <path d="M200,80 Q270,40 285,80" fill="none" stroke="rgba(200,168,75,.25)" stroke-width="1" stroke-dasharray="3 3"/>
+      </svg>
+    </div>
     <p class="eyebrow reveal" style="color:var(--gold-lt)">Conservation Footprint</p>
     <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em></h2>
-    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects — tracked through our accountability dashboard and audited annually.</p>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects across Uganda's landscapes — tracked through our accountability dashboard and audited annually.</p>
     <div class="stats-strip reveal">
-      <div class="stat-cell"><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="10000">0</span><span class="stat-l">Kg biodegradable packaging supported</span></div>
+      <div class="stat-cell"><div class="stat-ico">💰</div><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span></div>
+      <div class="stat-cell"><div class="stat-ico">📋</div><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span></div>
+      <div class="stat-cell"><div class="stat-ico">🏠</div><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span></div>
+      <div class="stat-cell"><div class="stat-ico">🌲</div><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span></div>
+      <div class="stat-cell"><div class="stat-ico">🌳</div><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span></div>
+      <div class="stat-cell"><div class="stat-ico">🌾</div><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span></div>
+      <div class="stat-cell"><div class="stat-ico">🌿</div><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span></div>
+      <div class="stat-cell"><div class="stat-ico">💧</div><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span></div>
+      <div class="stat-cell"><div class="stat-ico">📈</div><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
+      <div class="stat-cell stat-cell-sm"><div class="stat-ico">♻️</div><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span></div>
     </div>
   </div>
 </section>
@@ -153,7 +197,7 @@
         <div class="tier-badge" style="background:rgba(45,106,79,.12)">🎓</div>
         <div class="tier-name" style="color:var(--canopy-lt)">Student</div>
         <div class="tier-range">Individual: <strong>In-kind / Youth Project</strong><br>Registration: <strong>Free</strong></div>
-        <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship programme</li><li>Leadership development packages</li></ul>
+        <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship &amp; leadership development package</li></ul>
         <button class="tier-btn" style="background:rgba(45,106,79,.15);color:var(--canopy)">Select Student</button>
       </div>
       <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
@@ -441,8 +485,20 @@
     </div>
     <!-- COPY-READY SEND PANEL — appears after clicking Send Campaign -->
     <div id="email-send-panel" style="display:none" class="adm-card">
-      <h4>📋 Ready to Send — Copy each field into your email (Outlook / Gmail / any platform)</h4>
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.6">Open your UBF email (<strong>Outlook, Gmail, or any client</strong>), create a new email, then copy and paste each field below into the matching field in your email. This ensures the email comes from your official UBF address.</p>
+      <h4>📋 Ready to Send</h4>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Two options below — use whichever suits your setup:</p>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;padding:1rem;background:rgba(45,106,79,.06);border-radius:var(--r-sm);border:1px solid rgba(45,106,79,.15)">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📬 Option A — Open in Gmail</div>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55">Opens Gmail with recipients and message pre-filled. Make sure you switch to your UBF account in Gmail before sending.</p>
+          <a id="esp-gmail-btn" href="#" target="_blank" rel="noopener" class="btn btn-canopy btn-sm">Open in Gmail →</a>
+        </div>
+        <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📋 Option B — Copy &amp; Paste into Outlook</div>
+          <p style="font-size:.76rem;color:var(--muted);line-height:1.55">Use the Copy buttons below to paste each field into Outlook or any other email client. Guarantees the email comes from your UBF address.</p>
+        </div>
+      </div>
       <div class="fg" style="margin-bottom:.75rem">
         <label style="display:flex;justify-content:space-between;align-items:center">To (Recipients) <button class="btn btn-gold btn-sm" onclick="copyField('esp-to','Recipients')">Copy</button></label>
         <textarea id="esp-to" rows="3" style="font-size:.75rem;font-family:monospace;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
