@@ -68,7 +68,7 @@ const ADMIN_NAMES={
 const ADMIN_DEFAULT_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
-const SLIDE_IMAGES=Array.from({length:12},(_,i)=>`slide-${i+1}.jpg`);
+const SLIDE_IMAGES=Array.from({length:14},(_,i)=>`slide-${i+1}.jpg`);
 
 /* ═══ LOCAL UI-ONLY STATE (not shared data — just this browser's session/cache) ═══ */
 const LS={
