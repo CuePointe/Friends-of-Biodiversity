@@ -38,7 +38,7 @@ const TIER_RANGES={
   diamond:{individual:'5M+ UGX',institution:'50M+ UGX'},
 };
 const PERKS_MAP={
-  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','🎓 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🌍 Exposure visits to project sites'],
+  student:['🎓 Youth project & volunteer work registration','🤝 In-kind contributions recognised','📚 Full Learning Exchange access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate','🧭 Professional mentorship & leadership development package'],
   silver:['📦 Eco-friendly welcome kit & personalised certificates','📊 Contribution & accountability dashboard','🎓 Learning Exchange content library access','🏆 Wall of Fame listing','📜 Downloadable digital membership certificate'],
   gold:['All Silver perks','👁 Visibility in UBF conservation projects','🤝 Exclusive networking & partnership events','📬 Priority invitations to UBF events','📋 Quarterly impact report'],
   platinum:['All Gold perks','🎨 Co-branding on project materials & publications','🤝 Strategic partnership access','📰 Named in UBF annual report','💼 Private Executive Director briefing'],
@@ -68,7 +68,7 @@ const ADMIN_NAMES={
 const ADMIN_DEFAULT_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
-const SLIDE_IMAGES=Array.from({length:13},(_,i)=>`slide-${i+1}.jpg`);
+const SLIDE_IMAGES=Array.from({length:15},(_,i)=>`slide-${i+1}.jpg`);
 
 /* ═══ LOCAL UI-ONLY STATE (not shared data — just this browser's session/cache) ═══ */
 const LS={
@@ -162,6 +162,7 @@ function renderPaymentUI(){
 
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
+  preloadSlides(); // start downloading all slide images immediately in background
   showLoadingToast();
   await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment()]);
   await initAdmins();
@@ -173,6 +174,8 @@ async function bootstrapApp(){
   renderContent();
   renderFame();
   renderPublicAnnounces();
+  renderStatHints();
+  renderExtraStats();
   hideLoadingToast();
   subscribeRealtime();
 }
@@ -192,6 +195,14 @@ function subscribeRealtime(){
 
 /* ═══ HERO SLIDESHOW ═══ */
 let curSlide=0;
+/* ═══ PRELOAD ALL SLIDE IMAGES — ensures instant transitions, no delay ═══ */
+function preloadSlides(){
+  SLIDE_IMAGES.forEach(src=>{
+    const img=new Image();
+    img.src=src;
+  });
+}
+
 function initSlideshow(){
   const track=document.getElementById('slide-track');
   const dots=document.getElementById('slide-dots');
@@ -682,6 +693,7 @@ function renderMemberView(){
     '<div class="mem-sec-title">Your Perks</div>'+
     '<div class="perk-grid">'+perks.map(p=>'<div class="perk-card"><div class="pk-icon">'+p.split(' ')[0]+'</div><div class="pk-title">'+p.replace(/^[^\s]+\s/,'')+'</div></div>').join('')+'</div>'+
     '<div class="mem-sec-title" style="display:flex;justify-content:space-between;align-items:center">Your Certificate <button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download Certificate</button></div>'+
+    '<div style="margin-bottom:1.5rem"><button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Change My Password</button></div>'+
     '<div class="mem-sec-title">Announcements</div>'+
     (ANNOUNCES.length?ANNOUNCES.slice(0,5).map(a=>'<div class="mem-announce-card"><div class="mac-type">'+a.type+'</div><div class="mac-title">'+a.title+'</div><p class="mac-body">'+a.body+'</p><div class="mac-meta">'+a.date+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>')+
     '<div class="mem-sec-title">Financial Reports</div>'+
@@ -693,6 +705,34 @@ function renderMemberView(){
 }
 
 /* ═══ CERTIFICATE ═══ */
+/* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
+async function changePassword(){
+  if(!currentUser){toast('⚠ You must be signed in.');return}
+  const current=document.getElementById('cp-current').value;
+  const newPass=document.getElementById('cp-new').value;
+  const confirm=document.getElementById('cp-confirm').value;
+
+  if(!current||!newPass||!confirm){toast('⚠ All three fields are required.');return}
+  if(current!==currentUser.pass){toast('⚠ Current password is incorrect.');return}
+  if(newPass.length<8){toast('⚠ New password must be at least 8 characters.');return}
+  if(newPass!==confirm){toast('⚠ New passwords do not match.');return}
+  if(newPass===current){toast('⚠ New password must be different from your current one.');return}
+
+  const {error}=await sb.from('members').update({pass:newPass}).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not update password. Try again.');console.error(error);return}
+
+  // Update local session so current user doesn't get logged out
+  currentUser.pass=newPass;
+
+  // Clear fields
+  document.getElementById('cp-current').value='';
+  document.getElementById('cp-new').value='';
+  document.getElementById('cp-confirm').value='';
+
+  closeModal('m-change-pass');
+  toast('✅ Password updated successfully. Use your new password next time you sign in.');
+}
+
 function openCertModal(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -738,7 +778,27 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin()}
+function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();}
+
+/* Render any extra stats saved by admin into the DOM on page load */
+function renderExtraStats(){
+  const extra=getExtraStats();
+  const links=getStatLinks();
+  const strip=document.getElementById('stats-strip-inner');
+  if(!strip||!extra.length)return;
+  extra.forEach(s=>{
+    if(document.querySelector('.stat-cell[data-key="'+s.key+'"]'))return;// already in DOM
+    const cell=document.createElement('div');
+    cell.className='stat-cell'+(s.key==='packaging'?' stat-cell-sm':'');
+    cell.dataset.key=s.key;
+    cell.setAttribute('onclick',`openStatLink('${s.key}')`);
+    cell.innerHTML='<div class="stat-ico">'+(s.ico||'📌')+'</div>'+
+      '<span class="stat-n" data-t="'+s.val+'" data-prefix="'+(s.prefix||'')+'" data-suffix="'+(s.suffix||'')+'">0</span>'+
+      '<span class="stat-l">'+s.label+'</span>'+
+      '<span class="stat-link-hint">🔗</span>';
+    strip.appendChild(cell);
+  });
+}
 
 function renderAdminMembers(){
   const tb=document.getElementById('members-tbody');if(!tb)return;
@@ -877,19 +937,33 @@ async function sendEmail(){
   const body=document.getElementById('em-body').value.trim();
   const aud=document.getElementById('em-audience').value;
   if(!subj||!body){toast('⚠ Subject and message required.');return}
-  // Build recipient list filtered by tier
   const tierRank={all:0,student:1,silver:1,gold:2,platinum:3,diamond:4};
   const minRank=tierRank[aud]||0;
   const recipients=MEMBERS.filter(m=>m.role!=='admin'&&(minRank===0||(TIERS_DATA[m.tier]?.r||0)>=minRank));
-  const emails=recipients.map(m=>m.email).join(',');
+  const emails=recipients.map(m=>m.email).join('; ');
   if(!emails){toast('⚠ No members match the selected audience.');return}
-  // Open default email client with pre-filled recipients, subject, body
-  const mailtoLink=`mailto:${encodeURIComponent(emails)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445')}`;
-  window.open(mailtoLink,'_blank');
+
+  const fullBody=body+'\n\n—\nUganda Biodiversity Fund\nwww.ugandabiodiversityfund.org\n+256 (039) 3216445\ninfo@ugandabiodiversityfund.org';
+
+  // Show a copy-ready panel — works for Outlook, Gmail, or any platform
+  const panel=document.getElementById('email-send-panel');
+  document.getElementById('esp-to').value=emails;
+  document.getElementById('esp-subj').value=subj;
+  document.getElementById('esp-body').value=fullBody;
+
+  // Also build Gmail compose link as a quick option
+  const gmailUrl='https://mail.google.com/mail/?view=cm&to='+encodeURIComponent(emails)+'&su='+encodeURIComponent(subj)+'&body='+encodeURIComponent(fullBody);
+  document.getElementById('esp-gmail-btn').href=gmailUrl;
+
+  panel.style.display='block';
+  panel.scrollIntoView({behavior:'smooth'});
+
   await logEmail(subj,'Audience: '+aud+' ('+recipients.length+' members) · '+new Date().toLocaleString());
-  document.getElementById('em-subj').value='';document.getElementById('em-body').value='';
-  document.getElementById('email-prev').style.display='none';
-  toast('✅ Email client opened with '+recipients.length+' recipients.');
+  toast('✅ Campaign ready — copy each field into your email (Outlook or Gmail).');
+}
+function copyField(id,label){
+  const el=document.getElementById(id);
+  navigator.clipboard.writeText(el.value).then(()=>toast('✅ '+label+' copied — paste into your email.')).catch(()=>{el.select();document.execCommand('copy');toast('✅ '+label+' copied.');});
 }
 async function logEmail(subj,meta){
   EMAIL_LOG.unshift({subj,meta});
@@ -929,6 +1003,201 @@ document.querySelectorAll('.atab').forEach(btn=>{
     document.getElementById(p).classList.add('active');
   });
 });
+
+/* ═══ OUR FOOTPRINT — CLICKABLE STAT BOXES WITH PROOF LINKS ═══
+   STAT_LINKS stored in localStorage keyed by stat data-key.
+   Each entry: { url, desc, label }
+   Admins set links via Admin → Our Footprint tab.
+   Visitors clicking a stat box see the proof link modal.
+   Extra stats added by admin via "Add New Stat" are stored in EXTRA_STATS.
+═══ */
+const DEFAULT_STATS=[
+  {key:'endowments',ico:'💰',val:14,prefix:'$',suffix:'M+',label:'Raised in total endowments (USD)'},
+  {key:'projects',ico:'📋',val:25,prefix:'',suffix:'',label:'Grantee projects funded'},
+  {key:'households',ico:'🏠',val:3000,prefix:'',suffix:'+',label:'Households with improved livelihoods'},
+  {key:'woodlots',ico:'🌲',val:2500,prefix:'',suffix:'Ha',label:'Woodlots established across regions'},
+  {key:'woodlands',ico:'🌳',val:3000,prefix:'',suffix:'Ha',label:'Woodlands restored through natural regeneration'},
+  {key:'agriculture',ico:'🌾',val:2000,prefix:'',suffix:'Ha',label:'Agricultural land under Sustainable Land Management'},
+  {key:'forests',ico:'🌿',val:1000,prefix:'',suffix:'Ha',label:'Natural forests restored — Albertine & West Nile'},
+  {key:'wetlands',ico:'💧',val:500,prefix:'',suffix:'Ha',label:'Wetlands restored across landscapes'},
+  {key:'vegetation',ico:'📈',val:19,prefix:'',suffix:'%',label:'Increased vegetation cover across regions'},
+  {key:'packaging',ico:'♻️',val:10000,prefix:'',suffix:'Kg',label:'Biodegradable packaging supported'},
+];
+
+function getStatLinks(){return LS.get('stat_links',{});}
+function getExtraStats(){return LS.get('extra_stats',[]);}
+
+function openStatLink(key){
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  const stat=allStats.find(s=>s.key===key);
+  const link=links[key];
+  if(!link||!link.url){
+    // No proof link set yet
+    if(currentUser&&currentUser.role==='admin'){
+      openEditStatLink(key);
+    }else{
+      toast('No proof link attached yet. Admin can add one from the Admin Panel.');
+    }
+    return;
+  }
+  // Show proof modal
+  const body=document.getElementById('stat-proof-body');
+  body.innerHTML=
+    '<div style="text-align:center;margin-bottom:1.25rem">'+
+      '<div style="font-size:2.5rem;margin-bottom:.5rem">'+(stat?stat.ico:'🔗')+'</div>'+
+      '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.3rem">'+(stat?stat.label:'Achievement')+'</h3>'+
+    '</div>'+
+    '<p style="font-size:.85rem;color:var(--muted);line-height:1.65;margin-bottom:1.25rem">'+
+      (link.desc||'View the documentation and evidence for this achievement.')+
+    '</p>'+
+    '<a href="'+link.url+'" target="_blank" rel="noopener" class="btn btn-canopy btn-full">View Proof / Evidence →</a>'+
+    (currentUser&&currentUser.role==='admin'
+      ?'<button class="btn btn-ghost btn-full btn-sm" style="margin-top:.5rem" onclick="openEditStatLink(\''+key+'\');closeModal(\'m-stat-proof\')">✏ Edit this link</button>'
+      :'');
+  openModal('m-stat-proof');
+}
+
+function openEditStatLink(key){
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  const stat=allStats.find(s=>s.key===key);
+  const link=links[key]||{};
+  document.getElementById('esl-key').value=key;
+  document.getElementById('esl-label').value=stat?stat.label:key;
+  document.getElementById('esl-url').value=link.url||'';
+  document.getElementById('esl-desc').value=link.desc||'';
+  openModal('m-edit-stat-link');
+}
+function saveStatLink(){
+  const key=document.getElementById('esl-key').value;
+  const url=document.getElementById('esl-url').value.trim();
+  const desc=document.getElementById('esl-desc').value.trim();
+  const label=document.getElementById('esl-label').value;
+  if(!url){toast('⚠ Please enter a URL.');return}
+  const links=getStatLinks();
+  links[key]={url,desc,label};
+  LS.set('stat_links',links);
+  closeModal('m-edit-stat-link');
+  renderFootprintAdmin();
+  renderStatHints();
+  toast('✅ Proof link saved. Visitors clicking this stat will now see the link.');
+}
+function removeStatLink(){
+  const key=document.getElementById('esl-key').value;
+  const links=getStatLinks();
+  delete links[key];
+  LS.set('stat_links',links);
+  closeModal('m-edit-stat-link');
+  renderFootprintAdmin();
+  renderStatHints();
+  toast('Link removed.');
+}
+
+function renderStatHints(){
+  // Update the 🔗 hint visibility on stat cells — show gold when link exists
+  const links=getStatLinks();
+  document.querySelectorAll('.stat-cell[data-key]').forEach(cell=>{
+    const key=cell.dataset.key;
+    const hint=cell.querySelector('.stat-link-hint');
+    if(!hint)return;
+    if(links[key]&&links[key].url){
+      hint.style.display='block';
+      hint.style.color='var(--gold-lt)';
+      cell.style.cursor='pointer';
+    }else if(currentUser&&currentUser.role==='admin'){
+      hint.style.display='block';
+      hint.style.color='rgba(255,255,255,.2)';
+      cell.style.cursor='pointer';
+    }else{
+      hint.style.display='none';
+      cell.style.cursor='default';
+    }
+  });
+}
+
+function addFootprintStat(){
+  const ico=document.getElementById('nfs-ico').value.trim();
+  const val=parseInt(document.getElementById('nfs-val').value)||0;
+  const prefix=document.getElementById('nfs-prefix').value.trim();
+  const suffix=document.getElementById('nfs-suffix').value.trim();
+  const label=document.getElementById('nfs-label').value.trim();
+  const url=document.getElementById('nfs-url').value.trim();
+  const desc=document.getElementById('nfs-desc').value.trim();
+  if(!val||!label){toast('⚠ Figure and label are required.');return}
+  const key='extra_'+Date.now();
+  const extra=getExtraStats();
+  extra.push({key,ico:ico||'📌',val,prefix,suffix,label});
+  LS.set('extra_stats',extra);
+  if(url){
+    const links=getStatLinks();
+    links[key]={url,desc,label};
+    LS.set('stat_links',links);
+  }
+  // Inject into DOM
+  const strip=document.getElementById('stats-strip-inner');
+  if(strip){
+    const cell=document.createElement('div');
+    cell.className='stat-cell';
+    cell.dataset.key=key;
+    cell.setAttribute('onclick',`openStatLink('${key}')`);
+    cell.innerHTML='<div class="stat-ico">'+(ico||'📌')+'</div>'+
+      '<span class="stat-n" data-t="'+val+'" data-prefix="'+prefix+'" data-suffix="'+suffix+'">'+prefix+'0'+suffix+'</span>'+
+      '<span class="stat-l">'+label+'</span>'+
+      '<span class="stat-link-hint">🔗</span>';
+    strip.appendChild(cell);
+    // Animate the new counter
+    const el=cell.querySelector('[data-t]');
+    if(el){let cur=0;const step=val/55;const t=setInterval(()=>{cur=Math.min(cur+step,val);el.textContent=prefix+Math.round(cur).toLocaleString()+suffix;if(cur>=val)clearInterval(t);},22);}
+  }
+  closeModal('m-add-footprint');
+  ['nfs-ico','nfs-val','nfs-prefix','nfs-suffix','nfs-label','nfs-url','nfs-desc'].forEach(id=>document.getElementById(id).value='');
+  renderFootprintAdmin();renderStatHints();
+  toast('✅ New stat added to Our Footprint section.');
+}
+
+function renderFootprintAdmin(){
+  const el=document.getElementById('footprint-admin-list');if(!el)return;
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  el.innerHTML='<div style="overflow-x:auto"><table class="dtable">'+
+    '<thead><tr><th>Icon</th><th>Figure</th><th>Label</th><th>Proof Link</th><th>Actions</th></tr></thead>'+
+    '<tbody>'+
+    allStats.map(s=>{
+      const link=links[s.key];
+      const isExtra=extra.find(e=>e.key===s.key);
+      return '<tr>'+
+        '<td style="font-size:1.2rem">'+s.ico+'</td>'+
+        '<td style="font-family:var(--ff-m);font-size:.82rem">'+(s.prefix||'')+s.val.toLocaleString()+(s.suffix||'')+'</td>'+
+        '<td style="font-size:.8rem">'+s.label+'</td>'+
+        '<td>'+(link&&link.url
+          ?'<a href="'+link.url+'" target="_blank" style="color:var(--canopy-lt);font-size:.75rem;font-weight:600">'+( link.desc||link.url.slice(0,30)+'...')+'</a>'
+          :'<span style="font-size:.74rem;color:var(--muted)">No link yet</span>')+
+        '</td>'+
+        '<td style="display:flex;gap:.35rem;flex-wrap:wrap">'+
+          '<button class="btn btn-ghost btn-sm" onclick="openEditStatLink(\''+s.key+'\')">'+( link&&link.url?'✏ Edit':'+ Add Link')+'</button>'+
+          (isExtra?'<button class="btn btn-danger btn-sm" onclick="deleteExtraStat(\''+s.key+'\')">Delete</button>':'')+
+        '</td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table></div>';
+}
+function deleteExtraStat(key){
+  let extra=getExtraStats();
+  extra=extra.filter(s=>s.key!==key);
+  LS.set('extra_stats',extra);
+  const links=getStatLinks();
+  delete links[key];
+  LS.set('stat_links',links);
+  // Remove cell from DOM
+  const cell=document.querySelector('.stat-cell[data-key="'+key+'"]');
+  if(cell)cell.remove();
+  renderFootprintAdmin();
+  toast('Stat removed.');
+}
 
 /* ═══ COUNTER ANIMATION ═══ */
 function animCounters(){

@@ -11,6 +11,15 @@
 <link rel="icon" href="fob-logo.png?v=2" type="image/png"/>
 <link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
 <link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
+<!-- Preload critical images so hero and logos render instantly -->
+<link rel="preload" as="image" href="slide-1.jpg"/>
+<link rel="preload" as="image" href="slide-2.jpg"/>
+<link rel="preload" as="image" href="slide-3.jpg"/>
+<link rel="preload" as="image" href="fob-logo.png"/>
+<link rel="preload" as="image" href="ubf-logo.png"/>
+<link rel="preload" as="image" href="footprint-globe.jpg"/>
+<link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
+<link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
 </head>
 <body>
 
@@ -90,19 +99,19 @@
 <section id="impact">
   <div class="inner">
     <p class="eyebrow reveal" style="color:var(--gold-lt)">Conservation Footprint</p>
-    <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em></h2>
-    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects — tracked through our accountability dashboard and audited annually.</p>
-    <div class="stats-strip reveal">
-      <div class="stat-cell"><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
-      <div class="stat-cell"><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging materials supported</span></div>
+    <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em> <img src="footprint-globe.jpg" alt="" aria-hidden="true" style="width:104px;height:104px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;margin-left:.4rem;box-shadow:0 2px 10px rgba(0,0,0,.4);border:1.5px solid rgba(200,168,75,.4)"/></h2>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects across Uganda's landscapes — tracked through our accountability dashboard and audited annually.</p>
+    <div class="stats-strip reveal" id="stats-strip-inner">
+      <div class="stat-cell" data-key="endowments" onclick="openStatLink('endowments')"><div class="stat-ico">💰</div><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="projects" onclick="openStatLink('projects')"><div class="stat-ico">📋</div><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="households" onclick="openStatLink('households')"><div class="stat-ico">🏠</div><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlots" onclick="openStatLink('woodlots')"><div class="stat-ico">🌲</div><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlands" onclick="openStatLink('woodlands')"><div class="stat-ico">🌳</div><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="agriculture" onclick="openStatLink('agriculture')"><div class="stat-ico">🌾</div><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="forests" onclick="openStatLink('forests')"><div class="stat-ico">🌿</div><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="wetlands" onclick="openStatLink('wetlands')"><div class="stat-ico">💧</div><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="vegetation" onclick="openStatLink('vegetation')"><div class="stat-ico">📈</div><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell stat-cell-sm" data-key="packaging" onclick="openStatLink('packaging')"><div class="stat-ico">♻️</div><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span><span class="stat-link-hint">🔗</span></div>
     </div>
   </div>
 </section>
@@ -145,7 +154,7 @@
         <div class="tier-badge" style="background:rgba(45,106,79,.12)">🎓</div>
         <div class="tier-name" style="color:var(--canopy-lt)">Student</div>
         <div class="tier-range">Individual: <strong>In-kind / Youth Project</strong><br>Registration: <strong>Free</strong></div>
-        <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Exposure visits to project sites</li></ul>
+        <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship &amp; leadership development package</li></ul>
         <button class="tier-btn" style="background:rgba(45,106,79,.15);color:var(--canopy)">Select Student</button>
       </div>
       <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
@@ -358,6 +367,7 @@
   <div class="adm-hdr">
     <h1>⚙ Admin Control Panel</h1>
     <p id="adm-user-info">Authenticated</p>
+    <button class="btn btn-outline btn-sm" style="margin-top:.75rem" onclick="openModal('m-change-pass')">🔑 Change My Password</button>
   </div>
   <div class="adm-tabs">
     <button class="atab active" data-ap="ap-members">Members</button>
@@ -368,6 +378,7 @@
     <button class="atab" data-ap="ap-payment">Payment Details</button>
     <button class="atab" data-ap="ap-email">Email Campaigns</button>
     <button class="atab" data-ap="ap-slides">Slide Images</button>
+    <button class="atab" data-ap="ap-footprint">Our Footprint</button>
   </div>
 
   <div id="ap-members" class="adm-panel active">
@@ -417,7 +428,7 @@
       <div class="adm-card">
         <h4>✉ Compose Campaign</h4>
         <div style="background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:.85rem;font-size:.78rem;color:var(--canopy);margin-bottom:1rem;line-height:1.6">
-          <strong>How it works:</strong> Compose your message, select your audience, then click <em>Send Campaign</em>. Your default email app (e.g. Gmail, Outlook) will open with all matching member emails pre-filled as recipients. Review and click Send from there. The log below tracks all campaigns sent.
+          <strong>How it works:</strong> Compose your message and select your audience, then click <em>Send Campaign</em>. A ready-to-send panel will appear with the recipient list, subject, and message body — each with a <em>Copy</em> button. Open your UBF email (Outlook or Gmail), create a new email, and paste each field in. This ensures the email comes directly from your official UBF address.
         </div>
         <div class="fg"><label>Subject</label><input id="em-subj" placeholder="UBF Update: ..."/></div>
         <div class="fg"><label>Audience</label>
@@ -430,13 +441,43 @@
       </div>
       <div class="adm-card"><h4>📬 Sent Campaigns</h4><div id="email-log-list"></div></div>
     </div>
+    <!-- COPY-READY SEND PANEL — appears after clicking Send Campaign -->
+    <div id="email-send-panel" style="display:none" class="adm-card">
+      <h4>📋 Ready to Send</h4>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Two options below — use whichever suits your setup:</p>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;padding:1rem;background:rgba(45,106,79,.06);border-radius:var(--r-sm);border:1px solid rgba(45,106,79,.15)">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📬 Option A — Open in Gmail</div>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55">Opens Gmail with recipients and message pre-filled. Make sure you switch to your UBF account in Gmail before sending.</p>
+          <a id="esp-gmail-btn" href="#" target="_blank" rel="noopener" class="btn btn-canopy btn-sm">Open in Gmail →</a>
+        </div>
+        <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📋 Option B — Copy &amp; Paste into Outlook</div>
+          <p style="font-size:.76rem;color:var(--muted);line-height:1.55">Use the Copy buttons below to paste each field into Outlook or any other email client. Guarantees the email comes from your UBF address.</p>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">To (Recipients) <button class="btn btn-gold btn-sm" onclick="copyField('esp-to','Recipients')">Copy</button></label>
+        <textarea id="esp-to" rows="3" style="font-size:.75rem;font-family:monospace;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">Subject <button class="btn btn-gold btn-sm" onclick="copyField('esp-subj','Subject')">Copy</button></label>
+        <input id="esp-subj" style="background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;font-size:.84rem" readonly/>
+      </div>
+      <div class="fg">
+        <label style="display:flex;justify-content:space-between;align-items:center">Message Body <button class="btn btn-gold btn-sm" onclick="copyField('esp-body','Message body')">Copy</button></label>
+        <textarea id="esp-body" rows="7" style="font-size:.8rem;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.5rem" onclick="document.getElementById('email-send-panel').style.display='none'">✕ Close</button>
+    </div>
   </div>
 
   <div id="ap-slides" class="adm-panel">
     <div class="adm-sec"><span>Hero Slideshow Images</span></div>
     <div class="adm-card">
       <h4>Upload Additional Slide Images</h4>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">Upload new images to add to the hero slideshow for this session. Currently <strong id="slide-count-adm">13 slides</strong> loaded.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">Upload new images to add to the hero slideshow for this session. Currently <strong id="slide-count-adm">12 slides</strong> loaded.</p>
       <div class="fame-uploader" onclick="document.getElementById('slide-file-input').click()">
         <div style="font-size:2rem;margin-bottom:.5rem">🏞</div>
         <strong>Click to upload slide images</strong>
@@ -447,6 +488,13 @@
       <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;line-height:1.55">For permanent additions, upload new image files (e.g. <code>slide-14.jpg</code>) to the repo root alongside index.html, then update the count in the <code>SLIDE_IMAGES</code> line in <code>app.js</code>.</p>
     </div>
   </div>
+  <!-- OUR FOOTPRINT ADMIN PANEL -->
+  <div id="ap-footprint" class="adm-panel">
+    <div class="adm-sec"><span>Our Footprint — Stat Boxes &amp; Proof Links</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-add-footprint')">+ Add New Stat</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Each stat box on the public homepage can link to a report, article, photo album, or document that proves the achievement. Click <strong>Edit Link</strong> on any stat to attach a URL. Visitors who click the box will be taken to that proof.</p>
+    <div id="footprint-admin-list"></div>
+  </div>
+
 </div><!-- /view-admin -->
 
 <!-- ═══ MODALS ═══ -->
@@ -625,5 +673,60 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script>
+<!-- STAT PROOF LINK MODAL — shown to public when they click a stat box -->
+<div class="overlay" id="m-stat-proof">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-stat-proof')">✕</button>
+    <div id="stat-proof-body"></div>
+  </div>
+</div>
+
+<!-- EDIT STAT LINK MODAL — admin only -->
+<div class="overlay" id="m-edit-stat-link">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-edit-stat-link')">✕</button>
+    <h2>Edit Stat Proof Link</h2>
+    <p class="msub">Attach a URL to this stat box — a report, photo album, project page, or any document that proves this achievement.</p>
+    <input type="hidden" id="esl-key"/>
+    <div class="fg"><label>Stat Label</label><input id="esl-label" placeholder="e.g. Grantee projects funded" readonly style="background:var(--mist)"/></div>
+    <div class="fg"><label>Proof URL *</label><input id="esl-url" type="url" placeholder="https://drive.google.com/... or https://ugandabiodiversityfund.org/..."/></div>
+    <div class="fg"><label>Link Description (shown to visitors)</label><input id="esl-desc" placeholder="e.g. View our 2024 Annual Report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="saveStatLink()">Save Proof Link</button>
+    <button class="btn btn-danger btn-full" style="margin-top:.5rem" onclick="removeStatLink()">Remove Link</button>
+  </div>
+</div>
+
+<!-- ADD NEW FOOTPRINT STAT MODAL — admin only -->
+<div class="overlay" id="m-add-footprint">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-add-footprint')">✕</button>
+    <h2>Add New Footprint Stat</h2>
+    <p class="msub">Add a new achievement figure to the Our Footprint section on the homepage.</p>
+    <div class="fg"><label>Icon (emoji)</label><input id="nfs-ico" placeholder="e.g. 🌍" maxlength="4" style="font-size:1.5rem;width:80px"/></div>
+    <div class="fg"><label>Figure *</label><input id="nfs-val" type="number" placeholder="e.g. 5000"/></div>
+    <div class="fr2">
+      <div class="fg"><label>Prefix</label><input id="nfs-prefix" placeholder="e.g. $" maxlength="5"/></div>
+      <div class="fg"><label>Suffix</label><input id="nfs-suffix" placeholder="e.g. Ha or %" maxlength="10"/></div>
+    </div>
+    <div class="fg"><label>Label *</label><input id="nfs-label" placeholder="e.g. Trees planted in Karamoja"/></div>
+    <div class="fg"><label>Proof URL</label><input id="nfs-url" type="url" placeholder="https://..."/></div>
+    <div class="fg"><label>Link Description</label><input id="nfs-desc" placeholder="e.g. See project report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="addFootprintStat()">Add to Homepage</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="m-change-pass">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('m-change-pass')">✕</button>
+    <h2>Change Password</h2>
+    <p class="msub">Set a new password for your account. Minimum 8 characters.</p>
+    <div class="fg"><label>Current Password *</label><input id="cp-current" type="password" placeholder="Your current password"/></div>
+    <div class="fg"><label>New Password *</label><input id="cp-new" type="password" placeholder="Minimum 8 characters"/></div>
+    <div class="fg"><label>Confirm New Password *</label><input id="cp-confirm" type="password" placeholder="Repeat new password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
 </body>
 </html>
