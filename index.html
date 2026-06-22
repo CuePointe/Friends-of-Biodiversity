@@ -99,19 +99,19 @@
 <section id="impact">
   <div class="inner">
     <p class="eyebrow reveal" style="color:var(--gold-lt)">Conservation Footprint</p>
-    <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em> <img src="footprint-globe.jpg" alt="" aria-hidden="true" style="width:52px;height:52px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;margin-left:.4rem;box-shadow:0 2px 10px rgba(0,0,0,.4);border:1.5px solid rgba(200,168,75,.4)"/></h2>
+    <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em> <img src="footprint-globe.jpg" alt="" aria-hidden="true" style="width:104px;height:104px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;margin-left:.4rem;box-shadow:0 2px 10px rgba(0,0,0,.4);border:1.5px solid rgba(200,168,75,.4)"/></h2>
     <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects across Uganda's landscapes — tracked through our accountability dashboard and audited annually.</p>
-    <div class="stats-strip reveal">
-      <div class="stat-cell"><div class="stat-ico">💰</div><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span></div>
-      <div class="stat-cell"><div class="stat-ico">📋</div><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span></div>
-      <div class="stat-cell"><div class="stat-ico">🏠</div><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span></div>
-      <div class="stat-cell"><div class="stat-ico">🌲</div><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span></div>
-      <div class="stat-cell"><div class="stat-ico">🌳</div><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span></div>
-      <div class="stat-cell"><div class="stat-ico">🌾</div><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span></div>
-      <div class="stat-cell"><div class="stat-ico">🌿</div><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span></div>
-      <div class="stat-cell"><div class="stat-ico">💧</div><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span></div>
-      <div class="stat-cell"><div class="stat-ico">📈</div><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span></div>
-      <div class="stat-cell stat-cell-sm"><div class="stat-ico">♻️</div><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span></div>
+    <div class="stats-strip reveal" id="stats-strip-inner">
+      <div class="stat-cell" data-key="endowments" onclick="openStatLink('endowments')"><div class="stat-ico">💰</div><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="projects" onclick="openStatLink('projects')"><div class="stat-ico">📋</div><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="households" onclick="openStatLink('households')"><div class="stat-ico">🏠</div><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlots" onclick="openStatLink('woodlots')"><div class="stat-ico">🌲</div><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlands" onclick="openStatLink('woodlands')"><div class="stat-ico">🌳</div><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="agriculture" onclick="openStatLink('agriculture')"><div class="stat-ico">🌾</div><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="forests" onclick="openStatLink('forests')"><div class="stat-ico">🌿</div><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="wetlands" onclick="openStatLink('wetlands')"><div class="stat-ico">💧</div><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="vegetation" onclick="openStatLink('vegetation')"><div class="stat-ico">📈</div><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell stat-cell-sm" data-key="packaging" onclick="openStatLink('packaging')"><div class="stat-ico">♻️</div><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span><span class="stat-link-hint">🔗</span></div>
     </div>
   </div>
 </section>
@@ -378,6 +378,7 @@
     <button class="atab" data-ap="ap-payment">Payment Details</button>
     <button class="atab" data-ap="ap-email">Email Campaigns</button>
     <button class="atab" data-ap="ap-slides">Slide Images</button>
+    <button class="atab" data-ap="ap-footprint">Our Footprint</button>
   </div>
 
   <div id="ap-members" class="adm-panel active">
@@ -487,6 +488,13 @@
       <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;line-height:1.55">For permanent additions, upload new image files (e.g. <code>slide-14.jpg</code>) to the repo root alongside index.html, then update the count in the <code>SLIDE_IMAGES</code> line in <code>app.js</code>.</p>
     </div>
   </div>
+  <!-- OUR FOOTPRINT ADMIN PANEL -->
+  <div id="ap-footprint" class="adm-panel">
+    <div class="adm-sec"><span>Our Footprint — Stat Boxes &amp; Proof Links</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-add-footprint')">+ Add New Stat</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Each stat box on the public homepage can link to a report, article, photo album, or document that proves the achievement. Click <strong>Edit Link</strong> on any stat to attach a URL. Visitors who click the box will be taken to that proof.</p>
+    <div id="footprint-admin-list"></div>
+  </div>
+
 </div><!-- /view-admin -->
 
 <!-- ═══ MODALS ═══ -->
@@ -665,6 +673,48 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="app.js"></script>
+<!-- STAT PROOF LINK MODAL — shown to public when they click a stat box -->
+<div class="overlay" id="m-stat-proof">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-stat-proof')">✕</button>
+    <div id="stat-proof-body"></div>
+  </div>
+</div>
+
+<!-- EDIT STAT LINK MODAL — admin only -->
+<div class="overlay" id="m-edit-stat-link">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-edit-stat-link')">✕</button>
+    <h2>Edit Stat Proof Link</h2>
+    <p class="msub">Attach a URL to this stat box — a report, photo album, project page, or any document that proves this achievement.</p>
+    <input type="hidden" id="esl-key"/>
+    <div class="fg"><label>Stat Label</label><input id="esl-label" placeholder="e.g. Grantee projects funded" readonly style="background:var(--mist)"/></div>
+    <div class="fg"><label>Proof URL *</label><input id="esl-url" type="url" placeholder="https://drive.google.com/... or https://ugandabiodiversityfund.org/..."/></div>
+    <div class="fg"><label>Link Description (shown to visitors)</label><input id="esl-desc" placeholder="e.g. View our 2024 Annual Report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="saveStatLink()">Save Proof Link</button>
+    <button class="btn btn-danger btn-full" style="margin-top:.5rem" onclick="removeStatLink()">Remove Link</button>
+  </div>
+</div>
+
+<!-- ADD NEW FOOTPRINT STAT MODAL — admin only -->
+<div class="overlay" id="m-add-footprint">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-add-footprint')">✕</button>
+    <h2>Add New Footprint Stat</h2>
+    <p class="msub">Add a new achievement figure to the Our Footprint section on the homepage.</p>
+    <div class="fg"><label>Icon (emoji)</label><input id="nfs-ico" placeholder="e.g. 🌍" maxlength="4" style="font-size:1.5rem;width:80px"/></div>
+    <div class="fg"><label>Figure *</label><input id="nfs-val" type="number" placeholder="e.g. 5000"/></div>
+    <div class="fr2">
+      <div class="fg"><label>Prefix</label><input id="nfs-prefix" placeholder="e.g. $" maxlength="5"/></div>
+      <div class="fg"><label>Suffix</label><input id="nfs-suffix" placeholder="e.g. Ha or %" maxlength="10"/></div>
+    </div>
+    <div class="fg"><label>Label *</label><input id="nfs-label" placeholder="e.g. Trees planted in Karamoja"/></div>
+    <div class="fg"><label>Proof URL</label><input id="nfs-url" type="url" placeholder="https://..."/></div>
+    <div class="fg"><label>Link Description</label><input id="nfs-desc" placeholder="e.g. See project report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="addFootprintStat()">Add to Homepage</button>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD MODAL -->
 <div class="overlay" id="m-change-pass">
   <div class="modal" style="max-width:420px">

@@ -86,7 +86,10 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 /* IMPACT */
 #impact{background:var(--canopy)}
 .stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1.5px;background:rgba(200,168,75,.18);border-radius:var(--r);overflow:hidden;margin-top:2.5rem}
-.stat-cell{background:var(--canopy-mid);padding:1.25rem 1rem;text-align:center;overflow:hidden}
+.stat-cell{background:var(--canopy-mid);padding:1.25rem 1rem;text-align:center;overflow:hidden;transition:background var(--tr);position:relative}
+.stat-cell[data-key]{cursor:pointer}
+.stat-cell[data-key]:hover{background:rgba(45,106,79,.6)}
+.stat-link-hint{display:none;font-size:.65rem;position:absolute;top:.5rem;right:.5rem;opacity:.7}
 .stat-ico{font-size:1.5rem;margin-bottom:.35rem;line-height:1}
 .stat-n{font-family:var(--ff-d);font-size:clamp(1.1rem,2.5vw,2rem);font-weight:900;color:var(--gold);display:block;line-height:1.15;overflow-wrap:break-word;word-break:break-all}
 .stat-cell-sm .stat-n{font-size:clamp(.9rem,2vw,1.5rem)}

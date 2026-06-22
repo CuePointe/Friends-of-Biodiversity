@@ -68,7 +68,7 @@ const ADMIN_NAMES={
 const ADMIN_DEFAULT_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
-const SLIDE_IMAGES=Array.from({length:14},(_,i)=>`slide-${i+1}.jpg`);
+const SLIDE_IMAGES=Array.from({length:15},(_,i)=>`slide-${i+1}.jpg`);
 
 /* ═══ LOCAL UI-ONLY STATE (not shared data — just this browser's session/cache) ═══ */
 const LS={
@@ -174,6 +174,8 @@ async function bootstrapApp(){
   renderContent();
   renderFame();
   renderPublicAnnounces();
+  renderStatHints();
+  renderExtraStats();
   hideLoadingToast();
   subscribeRealtime();
 }
@@ -776,7 +778,27 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin()}
+function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();}
+
+/* Render any extra stats saved by admin into the DOM on page load */
+function renderExtraStats(){
+  const extra=getExtraStats();
+  const links=getStatLinks();
+  const strip=document.getElementById('stats-strip-inner');
+  if(!strip||!extra.length)return;
+  extra.forEach(s=>{
+    if(document.querySelector('.stat-cell[data-key="'+s.key+'"]'))return;// already in DOM
+    const cell=document.createElement('div');
+    cell.className='stat-cell'+(s.key==='packaging'?' stat-cell-sm':'');
+    cell.dataset.key=s.key;
+    cell.setAttribute('onclick',`openStatLink('${s.key}')`);
+    cell.innerHTML='<div class="stat-ico">'+(s.ico||'📌')+'</div>'+
+      '<span class="stat-n" data-t="'+s.val+'" data-prefix="'+(s.prefix||'')+'" data-suffix="'+(s.suffix||'')+'">0</span>'+
+      '<span class="stat-l">'+s.label+'</span>'+
+      '<span class="stat-link-hint">🔗</span>';
+    strip.appendChild(cell);
+  });
+}
 
 function renderAdminMembers(){
   const tb=document.getElementById('members-tbody');if(!tb)return;
@@ -981,6 +1003,201 @@ document.querySelectorAll('.atab').forEach(btn=>{
     document.getElementById(p).classList.add('active');
   });
 });
+
+/* ═══ OUR FOOTPRINT — CLICKABLE STAT BOXES WITH PROOF LINKS ═══
+   STAT_LINKS stored in localStorage keyed by stat data-key.
+   Each entry: { url, desc, label }
+   Admins set links via Admin → Our Footprint tab.
+   Visitors clicking a stat box see the proof link modal.
+   Extra stats added by admin via "Add New Stat" are stored in EXTRA_STATS.
+═══ */
+const DEFAULT_STATS=[
+  {key:'endowments',ico:'💰',val:14,prefix:'$',suffix:'M+',label:'Raised in total endowments (USD)'},
+  {key:'projects',ico:'📋',val:25,prefix:'',suffix:'',label:'Grantee projects funded'},
+  {key:'households',ico:'🏠',val:3000,prefix:'',suffix:'+',label:'Households with improved livelihoods'},
+  {key:'woodlots',ico:'🌲',val:2500,prefix:'',suffix:'Ha',label:'Woodlots established across regions'},
+  {key:'woodlands',ico:'🌳',val:3000,prefix:'',suffix:'Ha',label:'Woodlands restored through natural regeneration'},
+  {key:'agriculture',ico:'🌾',val:2000,prefix:'',suffix:'Ha',label:'Agricultural land under Sustainable Land Management'},
+  {key:'forests',ico:'🌿',val:1000,prefix:'',suffix:'Ha',label:'Natural forests restored — Albertine & West Nile'},
+  {key:'wetlands',ico:'💧',val:500,prefix:'',suffix:'Ha',label:'Wetlands restored across landscapes'},
+  {key:'vegetation',ico:'📈',val:19,prefix:'',suffix:'%',label:'Increased vegetation cover across regions'},
+  {key:'packaging',ico:'♻️',val:10000,prefix:'',suffix:'Kg',label:'Biodegradable packaging supported'},
+];
+
+function getStatLinks(){return LS.get('stat_links',{});}
+function getExtraStats(){return LS.get('extra_stats',[]);}
+
+function openStatLink(key){
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  const stat=allStats.find(s=>s.key===key);
+  const link=links[key];
+  if(!link||!link.url){
+    // No proof link set yet
+    if(currentUser&&currentUser.role==='admin'){
+      openEditStatLink(key);
+    }else{
+      toast('No proof link attached yet. Admin can add one from the Admin Panel.');
+    }
+    return;
+  }
+  // Show proof modal
+  const body=document.getElementById('stat-proof-body');
+  body.innerHTML=
+    '<div style="text-align:center;margin-bottom:1.25rem">'+
+      '<div style="font-size:2.5rem;margin-bottom:.5rem">'+(stat?stat.ico:'🔗')+'</div>'+
+      '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.3rem">'+(stat?stat.label:'Achievement')+'</h3>'+
+    '</div>'+
+    '<p style="font-size:.85rem;color:var(--muted);line-height:1.65;margin-bottom:1.25rem">'+
+      (link.desc||'View the documentation and evidence for this achievement.')+
+    '</p>'+
+    '<a href="'+link.url+'" target="_blank" rel="noopener" class="btn btn-canopy btn-full">View Proof / Evidence →</a>'+
+    (currentUser&&currentUser.role==='admin'
+      ?'<button class="btn btn-ghost btn-full btn-sm" style="margin-top:.5rem" onclick="openEditStatLink(\''+key+'\');closeModal(\'m-stat-proof\')">✏ Edit this link</button>'
+      :'');
+  openModal('m-stat-proof');
+}
+
+function openEditStatLink(key){
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  const stat=allStats.find(s=>s.key===key);
+  const link=links[key]||{};
+  document.getElementById('esl-key').value=key;
+  document.getElementById('esl-label').value=stat?stat.label:key;
+  document.getElementById('esl-url').value=link.url||'';
+  document.getElementById('esl-desc').value=link.desc||'';
+  openModal('m-edit-stat-link');
+}
+function saveStatLink(){
+  const key=document.getElementById('esl-key').value;
+  const url=document.getElementById('esl-url').value.trim();
+  const desc=document.getElementById('esl-desc').value.trim();
+  const label=document.getElementById('esl-label').value;
+  if(!url){toast('⚠ Please enter a URL.');return}
+  const links=getStatLinks();
+  links[key]={url,desc,label};
+  LS.set('stat_links',links);
+  closeModal('m-edit-stat-link');
+  renderFootprintAdmin();
+  renderStatHints();
+  toast('✅ Proof link saved. Visitors clicking this stat will now see the link.');
+}
+function removeStatLink(){
+  const key=document.getElementById('esl-key').value;
+  const links=getStatLinks();
+  delete links[key];
+  LS.set('stat_links',links);
+  closeModal('m-edit-stat-link');
+  renderFootprintAdmin();
+  renderStatHints();
+  toast('Link removed.');
+}
+
+function renderStatHints(){
+  // Update the 🔗 hint visibility on stat cells — show gold when link exists
+  const links=getStatLinks();
+  document.querySelectorAll('.stat-cell[data-key]').forEach(cell=>{
+    const key=cell.dataset.key;
+    const hint=cell.querySelector('.stat-link-hint');
+    if(!hint)return;
+    if(links[key]&&links[key].url){
+      hint.style.display='block';
+      hint.style.color='var(--gold-lt)';
+      cell.style.cursor='pointer';
+    }else if(currentUser&&currentUser.role==='admin'){
+      hint.style.display='block';
+      hint.style.color='rgba(255,255,255,.2)';
+      cell.style.cursor='pointer';
+    }else{
+      hint.style.display='none';
+      cell.style.cursor='default';
+    }
+  });
+}
+
+function addFootprintStat(){
+  const ico=document.getElementById('nfs-ico').value.trim();
+  const val=parseInt(document.getElementById('nfs-val').value)||0;
+  const prefix=document.getElementById('nfs-prefix').value.trim();
+  const suffix=document.getElementById('nfs-suffix').value.trim();
+  const label=document.getElementById('nfs-label').value.trim();
+  const url=document.getElementById('nfs-url').value.trim();
+  const desc=document.getElementById('nfs-desc').value.trim();
+  if(!val||!label){toast('⚠ Figure and label are required.');return}
+  const key='extra_'+Date.now();
+  const extra=getExtraStats();
+  extra.push({key,ico:ico||'📌',val,prefix,suffix,label});
+  LS.set('extra_stats',extra);
+  if(url){
+    const links=getStatLinks();
+    links[key]={url,desc,label};
+    LS.set('stat_links',links);
+  }
+  // Inject into DOM
+  const strip=document.getElementById('stats-strip-inner');
+  if(strip){
+    const cell=document.createElement('div');
+    cell.className='stat-cell';
+    cell.dataset.key=key;
+    cell.setAttribute('onclick',`openStatLink('${key}')`);
+    cell.innerHTML='<div class="stat-ico">'+(ico||'📌')+'</div>'+
+      '<span class="stat-n" data-t="'+val+'" data-prefix="'+prefix+'" data-suffix="'+suffix+'">'+prefix+'0'+suffix+'</span>'+
+      '<span class="stat-l">'+label+'</span>'+
+      '<span class="stat-link-hint">🔗</span>';
+    strip.appendChild(cell);
+    // Animate the new counter
+    const el=cell.querySelector('[data-t]');
+    if(el){let cur=0;const step=val/55;const t=setInterval(()=>{cur=Math.min(cur+step,val);el.textContent=prefix+Math.round(cur).toLocaleString()+suffix;if(cur>=val)clearInterval(t);},22);}
+  }
+  closeModal('m-add-footprint');
+  ['nfs-ico','nfs-val','nfs-prefix','nfs-suffix','nfs-label','nfs-url','nfs-desc'].forEach(id=>document.getElementById(id).value='');
+  renderFootprintAdmin();renderStatHints();
+  toast('✅ New stat added to Our Footprint section.');
+}
+
+function renderFootprintAdmin(){
+  const el=document.getElementById('footprint-admin-list');if(!el)return;
+  const links=getStatLinks();
+  const extra=getExtraStats();
+  const allStats=[...DEFAULT_STATS,...extra];
+  el.innerHTML='<div style="overflow-x:auto"><table class="dtable">'+
+    '<thead><tr><th>Icon</th><th>Figure</th><th>Label</th><th>Proof Link</th><th>Actions</th></tr></thead>'+
+    '<tbody>'+
+    allStats.map(s=>{
+      const link=links[s.key];
+      const isExtra=extra.find(e=>e.key===s.key);
+      return '<tr>'+
+        '<td style="font-size:1.2rem">'+s.ico+'</td>'+
+        '<td style="font-family:var(--ff-m);font-size:.82rem">'+(s.prefix||'')+s.val.toLocaleString()+(s.suffix||'')+'</td>'+
+        '<td style="font-size:.8rem">'+s.label+'</td>'+
+        '<td>'+(link&&link.url
+          ?'<a href="'+link.url+'" target="_blank" style="color:var(--canopy-lt);font-size:.75rem;font-weight:600">'+( link.desc||link.url.slice(0,30)+'...')+'</a>'
+          :'<span style="font-size:.74rem;color:var(--muted)">No link yet</span>')+
+        '</td>'+
+        '<td style="display:flex;gap:.35rem;flex-wrap:wrap">'+
+          '<button class="btn btn-ghost btn-sm" onclick="openEditStatLink(\''+s.key+'\')">'+( link&&link.url?'✏ Edit':'+ Add Link')+'</button>'+
+          (isExtra?'<button class="btn btn-danger btn-sm" onclick="deleteExtraStat(\''+s.key+'\')">Delete</button>':'')+
+        '</td>'+
+      '</tr>';
+    }).join('')+
+    '</tbody></table></div>';
+}
+function deleteExtraStat(key){
+  let extra=getExtraStats();
+  extra=extra.filter(s=>s.key!==key);
+  LS.set('extra_stats',extra);
+  const links=getStatLinks();
+  delete links[key];
+  LS.set('stat_links',links);
+  // Remove cell from DOM
+  const cell=document.querySelector('.stat-cell[data-key="'+key+'"]');
+  if(cell)cell.remove();
+  renderFootprintAdmin();
+  toast('Stat removed.');
+}
 
 /* ═══ COUNTER ANIMATION ═══ */
 function animCounters(){
