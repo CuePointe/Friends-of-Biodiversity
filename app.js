@@ -198,7 +198,7 @@ function subscribeRealtime(){
 
 function updatePostCreateBtn(){
   const wrap=document.getElementById('post-create-btn-wrap');
-  if(wrap)wrap.style.display=(currentUser&&currentUser.role!=='admin')?'block':'none';
+  if(wrap)wrap.style.display=currentUser?'block':'none';
 }
 
 /* ═══ HERO SLIDESHOW ═══ */
@@ -1292,10 +1292,9 @@ function renderPosts(filter){
     const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
     const isOwner=currentUser&&currentUser.id===p.author_id;
     const isAdmin=currentUser&&currentUser.role==='admin';
-    const ytMatch=p.video_url&&p.video_url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
-    const ytEmbed=ytMatch?'https://www.youtube.com/embed/'+ytMatch[1]:'';
-    const vimeoMatch=p.video_url&&p.video_url.match(/vimeo\.com\/(\d+)/);
-    const vimeoEmbed=vimeoMatch?'https://player.vimeo.com/video/'+vimeoMatch[1]:'';
+    const ytMatch=null; // no external links — all videos are direct uploads
+    const ytEmbed='';
+    const vimeoEmbed='';
     return '<div class="post-card" id="post-'+p.id+'">'+
       '<div class="post-header">'+
         '<div class="post-avatar">'+initials+'</div>'+
@@ -1307,7 +1306,7 @@ function renderPosts(filter){
       '</div>'+
       (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
       (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image"/>':'')+
-      ((ytEmbed||vimeoEmbed)?'<div class="post-video-wrap"><iframe src="'+(ytEmbed||vimeoEmbed)+'" allowfullscreen></iframe></div>':'')+
+      (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline style="width:100%;border-radius:var(--r-sm);max-height:360px;background:#000"></video></div>':'')+
       '<div class="post-reactions">'+
         POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)">'+r.emoji+' <span>'+(p.reactions[r.key]||0)+'</span></button>').join('')+
         '<div class="post-actions">'+
@@ -1331,6 +1330,18 @@ function handlePostImage(e){
   };
   reader.readAsDataURL(f);
 }
+let postVideoFile=null;
+function handlePostVideo(e){
+  const f=e.target.files[0];if(!f)return;
+  postVideoFile=f;
+  document.getElementById('post-vid-prev').innerHTML=
+    '<div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--mist);border-radius:var(--r-sm)">'+
+      '<span style="font-size:1.2rem">🎬</span>'+
+      '<span style="font-size:.82rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'+
+      '<span style="font-size:.72rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(1)+'MB</span>'+
+      '<button onclick="postVideoFile=null;document.getElementById(\'post-vid-prev\').innerHTML=\'\'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem">✕</button>'+
+    '</div>';
+}
 
 // Word count live feedback
 document.addEventListener('input',e=>{
@@ -1346,56 +1357,75 @@ document.addEventListener('input',e=>{
 async function submitPost(){
   if(!currentUser){toast('Sign in to post.');return}
   const body=document.getElementById('post-body').value.trim();
-  const videoUrl=document.getElementById('post-video-url').value.trim();
   const editId=document.getElementById('post-edit-id').value;
-  if(!body&&!postImageData&&!videoUrl){toast('⚠ Write something or attach an image/video.');return}
+  if(!body&&!postImageData&&!postVideoFile){toast('⚠ Write something or attach an image or video.');return}
   const words=body.split(/\s+/).filter(Boolean).length;
   if(words>400){toast('⚠ Post exceeds 400 words. Please shorten it.');return}
+  toast('⬆ Publishing...');
 
   let imageUrl='';
   if(postImageData){
-    // Upload image to Supabase Storage
     const blob=await(await fetch(postImageData)).blob();
-    const path='posts/'+Date.now()+'_'+currentUser.id+'.jpg';
+    const path='posts/img_'+Date.now()+'_'+currentUser.id+'.jpg';
     const{error:upErr}=await sb.storage.from('content-files').upload(path,blob,{contentType:'image/jpeg'});
     if(!upErr){const{data}=sb.storage.from('content-files').getPublicUrl(path);imageUrl=data.publicUrl;}
+    else{console.error('image upload',upErr);}
+  }
+
+  let videoUrl='';
+  if(postVideoFile){
+    const ext=postVideoFile.name.split('.').pop().toLowerCase();
+    const path='posts/vid_'+Date.now()+'_'+currentUser.id+'.'+ext;
+    const{error:upErr}=await sb.storage.from('content-files').upload(path,postVideoFile,{contentType:postVideoFile.type});
+    if(!upErr){const{data}=sb.storage.from('content-files').getPublicUrl(path);videoUrl=data.publicUrl;}
+    else{console.error('video upload',upErr);toast('⚠ Video upload failed — check your Supabase storage bucket size limit.');}
   }
 
   if(editId){
-    // Update existing post
-    const{error}=await sb.from('member_posts').update({body,image_url:imageUrl||undefined,video_url:videoUrl||null}).eq('id',editId);
+    const updates={body};
+    if(imageUrl)updates.image_url=imageUrl;
+    if(videoUrl)updates.video_url=videoUrl;
+    const{error}=await sb.from('member_posts').update(updates).eq('id',editId);
     if(error){toast('⚠ Could not update post.');console.error(error);return}
     toast('✅ Post updated.');
   }else{
     const row={
-      author_id:currentUser.id,author_name:currentUser.name,
-      author_tier:currentUser.tier,body,
-      image_url:imageUrl||null,video_url:videoUrl||null,
+      author_id:currentUser.id,
+      author_name:currentUser.name,
+      author_tier:currentUser.tier||'silver',
+      body,
+      image_url:imageUrl||null,
+      video_url:videoUrl||null,
       reactions:{likes:0,thumbsup:0,support:0,wow:0,celebrate:0},
     };
     const{error}=await sb.from('member_posts').insert(row);
-    if(error){toast('⚠ Could not publish post.');console.error(error);return}
+    if(error){toast('⚠ Could not publish post. Check Supabase RLS policies.');console.error(error);return}
     toast('✅ Post published!');
   }
 
   // Reset form
   document.getElementById('post-body').value='';
-  document.getElementById('post-video-url').value='';
   document.getElementById('post-img-prev').innerHTML='';
+  document.getElementById('post-vid-prev').innerHTML='';
   document.getElementById('post-edit-id').value='';
   document.getElementById('post-modal-title').textContent='Create a Post';
+  const wc=document.getElementById('post-word-count');if(wc)wc.textContent='';
   postImageData=null;
+  postVideoFile=null;
   closeModal('m-create-post');
   await loadPosts();renderPosts();renderAdminPosts();
 }
 
 function editPost(id){
   const p=POSTS.find(x=>x.id===id);if(!p)return;
-  if(currentUser.id!==p.author_id){toast('You can only edit your own posts.');return}
+  if(currentUser.id!==p.author_id&&currentUser.role!=='admin'){toast('You can only edit your own posts.');return}
   document.getElementById('post-edit-id').value=id;
   document.getElementById('post-modal-title').textContent='Edit Post';
   document.getElementById('post-body').value=p.body||'';
-  document.getElementById('post-video-url').value=p.video_url||'';
+  document.getElementById('post-img-prev').innerHTML='';
+  document.getElementById('post-vid-prev').innerHTML='';
+  postImageData=null;
+  postVideoFile=null;
   openModal('m-create-post');
 }
 

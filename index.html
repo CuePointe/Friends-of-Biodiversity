@@ -755,8 +755,13 @@
       <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
       <div id="post-img-prev"></div>
     </div>
-    <div class="fg"><label>Video URL (optional — YouTube or Vimeo link)</label>
-      <input id="post-video-url" placeholder="https://youtube.com/..."/>
+    <div class="fg"><label>Video (optional — upload directly)</label>
+      <div class="upload-zone" onclick="document.getElementById('post-vid-input').click()" style="padding:1rem">
+        <div class="uz-icon">🎬</div><strong>Click to upload a video</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">MP4 or MOV — plays directly in the app</p>
+      </div>
+      <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
+      <div id="post-vid-prev"></div>
     </div>
     <button class="btn btn-canopy btn-full" onclick="submitPost()">Submit Post for Review →</button>
   </div>
