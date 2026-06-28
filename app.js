@@ -1612,3 +1612,76 @@ function toast(msg){
 /* ═══ GO ═══ */
 bootstrapApp();
 showEP(true);
+
+/* ═══ PWA — SERVICE WORKER REGISTRATION & INSTALL PROMPT ═══ */
+let pwaInstallPrompt=null;
+
+// Register service worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg=>console.log('FoB PWA: Service worker registered',reg.scope))
+      .catch(err=>console.log('FoB PWA: Service worker failed',err));
+  });
+}
+
+// Capture the install prompt before it fires
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  pwaInstallPrompt=e;
+  showPWABanner();
+});
+
+// Show a friendly install banner
+function showPWABanner(){
+  if(LS.get('pwa_dismissed',false))return;
+  const existing=document.getElementById('pwa-banner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='pwa-banner';
+  banner.innerHTML=
+    '<div style="display:flex;align-items:center;gap:.75rem;flex:1">'+
+      '<img src="icon-96.png" style="width:42px;height:42px;border-radius:10px;flex-shrink:0"/>'+
+      '<div>'+
+        '<div style="font-weight:700;font-size:.88rem;color:var(--canopy)">Install Friends of Biodiversity</div>'+
+        '<div style="font-size:.76rem;color:var(--muted);margin-top:.1rem">Add to your home screen for quick access</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:.5rem;flex-shrink:0">'+
+      '<button onclick="installPWA()" style="padding:.45rem 1rem;background:var(--canopy);color:#fff;border:none;border-radius:var(--r-sm);font-weight:700;font-size:.8rem;cursor:pointer">Install</button>'+
+      '<button onclick="dismissPWABanner()" style="padding:.45rem .75rem;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r-sm);font-size:.8rem;cursor:pointer">Not now</button>'+
+    '</div>';
+  banner.style.cssText=
+    'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);'+
+    'width:calc(100vw - 2rem);max-width:520px;'+
+    'background:#fff;border-radius:var(--r);padding:1rem 1.1rem;'+
+    'box-shadow:0 4px 24px rgba(0,0,0,.18);z-index:700;'+
+    'display:flex;align-items:center;gap:1rem;flex-wrap:wrap;'+
+    'border-top:3px solid var(--canopy-lt);'+
+    'animation:slideUp .4s ease;';
+  document.body.appendChild(banner);
+}
+
+async function installPWA(){
+  if(!pwaInstallPrompt)return;
+  pwaInstallPrompt.prompt();
+  const result=await pwaInstallPrompt.userChoice;
+  if(result.outcome==='accepted'){
+    toast('🌿 App installed! Find "FoB Green Card" on your home screen.');
+    dismissPWABanner();
+  }
+  pwaInstallPrompt=null;
+}
+
+function dismissPWABanner(){
+  const banner=document.getElementById('pwa-banner');
+  if(banner)banner.remove();
+  LS.set('pwa_dismissed',true);
+}
+
+// Show success message if app was launched from home screen
+if(window.matchMedia('(display-mode: standalone)').matches){
+  window.addEventListener('load',()=>{
+    setTimeout(()=>toast('🌿 Welcome to the Friends of Biodiversity app!'),1000);
+  });
+}

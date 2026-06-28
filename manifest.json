@@ -1,0 +1,92 @@
+{
+  "name": "Friends of Biodiversity — Uganda Biodiversity Fund",
+  "short_name": "FoB Green Card",
+  "description": "The Uganda Biodiversity Fund Friends of Biodiversity Green Card membership platform. Protecting Uganda's ecosystems for now and the future.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0B2618",
+  "theme_color": "#0B2618",
+  "lang": "en",
+  "scope": "/",
+  "categories": ["education", "lifestyle", "social"],
+  "icons": [
+    {
+      "src": "icon-72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Learning Exchange",
+      "short_name": "Learn",
+      "description": "Access conservation videos, articles, research and more",
+      "url": "/#learn",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Green Card Tiers",
+      "short_name": "Join",
+      "description": "Join the Friends of Biodiversity programme",
+      "url": "/#greencard",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Our Footprint",
+      "short_name": "Impact",
+      "description": "See UBF's conservation impact across Uganda",
+      "url": "/#impact",
+      "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
+    }
+  ]
+}
