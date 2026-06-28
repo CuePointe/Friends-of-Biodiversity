@@ -691,31 +691,43 @@ function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
   const initials=u.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-  const avatarHtml=u.photo_url
-    ?'<img src="'+u.photo_url+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(200,168,75,.5);box-shadow:0 2px 12px rgba(0,0,0,.3)"/>'
-    :'<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--canopy-lt),var(--canopy));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1.8rem;font-weight:700;color:var(--gold);border:3px solid rgba(200,168,75,.4);box-shadow:0 2px 12px rgba(0,0,0,.3)">'+initials+'</div>';
-  document.getElementById('mem-greeting').textContent='Welcome back, '+u.name.split(' ')[0]+' '+td.emoji;
-  document.getElementById('mem-sub').textContent=td.label+' Member · '+u.year+(u.org?' · '+u.org:'');
-  // Inject avatar into header
+  // Build LinkedIn-style profile header: wallpaper + floating avatar
   let avatarWrap=document.getElementById('mem-avatar-wrap');
   if(!avatarWrap){
     avatarWrap=document.createElement('div');
     avatarWrap.id='mem-avatar-wrap';
-    avatarWrap.style.cssText='display:flex;align-items:center;gap:1.25rem;margin-bottom:1.25rem';
     const hdr=document.querySelector('.mem-hdr');
     if(hdr)hdr.insertBefore(avatarWrap,hdr.querySelector('h1'));
   }
+  avatarWrap.className='profile-header-card';
   avatarWrap.innerHTML=
-    '<div style="position:relative;flex-shrink:0">'+
-      avatarHtml+
-      '<label for="profile-photo-input" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:.8rem" title="Change photo">📷</label>'+
-      '<input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(event)"/>'+
+    // Wallpaper strip
+    '<div class="profile-wallpaper" style="'+(u.wallpaper_url?'background-image:url(\''+u.wallpaper_url+'\');background-size:cover;background-position:center':'background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)')+'">'+'</div>'+
+    // Avatar floating over wallpaper
+    '<div class="profile-avatar-row">'+
+      '<div class="profile-avatar-wrap">'+
+        (u.photo_url
+          ?'<img src="'+u.photo_url+'" class="profile-avatar-img"/>'
+          :'<div class="profile-avatar-img profile-avatar-init">'+initials+'</div>')+
+      '</div>'+
+      '<div class="profile-header-actions">'+
+        '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
+      '</div>'+
     '</div>'+
-    '<div>'+
-      '<div style="font-family:var(--ff-d);font-size:1.3rem;color:var(--gold-lt);font-weight:700">'+u.name+'</div>'+
-      '<div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.2rem">'+td.emoji+' '+td.label+' Member</div>'+
-      (u.org?'<div style="font-size:.78rem;color:rgba(255,255,255,.4)">'+u.org+'</div>':'')+
+    // Name, tier, bio
+    '<div class="profile-info">'+
+      '<div class="profile-name">'+u.name+'</div>'+
+      '<div class="profile-tier-badge">'+td.emoji+' '+td.label+' Member'+(u.org?' · '+u.org:'')+'</div>'+
+      (u.bio?'<div class="profile-bio">'+u.bio+'</div>':'')+
+      '<div class="profile-stats">'+
+        '<span><strong>'+(u.followers_count||0)+'</strong> followers</span>'+
+        '<span>·</span>'+
+        '<span><strong>'+POSTS.filter(p=>p.author_id===u.id).length+'</strong> posts</span>'+
+      '</div>'+
     '</div>';
+
+  document.getElementById('mem-greeting').textContent='Welcome back, '+u.name.split(' ')[0]+' '+td.emoji;
+  document.getElementById('mem-sub').textContent=td.label+' Member · '+u.year+(u.org?' · '+u.org:'');
   const accessible=CONTENT.filter(c=>ACCESS_RANK[c.access]<=(td.r||1));
   document.getElementById('mem-strip').innerHTML=
     '<div class="mem-mini"><div class="val">'+td.emoji+'</div><div class="lbl">'+td.label+' Tier</div></div>'+
@@ -727,7 +739,7 @@ function renderMemberView(){
     '<div class="mem-sec-title">Your Perks</div>'+
     '<div class="perk-grid">'+perks.map(p=>'<div class="perk-card"><div class="pk-icon">'+p.split(' ')[0]+'</div><div class="pk-title">'+p.replace(/^[^\s]+\s/,'')+'</div></div>').join('')+'</div>'+
     '<div class="mem-sec-title" style="display:flex;justify-content:space-between;align-items:center">Your Certificate <button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download Certificate</button></div>'+
-    '<div style="margin-bottom:1.5rem"><button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Change My Password</button></div>'+
+    '<div style="margin-bottom:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button><button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Change Password</button></div>'+
     '<div class="mem-sec-title">Announcements</div>'+
     (ANNOUNCES.length?ANNOUNCES.slice(0,5).map(a=>'<div class="mem-announce-card"><div class="mac-type">'+a.type+'</div><div class="mac-title">'+a.title+'</div><p class="mac-body">'+a.body+'</p><div class="mac-meta">'+a.date+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>')+
     '<div class="mem-sec-title">Financial Reports</div>'+
@@ -746,6 +758,171 @@ function renderMemberView(){
 
 /* ═══ CERTIFICATE ═══ */
 /* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
+/* ═══ PROFILE — EDIT, WALLPAPER, BIO, FOLLOW ═══ */
+
+let epPhotoFile=null;let epWallpaperFile=null;
+
+function openEditProfile(){
+  if(!currentUser)return;
+  const u=currentUser;
+  // Set previews
+  const photoPrev=document.getElementById('ep-photo-prev');
+  if(photoPrev){
+    photoPrev.innerHTML=u.photo_url
+      ?'<img src="'+u.photo_url+'" style="width:60px;height:60px;object-fit:cover"/>'
+      :(u.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  }
+  const wallPrev=document.getElementById('ep-wallpaper-prev');
+  if(wallPrev&&u.wallpaper_url){
+    wallPrev.style.backgroundImage='url(\''+u.wallpaper_url+'\')';
+    wallPrev.style.backgroundSize='cover';
+    wallPrev.style.backgroundPosition='center';
+  }
+  const bioEl=document.getElementById('ep-bio');
+  if(bioEl)bioEl.value=u.bio||'';
+  const bioCount=document.getElementById('ep-bio-count');
+  if(bioCount)bioCount.textContent=(u.bio||'').length+' / 160';
+  // Bio live count
+  if(bioEl)bioEl.oninput=()=>{if(bioCount)bioCount.textContent=bioEl.value.length+' / 160';};
+  epPhotoFile=null;epWallpaperFile=null;
+  openModal('m-edit-profile');
+}
+
+function previewEPPhoto(e){
+  const f=e.target.files[0];if(!f)return;
+  epPhotoFile=f;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const prev=document.getElementById('ep-photo-prev');
+    if(prev)prev.innerHTML='<img src="'+ev.target.result+'" style="width:60px;height:60px;object-fit:cover;border-radius:50%"/>';
+  };
+  reader.readAsDataURL(f);
+}
+
+function previewEPWallpaper(e){
+  const f=e.target.files[0];if(!f)return;
+  epWallpaperFile=f;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    const prev=document.getElementById('ep-wallpaper-prev');
+    if(prev){prev.style.backgroundImage='url(\''+ev.target.result+'\')';prev.style.backgroundSize='cover';prev.style.backgroundPosition='center';}
+  };
+  reader.readAsDataURL(f);
+}
+
+async function saveProfile(){
+  if(!currentUser)return;
+  toast('⬆ Saving profile...');
+  const updates={};
+
+  // Upload photo if changed
+  if(epPhotoFile){
+    const path='profiles/photo_'+currentUser.id+'.'+epPhotoFile.name.split('.').pop().toLowerCase();
+    const{error}=await sb.storage.from('fame-photos').upload(path,epPhotoFile,{upsert:true,contentType:epPhotoFile.type});
+    if(!error){const{data}=sb.storage.from('fame-photos').getPublicUrl(path);updates.photo_url=data.publicUrl+'?t='+Date.now();}
+  }
+
+  // Upload wallpaper if changed
+  if(epWallpaperFile){
+    const path='profiles/wall_'+currentUser.id+'.'+epWallpaperFile.name.split('.').pop().toLowerCase();
+    const{error}=await sb.storage.from('fame-photos').upload(path,epWallpaperFile,{upsert:true,contentType:epWallpaperFile.type});
+    if(!error){const{data}=sb.storage.from('fame-photos').getPublicUrl(path);updates.wallpaper_url=data.publicUrl+'?t='+Date.now();}
+  }
+
+  // Bio
+  const bio=document.getElementById('ep-bio').value.trim().slice(0,160);
+  updates.bio=bio;
+
+  const{error}=await sb.from('members').update(updates).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not save profile.');console.error(error);return}
+
+  Object.assign(currentUser,updates);
+  closeModal('m-edit-profile');
+  renderMemberView();
+  toast('✅ Profile saved!');
+}
+
+/* ── VIEW ANY MEMBER'S PROFILE ── */
+async function viewMemberProfile(memberId){
+  const m=MEMBERS.find(x=>x.id===memberId);
+  if(!m)return;
+  const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
+  const initials=(m.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+
+  // Check if current user follows this member
+  let isFollowing=false;
+  if(currentUser&&currentUser.id!==memberId){
+    const{data}=await sb.from('follows').select('id').eq('follower_id',currentUser.id).eq('following_id',memberId).single();
+    isFollowing=!!data;
+  }
+
+  // Get this member's posts
+  const memberPosts=POSTS.filter(p=>p.author_id===memberId);
+
+  const body=document.getElementById('profile-modal-body');
+  body.innerHTML=
+    // Wallpaper
+    '<div style="height:140px;'+(m.wallpaper_url?'background-image:url(\''+m.wallpaper_url+'\');background-size:cover;background-position:center':'background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)')+';position:relative">'+
+    '</div>'+
+    // Avatar
+    '<div style="padding:0 1.25rem;position:relative;margin-top:-40px;display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:.75rem">'+
+      '<div style="width:80px;height:80px;border-radius:50%;border:4px solid #fff;overflow:hidden;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1.6rem;font-weight:700;color:var(--gold);flex-shrink:0">'+
+        (m.photo_url?'<img src="'+m.photo_url+'" style="width:100%;height:100%;object-fit:cover"/>':initials)+
+      '</div>'+
+      (currentUser&&currentUser.id!==memberId?
+        '<button id="follow-btn-'+memberId+'" class="btn '+(isFollowing?'btn-ghost':'btn-canopy')+' btn-sm" onclick="toggleFollow(\''+memberId+'\',\''+m.name+'\')">'+
+          (isFollowing?'✓ Following':'+ Follow')+
+        '</button>'
+      :'')+
+    '</div>'+
+    // Info
+    '<div style="padding:0 1.25rem 1.25rem">'+
+      '<div style="font-family:var(--ff-d);font-size:1.2rem;font-weight:700;color:var(--canopy)">'+m.name+'</div>'+
+      '<div style="font-size:.8rem;color:var(--muted);margin-top:.2rem">'+td.emoji+' '+td.label+' Member'+(m.org?' · '+m.org:'')+'</div>'+
+      (m.bio?'<p style="font-size:.86rem;color:var(--text);margin-top:.65rem;line-height:1.65">'+m.bio+'</p>':'')+
+      '<div style="display:flex;gap:1.25rem;margin-top:.75rem;font-size:.82rem">'+
+        '<span><strong>'+(m.followers_count||0)+'</strong> <span style="color:var(--muted)">followers</span></span>'+
+        '<span><strong>'+memberPosts.length+'</strong> <span style="color:var(--muted)">posts</span></span>'+
+      '</div>'+
+      // Recent posts preview
+      (memberPosts.length?
+        '<div style="margin-top:1.1rem;padding-top:1rem;border-top:1px solid var(--border)">'+
+          '<div style="font-weight:600;font-size:.82rem;color:var(--canopy);margin-bottom:.6rem">Recent Posts</div>'+
+          memberPosts.slice(0,2).map(p=>
+            '<div style="padding:.65rem;background:var(--mist);border-radius:10px;margin-bottom:.5rem;font-size:.83rem;color:var(--text);line-height:1.6">'+
+              (p.body?p.body.slice(0,120)+(p.body.length>120?'...':''):'📷 Photo post')+
+            '</div>'
+          ).join('')+
+        '</div>'
+      :'')+
+    '</div>';
+
+  openModal('m-member-profile');
+}
+
+/* ── FOLLOW / UNFOLLOW ── */
+async function toggleFollow(memberId,memberName){
+  if(!currentUser){toast('Sign in to follow members.');openModal('m-login');return}
+  if(currentUser.id===memberId)return;
+  const btn=document.getElementById('follow-btn-'+memberId);
+  const isFollowing=btn&&btn.textContent.includes('Following');
+
+  if(isFollowing){
+    await sb.from('follows').delete().eq('follower_id',currentUser.id).eq('following_id',memberId);
+    await sb.from('members').update({followers_count:Math.max(0,((MEMBERS.find(m=>m.id===memberId)||{}).followers_count||1)-1)}).eq('id',memberId);
+    if(btn){btn.textContent='+ Follow';btn.className='btn btn-canopy btn-sm';}
+    toast('Unfollowed '+memberName);
+  }else{
+    const{error}=await sb.from('follows').insert({follower_id:currentUser.id,following_id:memberId});
+    if(error&&error.code==='23505'){toast('Already following '+memberName);return}
+    if(error){toast('⚠ Could not follow.');return}
+    await sb.from('members').update({followers_count:((MEMBERS.find(m=>m.id===memberId)||{}).followers_count||0)+1}).eq('id',memberId);
+    if(btn){btn.textContent='✓ Following';btn.className='btn btn-ghost btn-sm';}
+    toast('Now following '+memberName+'!');
+  }
+  await loadMembers();
+}
+
 /* ═══ PROFILE PHOTO UPLOAD ═══ */
 async function uploadProfilePhoto(e){
   const f=e.target.files[0];if(!f||!currentUser)return;
@@ -1375,7 +1552,7 @@ function renderPosts(filter){
       '<div class="post-header">'+
         avatarHtml+
         '<div class="post-meta">'+
-          '<div class="post-author">'+p.author_name+'</div>'+
+          '<div class="post-author" onclick="viewMemberProfile(\''+p.author_id+'\')" style="cursor:pointer">'+p.author_name+'</div>'+
           '<div class="post-tier">'+td.emoji+' '+td.label+' · '+(p.created_at||'').slice(0,10)+'</div>'+
         '</div>'+
         (isOwner||isAdmin?

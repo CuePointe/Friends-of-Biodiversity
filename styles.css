@@ -482,3 +482,20 @@ section{transition:background .3s}
 /* Better form inputs */
 input,select,textarea{border-radius:10px!important;transition:border-color .15s,box-shadow .15s}
 input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)!important}
+
+/* ── LINKEDIN-STYLE PROFILE HEADER ── */
+.profile-header-card{background:var(--white);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);margin-bottom:1.5rem}
+.profile-wallpaper{height:120px;position:relative;background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)}
+.profile-avatar-row{display:flex;justify-content:space-between;align-items:flex-end;padding:0 1.25rem;margin-top:-40px;margin-bottom:.5rem}
+.profile-avatar-wrap{position:relative}
+.profile-avatar-img{width:80px;height:80px;border-radius:50%;border:4px solid #fff;object-fit:cover;box-shadow:0 2px 12px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
+.profile-avatar-init{background:linear-gradient(135deg,var(--canopy-lt),var(--canopy));font-family:var(--ff-d);font-size:1.8rem;font-weight:700;color:var(--gold)}
+.profile-header-actions{display:flex;gap:.5rem;align-items:center;padding-bottom:.25rem}
+.profile-info{padding:.5rem 1.25rem 1.25rem}
+.profile-name{font-family:var(--ff-d);font-size:1.25rem;font-weight:700;color:var(--canopy)}
+.profile-tier-badge{font-size:.8rem;color:var(--muted);margin-top:.2rem}
+.profile-bio{font-size:.88rem;color:var(--text);line-height:1.65;margin-top:.6rem}
+.profile-stats{display:flex;gap:.75rem;margin-top:.6rem;font-size:.82rem;color:var(--muted)}
+.profile-stats strong{color:var(--canopy);font-weight:700}
+/* Profile modal */
+.profile-modal{padding:0!important;border-radius:20px!important;overflow:hidden!important}

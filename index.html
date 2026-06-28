@@ -792,6 +792,42 @@
   </div>
 </div>
 
+<!-- MEMBER PROFILE MODAL — public view of any member -->
+<div class="overlay" id="m-member-profile">
+  <div class="modal profile-modal" style="max-width:560px;padding:0;overflow:hidden">
+    <button class="modal-close" style="position:absolute;top:.75rem;right:.75rem;z-index:10;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="closeModal('m-member-profile')">✕</button>
+    <div id="profile-modal-body"></div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL — for own profile -->
+<div class="overlay" id="m-edit-profile">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-edit-profile')">✕</button>
+    <h2>Edit Your Profile</h2>
+    <p class="msub">Your profile is visible to all members.</p>
+    <div class="fg">
+      <label>Profile Photo</label>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem">
+        <div id="ep-photo-prev" style="width:60px;height:60px;border-radius:50%;overflow:hidden;background:var(--canopy);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:1.1rem;flex-shrink:0"></div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">📷 Change Photo<input type="file" id="ep-photo-input" accept="image/*" style="display:none" onchange="previewEPPhoto(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Cover Wallpaper</label>
+      <div id="ep-wallpaper-prev" style="width:100%;height:80px;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));margin-bottom:.5rem;overflow:hidden;position:relative">
+        <label class="btn btn-ghost btn-sm" style="position:absolute;bottom:.4rem;right:.4rem;cursor:pointer;background:rgba(0,0,0,.5);color:#fff;border:none">🖼 Change Wallpaper<input type="file" id="ep-wallpaper-input" accept="image/*" style="display:none" onchange="previewEPWallpaper(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Bio <span style="font-size:.75rem;color:var(--muted)">(max 160 characters)</span></label>
+      <textarea id="ep-bio" rows="3" maxlength="160" placeholder="Tell the community about your passion for biodiversity conservation..."></textarea>
+      <div id="ep-bio-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:.2rem">0 / 160</div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
+
 <!-- CHANGE PASSWORD MODAL -->
 <div class="overlay" id="m-change-pass">
   <div class="modal" style="max-width:420px">

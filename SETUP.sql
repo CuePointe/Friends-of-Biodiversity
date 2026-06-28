@@ -211,3 +211,21 @@ alter table post_comments enable row level security;
 create policy "pcomments_select" on post_comments for select using (true);
 create policy "pcomments_insert" on post_comments for insert with check (true);
 create policy "pcomments_delete" on post_comments for delete using (true);
+
+-- ── PROFILE EXTENSIONS ──
+alter table members add column if not exists wallpaper_url text;
+alter table members add column if not exists bio text;
+alter table members add column if not exists followers_count int default 0;
+
+-- ── FOLLOWS ──
+create table if not exists follows (
+  id uuid primary key default gen_random_uuid(),
+  follower_id uuid not null,
+  following_id uuid not null,
+  created_at timestamp without time zone default now(),
+  unique(follower_id, following_id)
+);
+alter table follows enable row level security;
+create policy "follows_select" on follows for select using (true);
+create policy "follows_insert" on follows for insert with check (true);
+create policy "follows_delete" on follows for delete using (true);
