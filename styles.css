@@ -35,6 +35,7 @@ img{max-width:100%;display:block}
 .sec-body{font-size:1rem;color:var(--muted);line-height:1.75;max-width:620px}
 section{padding:4.5rem 1.5rem}
 .inner{max-width:1200px;margin:0 auto}
+.feed-inner{max-width:680px;margin:0 auto;padding:0 1rem}
 
 /* HEADER */
 #hdr{position:fixed;top:0;left:0;right:0;z-index:200;padding:0 1.5rem;transition:background var(--tr),box-shadow var(--tr)}
@@ -160,7 +161,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .filter-row{display:flex;gap:.45rem;flex-wrap:wrap}
 .ftag{padding:.36rem .88rem;border-radius:99px;border:1.5px solid var(--border);background:var(--white);color:var(--muted);font-size:.77rem;font-weight:600;cursor:pointer;transition:background var(--tr),color var(--tr),border-color var(--tr)}
 .ftag.active,.ftag:hover{background:var(--canopy);color:var(--white);border-color:var(--canopy)}
-.content-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(295px,1fr));gap:1.2rem}
+.content-grid{display:grid;grid-template-columns:1fr;gap:.85rem;max-width:680px;margin:0 auto}
 .content-card{background:var(--white);border-radius:var(--r);overflow:hidden;box-shadow:var(--sh);transition:transform var(--tr)}
 .content-card:hover{transform:translateY(-3px);box-shadow:var(--sh-lg)}
 .cc-thumb{height:155px;position:relative;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
@@ -400,7 +401,7 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 /* ── COMMUNITY POSTS FEED ── */
-.post-card{background:var(--white);border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.08),0 4px 16px rgba(0,0,0,.06);margin-bottom:1rem;overflow:hidden;transition:box-shadow .2s,transform .2s}
+.post-card{background:var(--white);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.07);margin-bottom:.85rem;overflow:hidden;transition:box-shadow .2s;border:1px solid var(--border)}
 .post-card:hover{box-shadow:0 4px 20px rgba(0,0,0,.12);transform:translateY(-1px)}
 .post-header{display:flex;align-items:center;gap:.75rem;padding:1rem 1.1rem .6rem;position:relative}
 .post-avatar{width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1rem;font-weight:700;color:var(--gold);flex-shrink:0;overflow:hidden}
@@ -454,3 +455,30 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 /* Word count */
 .word-count{font-size:.72rem;color:var(--muted);text-align:right;margin-top:.25rem}
 .word-count.over{color:var(--rust);font-weight:600}
+
+/* ── LINKEDIN-STYLE POST PROMPT ── */
+.post-prompt{display:flex;align-items:center;gap:.75rem;background:var(--white);border-radius:16px 16px 0 0;padding:1rem 1.1rem .65rem;cursor:pointer;border:1px solid var(--border);border-bottom:none}
+.post-prompt-avatar{flex-shrink:0}
+.post-prompt-input{flex:1;background:var(--mist);border:1.5px solid var(--border);border-radius:24px;padding:.6rem 1rem;font-size:.88rem;color:var(--muted);transition:border-color .15s;cursor:pointer}
+.post-prompt:hover .post-prompt-input{border-color:var(--canopy-lt);color:var(--text)}
+.post-prompt-actions{display:flex;background:var(--white);border-radius:0 0 16px 16px;border:1px solid var(--border);border-top:1px solid var(--border);padding:.3rem .5rem .5rem;gap:.25rem;margin-bottom:.85rem}
+.post-prompt-btn{flex:1;background:none;border:none;padding:.5rem .4rem;border-radius:8px;font-size:.8rem;font-family:var(--ff-b);color:var(--muted);cursor:pointer;font-weight:600;transition:background .15s,color .15s;white-space:nowrap}
+.post-prompt-btn:hover{background:var(--mist);color:var(--canopy)}
+
+/* ── GLOBAL UI REFINEMENTS ── */
+/* Smoother modal */
+.modal{background:var(--white);border-radius:20px;padding:2rem;width:calc(100% - 2rem);max-width:560px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.2)}
+/* Tier cards */
+.tier-card{border-radius:16px}
+/* Admin cards */
+.adm-card{border-radius:14px}
+/* Buttons */
+.btn{border-radius:10px}
+.btn-sm{border-radius:8px}
+/* Nav */
+nav{backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+/* Smoother section transitions */
+section{transition:background .3s}
+/* Better form inputs */
+input,select,textarea{border-radius:10px!important;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)!important}

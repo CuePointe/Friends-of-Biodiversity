@@ -152,16 +152,18 @@
 
     <!-- COMMUNITY POSTS FEED -->
     <div id="community-feed-wrap" style="margin-top:3rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
-        <div>
-          <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
-          <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+      <div class="feed-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
+          <div>
+            <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
+            <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+          </div>
+          <div id="post-create-btn-wrap" style="display:none">
+            <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
+          </div>
         </div>
-        <div id="post-create-btn-wrap" style="display:none">
-          <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
-        </div>
+        <div id="posts-feed"></div>
       </div>
-      <div id="posts-feed"></div>
     </div>
   </div>
 </section>

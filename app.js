@@ -1307,22 +1307,46 @@ let postImageData=null;
 let currentPostFilter='all';
 
 async function loadPosts(){
-  const{data,error}=await sb.from('member_posts')
-    .select('*,post_comments(*)')
+  const{data:posts,error}=await sb.from('member_posts')
+    .select('*')
     .order('created_at',{ascending:false});
   if(error){console.error('loadPosts',error);return}
-  POSTS=(data||[]).map(p=>({
+
+  // Load comments separately — more reliable than FK join
+  const{data:comments}=await sb.from('post_comments')
+    .select('*')
+    .order('created_at',{ascending:true});
+
+  POSTS=(posts||[]).map(p=>({
     ...p,
-    comments:(p.post_comments||[]).sort((a,b)=>new Date(a.created_at)-new Date(b.created_at))
+    comments:(comments||[]).filter(c=>c.post_id===p.id)
   }));
 }
 
 function renderPosts(filter){
   currentPostFilter=filter||currentPostFilter;
   const el=document.getElementById('posts-feed');if(!el)return;
-  let items=POSTS;
+  const items=POSTS;
+
+  // LinkedIn-style "Start a post" bar at top
+  const promptHtml=currentUser?
+    '<div class="post-prompt" onclick="openModal(\'m-create-post\')">'+
+      '<div class="post-prompt-avatar">'+
+        (currentUser.photo_url
+          ?'<img src="'+currentUser.photo_url+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>'
+          :'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);font-size:.9rem">'+currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()+'</div>')+
+      '</div>'+
+      '<div class="post-prompt-input">Share a conservation story, project update...</div>'+
+    '</div>'+
+    '<div class="post-prompt-actions">'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">📷 Photo</button>'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">🎬 Video</button>'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">✍ Write</button>'+
+    '</div>'
+    :'';
+
   if(!items.length){
-    el.innerHTML='<div class="post-empty"><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    el.innerHTML=promptHtml+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
     return;
   }
   const myReacts=LS.get('post_reacts',{});
@@ -1333,7 +1357,7 @@ function renderPosts(filter){
     {key:'wow',emoji:'😮',label:'Wow'},
     {key:'celebrate',emoji:'🎉',label:'Celebrate'},
   ];
-  el.innerHTML=items.map(p=>{
+  el.innerHTML=promptHtml+items.map(p=>{
     const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
     // Find author's photo from loaded members
