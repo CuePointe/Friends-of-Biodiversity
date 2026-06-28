@@ -8,9 +8,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
-<link rel="icon" href="fob-logo.png?v=2" type="image/png"/>
-<link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
-<link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
+<link rel="shortcut icon" href="favicon.png"/>
+<link rel="apple-touch-icon" href="favicon.png"/>
 <!-- Preload critical images so hero and logos render instantly -->
 <link rel="preload" as="image" href="slide-1.jpg"/>
 <link rel="preload" as="image" href="slide-2.jpg"/>
@@ -18,8 +19,6 @@
 <link rel="preload" as="image" href="fob-logo.png"/>
 <link rel="preload" as="image" href="ubf-logo.png"/>
 <link rel="preload" as="image" href="footprint-globe.jpg"/>
-<link rel="shortcut icon" href="fob-logo.png?v=2" type="image/png"/>
-<link rel="apple-touch-icon" href="fob-logo.png?v=2"/>
 </head>
 <body>
 
@@ -140,6 +139,20 @@
       </div>
     </div>
     <div class="content-grid" id="content-grid"></div>
+
+    <!-- COMMUNITY POSTS FEED -->
+    <div id="community-feed-wrap" style="margin-top:3rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
+        <div>
+          <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
+          <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+        </div>
+        <div id="post-create-btn-wrap" style="display:none">
+          <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
+        </div>
+      </div>
+      <div id="posts-feed"></div>
+    </div>
   </div>
 </section>
 
@@ -379,11 +392,12 @@
     <button class="atab" data-ap="ap-email">Email Campaigns</button>
     <button class="atab" data-ap="ap-slides">Slide Images</button>
     <button class="atab" data-ap="ap-footprint">Our Footprint</button>
+    <button class="atab" data-ap="ap-posts">Community Posts</button>
   </div>
 
   <div id="ap-members" class="adm-panel active">
     <div class="adm-sec"><span>Registered Members</span><button class="btn btn-canopy btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
-    <div class="adm-card" style="overflow-x:auto"><table class="dtable"><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Tier</th><th>UGX Commitment</th><th>Year</th><th>Pay Ref</th><th>Role</th></tr></thead><tbody id="members-tbody"></tbody></table></div>
+    <div class="adm-card" style="overflow-x:auto"><table class="dtable"><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Tier</th><th>UGX Commitment</th><th>Year</th><th>Pay Ref</th><th>Role</th><th>Actions</th></tr></thead><tbody id="members-tbody"></tbody></table></div>
   </div>
 
   <div id="ap-content" class="adm-panel">
@@ -493,6 +507,16 @@
     <div class="adm-sec"><span>Our Footprint — Stat Boxes &amp; Proof Links</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-add-footprint')">+ Add New Stat</button></div>
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Each stat box on the public homepage can link to a report, article, photo album, or document that proves the achievement. Click <strong>Edit Link</strong> on any stat to attach a URL. Visitors who click the box will be taken to that proof.</p>
     <div id="footprint-admin-list"></div>
+  </div>
+
+  <!-- COMMUNITY POSTS ADMIN PANEL -->
+  <div id="ap-posts" class="adm-panel">
+    <div class="adm-sec"><span>Community Posts — Member Submissions</span></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Member posts appear instantly and publicly. Your role here is to remove any post that violates UBF community standards — disrespectful, unethical, or inappropriate content. Click <strong>Remove Post</strong> on any item to delete it immediately.</p>
+    <div style="display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="filterAdminPosts('all')">All Posts</button>
+    </div>
+    <div id="admin-posts-list"></div>
   </div>
 
 </div><!-- /view-admin -->
@@ -712,6 +736,47 @@
     <div class="fg"><label>Proof URL</label><input id="nfs-url" type="url" placeholder="https://..."/></div>
     <div class="fg"><label>Link Description</label><input id="nfs-desc" placeholder="e.g. See project report"/></div>
     <button class="btn btn-canopy btn-full" onclick="addFootprintStat()">Add to Homepage</button>
+  </div>
+</div>
+
+<!-- CREATE / EDIT POST MODAL -->
+<div class="overlay" id="m-create-post">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('m-create-post')">✕</button>
+    <h2 id="post-modal-title">Create a Post</h2>
+    <p class="msub">Share thoughts, updates, or conservation stories with the UBF community. Maximum 400 words. Posts appear instantly and are visible to all members.</p>
+    <input type="hidden" id="post-edit-id"/>
+    <div class="fg"><label>What's on your mind? *</label><textarea id="post-body" rows="4" placeholder="Share your conservation story, project update, or community experience..."></textarea></div>
+    <div class="fg"><label>Image (optional)</label>
+      <div class="upload-zone" onclick="document.getElementById('post-img-input').click()" style="padding:1rem">
+        <div class="uz-icon">🖼</div><strong>Click to attach an image</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">JPG or PNG</p>
+      </div>
+      <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
+      <div id="post-img-prev"></div>
+    </div>
+    <div class="fg"><label>Video (optional — upload directly)</label>
+      <div class="upload-zone" onclick="document.getElementById('post-vid-input').click()" style="padding:1rem">
+        <div class="uz-icon">🎬</div><strong>Click to upload a video</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">MP4 or MOV — plays directly in the app</p>
+      </div>
+      <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
+      <div id="post-vid-prev"></div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="submitPost()">Submit Post for Review →</button>
+  </div>
+</div>
+
+<!-- LEAVE MEMBERSHIP MODAL -->
+<div class="overlay" id="m-leave">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('m-leave')">✕</button>
+    <h2>Leave Membership</h2>
+    <p class="msub" style="color:var(--rust)">⚠ This will permanently deactivate your membership and unsubscribe you from all UBF communications.</p>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.65">If you have any concerns about your membership, please contact us first at <strong>info@ugandabiodiversityfund.org</strong> — we'd love to hear your feedback.</p>
+    <div class="fg"><label>Type <strong>LEAVE</strong> to confirm</label><input id="leave-confirm" placeholder="Type LEAVE here"/></div>
+    <button class="btn btn-danger btn-full" onclick="confirmLeave()">Permanently Leave &amp; Unsubscribe</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="closeModal('m-leave')">Cancel — Stay as Member</button>
   </div>
 </div>
 

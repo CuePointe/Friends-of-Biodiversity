@@ -68,7 +68,7 @@ const ADMIN_NAMES={
 const ADMIN_DEFAULT_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
-const SLIDE_IMAGES=Array.from({length:15},(_,i)=>`slide-${i+1}.jpg`);
+const SLIDE_IMAGES=Array.from({length:17},(_,i)=>`slide-${i+1}.jpg`);
 
 /* ═══ LOCAL UI-ONLY STATE (not shared data — just this browser's session/cache) ═══ */
 const LS={
@@ -164,7 +164,7 @@ function renderPaymentUI(){
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showLoadingToast();
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -176,6 +176,8 @@ async function bootstrapApp(){
   renderPublicAnnounces();
   renderStatHints();
   renderExtraStats();
+  renderPosts();
+  updatePostCreateBtn();
   hideLoadingToast();
   subscribeRealtime();
 }
@@ -191,6 +193,12 @@ function subscribeRealtime(){
   sb.channel('public:fin_reports').on('postgres_changes',{event:'*',schema:'public',table:'fin_reports'},async()=>{await loadFinReports();renderFinancials()}).subscribe();
   sb.channel('public:members').on('postgres_changes',{event:'*',schema:'public',table:'members'},async()=>{await loadMembers();renderAdminMembers()}).subscribe();
   sb.channel('public:payment_details').on('postgres_changes',{event:'*',schema:'public',table:'payment_details'},async()=>{await loadPayment();renderPaymentUI()}).subscribe();
+  sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();}).subscribe();
+}
+
+function updatePostCreateBtn(){
+  const wrap=document.getElementById('post-create-btn-wrap');
+  if(wrap)wrap.style.display=currentUser?'block':'none';
 }
 
 /* ═══ HERO SLIDESHOW ═══ */
@@ -304,6 +312,7 @@ function updateNav(){
   document.getElementById('upload-btn-slot').style.display=adm?'':'none';
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
   renderContent();
+  updatePostCreateBtn();
 }
 
 /* ═══ ENROLL ═══ */
@@ -680,8 +689,32 @@ function renderPublicAnnounces(){
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  const initials=u.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const avatarHtml=u.photo_url
+    ?'<img src="'+u.photo_url+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(200,168,75,.5);box-shadow:0 2px 12px rgba(0,0,0,.3)"/>'
+    :'<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--canopy-lt),var(--canopy));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1.8rem;font-weight:700;color:var(--gold);border:3px solid rgba(200,168,75,.4);box-shadow:0 2px 12px rgba(0,0,0,.3)">'+initials+'</div>';
   document.getElementById('mem-greeting').textContent='Welcome back, '+u.name.split(' ')[0]+' '+td.emoji;
   document.getElementById('mem-sub').textContent=td.label+' Member · '+u.year+(u.org?' · '+u.org:'');
+  // Inject avatar into header
+  let avatarWrap=document.getElementById('mem-avatar-wrap');
+  if(!avatarWrap){
+    avatarWrap=document.createElement('div');
+    avatarWrap.id='mem-avatar-wrap';
+    avatarWrap.style.cssText='display:flex;align-items:center;gap:1.25rem;margin-bottom:1.25rem';
+    const hdr=document.querySelector('.mem-hdr');
+    if(hdr)hdr.insertBefore(avatarWrap,hdr.querySelector('h1'));
+  }
+  avatarWrap.innerHTML=
+    '<div style="position:relative;flex-shrink:0">'+
+      avatarHtml+
+      '<label for="profile-photo-input" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:.8rem" title="Change photo">📷</label>'+
+      '<input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(event)"/>'+
+    '</div>'+
+    '<div>'+
+      '<div style="font-family:var(--ff-d);font-size:1.3rem;color:var(--gold-lt);font-weight:700">'+u.name+'</div>'+
+      '<div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.2rem">'+td.emoji+' '+td.label+' Member</div>'+
+      (u.org?'<div style="font-size:.78rem;color:rgba(255,255,255,.4)">'+u.org+'</div>':'')+
+    '</div>';
   const accessible=CONTENT.filter(c=>ACCESS_RANK[c.access]<=(td.r||1));
   document.getElementById('mem-strip').innerHTML=
     '<div class="mem-mini"><div class="val">'+td.emoji+'</div><div class="lbl">'+td.label+' Tier</div></div>'+
@@ -701,11 +734,33 @@ function renderMemberView(){
     '<div style="margin-top:2rem;display:flex;gap:.75rem;flex-wrap:wrap">'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),200)">Go to Learning Exchange →</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'wallfame\').scrollIntoView({behavior:\'smooth\'}),200)">Wall of Fame →</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✏ Create Post</button>'+
+    '</div>'+
+    '<div style="margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">'+
+      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Want to leave the Friends of Biodiversity programme or unsubscribe from communications?</p>'+
+      '<button class="btn btn-sm" style="background:rgba(181,69,27,.08);color:var(--rust);border:1.5px solid rgba(181,69,27,.25)" onclick="openModal(\'m-leave\')">Leave Membership &amp; Unsubscribe</button>'+
+    '</div>'
     '</div>';
 }
 
 /* ═══ CERTIFICATE ═══ */
 /* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
+/* ═══ PROFILE PHOTO UPLOAD ═══ */
+async function uploadProfilePhoto(e){
+  const f=e.target.files[0];if(!f||!currentUser)return;
+  toast('⬆ Uploading profile photo...');
+  const path='profiles/'+currentUser.id+'.'+f.name.split('.').pop().toLowerCase();
+  const{error:upErr}=await sb.storage.from('fame-photos').upload(path,f,{upsert:true,contentType:f.type});
+  if(upErr){toast('⚠ Upload failed. Try a smaller image.');console.error(upErr);return}
+  const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
+  const photoUrl=data.publicUrl+'?t='+Date.now();// cache-bust
+  const{error}=await sb.from('members').update({photo_url:photoUrl}).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not save photo.');console.error(error);return}
+  currentUser.photo_url=photoUrl;
+  toast('✅ Profile photo updated!');
+  renderMemberView();
+}
+
 async function changePassword(){
   if(!currentUser){toast('⚠ You must be signed in.');return}
   const current=document.getElementById('cp-current').value;
@@ -778,7 +833,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();}
+function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();}
 
 /* Render any extra stats saved by admin into the DOM on page load */
 function renderExtraStats(){
@@ -802,7 +857,17 @@ function renderExtraStats(){
 
 function renderAdminMembers(){
   const tb=document.getElementById('members-tbody');if(!tb)return;
-  tb.innerHTML=MEMBERS.map(m=>'<tr><td>'+m.name+'</td><td style="font-size:.76rem">'+m.email+'</td><td>'+(m.type||'—')+'</td><td><span class="pill pill-'+((m.tier||'silver'))+'">'+((m.tier||'').charAt(0).toUpperCase()+(m.tier||'').slice(1)||'—')+'</span></td><td>'+(m.amount?m.amount.toLocaleString():'—')+'</td><td>'+(m.year||'—')+'</td><td style="font-size:.74rem">'+(m.payref||'—')+'</td><td><span class="pill '+(m.role==='admin'?'pill-admin':'pill-ok')+'">'+m.role+'</span></td></tr>').join('');
+  tb.innerHTML=MEMBERS.map(m=>'<tr>'+
+    '<td>'+m.name+'</td>'+
+    '<td style="font-size:.76rem">'+m.email+'</td>'+
+    '<td>'+(m.type||'—')+'</td>'+
+    '<td><span class="pill pill-'+((m.tier||'silver'))+'">'+((m.tier||'').charAt(0).toUpperCase()+(m.tier||'').slice(1)||'—')+'</span></td>'+
+    '<td>'+(m.amount?m.amount.toLocaleString():'—')+'</td>'+
+    '<td>'+(m.year||'—')+'</td>'+
+    '<td style="font-size:.74rem">'+(m.payref||'—')+'</td>'+
+    '<td><span class="pill '+(m.role==='admin'?'pill-admin':m.role==='removed'?'pill-danger':'pill-ok')+'">'+m.role+'</span></td>'+
+    '<td>'+(m.role!=='admin'?'<button class="btn btn-danger btn-sm" onclick="adminRemoveMember(\''+m.id+'\',\''+m.name.replace(/'/g,'')+'\')">Remove</button>':'<span style="font-size:.72rem;color:var(--muted)">—</span>')+'</td>'+
+  '</tr>').join('');
 }
 
 function renderAdminContent(){
@@ -1233,6 +1298,308 @@ async function subscribeEP(){
   if(!em||!em.includes('@')){toast('⚠ Enter a valid email address.');return}
   await logEmail('Newsletter Subscription','New subscriber: '+em+' · '+new Date().toLocaleDateString());
   dismissEP();toast('✅ Subscribed! You will receive UBF updates.');
+}
+
+/* ═══ COMMUNITY POSTS ═══ */
+let POSTS=[];
+let postImageData=null;
+let currentPostFilter='all';
+
+async function loadPosts(){
+  const{data,error}=await sb.from('member_posts').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadPosts',error);return}
+  POSTS=data||[];
+}
+
+function renderPosts(filter){
+  currentPostFilter=filter||currentPostFilter;
+  const el=document.getElementById('posts-feed');if(!el)return;
+  let items=POSTS;
+  if(!items.length){
+    el.innerHTML='<div class="post-empty"><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    return;
+  }
+  const myReacts=LS.get('post_reacts',{});
+  const POST_EMOJIS=[
+    {key:'likes',emoji:'❤️',label:'Love'},
+    {key:'thumbsup',emoji:'👍',label:'Like'},
+    {key:'support',emoji:'🤝',label:'Support'},
+    {key:'wow',emoji:'😮',label:'Wow'},
+    {key:'celebrate',emoji:'🎉',label:'Celebrate'},
+  ];
+  el.innerHTML=items.map(p=>{
+    const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
+    // Find author's photo from loaded members
+    const authorMember=MEMBERS.find(m=>m.id===p.author_id);
+    const authorPhoto=authorMember&&authorMember.photo_url;
+    const avatarHtml=authorPhoto
+      ?'<img src="'+authorPhoto+'" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,168,75,.3)"/>'
+      :'<div class="post-avatar">'+initials+'</div>';
+    const isOwner=currentUser&&currentUser.id===p.author_id;
+    const isAdmin=currentUser&&currentUser.role==='admin';
+    const ytMatch=null; // no external links — all videos are direct uploads
+    const ytEmbed='';
+    const vimeoEmbed='';
+    return '<div class="post-card" id="post-'+p.id+'">'+
+      '<div class="post-header">'+
+        avatarHtml+
+        '<div class="post-meta">'+
+          '<div class="post-author">'+p.author_name+' '+td.emoji+'</div>'+
+          '<div class="post-tier">'+td.label+' Member</div>'+
+        '</div>'+
+        '<div class="post-time">'+(p.created_at||'').slice(0,10)+'</div>'+
+      '</div>'+
+      (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
+      (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image"/>':'')+
+      (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline style="width:100%;border-radius:var(--r-sm);max-height:360px;background:#000"></video></div>':'')+
+      '<div class="post-reactions">'+
+        POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)">'+r.emoji+' <span>'+(p.reactions[r.key]||0)+'</span></button>').join('')+
+        '<div class="post-actions">'+
+          (isOwner?'<button class="btn btn-ghost btn-sm" onclick="editPost(\''+p.id+'\')">✏</button>':'')+''+
+          (isOwner||isAdmin?'<button class="btn btn-danger btn-sm" onclick="deletePost(\''+p.id+'\')">🗑'+(isAdmin&&!isOwner?' Remove':'')+'</button>':'')+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+function handlePostImage(e){
+  const f=e.target.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    postImageData=ev.target.result;
+    document.getElementById('post-img-prev').innerHTML=
+      '<div style="position:relative;margin-top:.5rem"><img src="'+postImageData+'" style="width:100%;max-height:200px;object-fit:cover;border-radius:var(--r-sm)"/><button onclick="postImageData=null;document.getElementById(\'post-img-prev\').innerHTML=\'\'" style="position:absolute;top:.4rem;right:.4rem;background:rgba(0,0,0,.6);color:#fff;border:none;border-radius:50%;width:24px;height:24px;cursor:pointer;font-size:.8rem">✕</button></div>';
+  };
+  reader.readAsDataURL(f);
+}
+let postVideoFile=null;
+function handlePostVideo(e){
+  const f=e.target.files[0];if(!f)return;
+  postVideoFile=f;
+  document.getElementById('post-vid-prev').innerHTML=
+    '<div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--mist);border-radius:var(--r-sm)">'+
+      '<span style="font-size:1.2rem">🎬</span>'+
+      '<span style="font-size:.82rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+f.name+'</span>'+
+      '<span style="font-size:.72rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(1)+'MB</span>'+
+      '<button onclick="postVideoFile=null;document.getElementById(\'post-vid-prev\').innerHTML=\'\'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem">✕</button>'+
+    '</div>';
+}
+
+// Word count live feedback
+document.addEventListener('input',e=>{
+  if(e.target.id==='post-body'){
+    const words=e.target.value.trim().split(/\s+/).filter(Boolean).length;
+    let wc=document.getElementById('post-word-count');
+    if(!wc){wc=document.createElement('div');wc.id='post-word-count';wc.className='word-count';e.target.parentNode.appendChild(wc);}
+    wc.textContent=words+' / 400 words';
+    wc.className='word-count'+(words>400?' over':'');
+  }
+});
+
+async function submitPost(){
+  if(!currentUser){toast('Sign in to post.');return}
+  const body=document.getElementById('post-body').value.trim();
+  const editId=document.getElementById('post-edit-id').value;
+  if(!body&&!postImageData&&!postVideoFile){toast('⚠ Write something or attach an image or video.');return}
+  const words=body.split(/\s+/).filter(Boolean).length;
+  if(words>400){toast('⚠ Post exceeds 400 words. Please shorten it.');return}
+  toast('⬆ Publishing...');
+
+  let imageUrl='';
+  if(postImageData){
+    const blob=await(await fetch(postImageData)).blob();
+    const path='posts/img_'+Date.now()+'_'+currentUser.id+'.jpg';
+    const{error:upErr}=await sb.storage.from('content-files').upload(path,blob,{contentType:'image/jpeg'});
+    if(!upErr){const{data}=sb.storage.from('content-files').getPublicUrl(path);imageUrl=data.publicUrl;}
+    else{console.error('image upload',upErr);}
+  }
+
+  let videoUrl='';
+  if(postVideoFile){
+    const ext=postVideoFile.name.split('.').pop().toLowerCase();
+    const path='posts/vid_'+Date.now()+'_'+currentUser.id+'.'+ext;
+    const{error:upErr}=await sb.storage.from('content-files').upload(path,postVideoFile,{contentType:postVideoFile.type});
+    if(!upErr){const{data}=sb.storage.from('content-files').getPublicUrl(path);videoUrl=data.publicUrl;}
+    else{console.error('video upload',upErr);toast('⚠ Video upload failed — check your Supabase storage bucket size limit.');}
+  }
+
+  if(editId){
+    const updates={body};
+    if(imageUrl)updates.image_url=imageUrl;
+    if(videoUrl)updates.video_url=videoUrl;
+    const{error}=await sb.from('member_posts').update(updates).eq('id',editId);
+    if(error){toast('⚠ Could not update post.');console.error(error);return}
+    toast('✅ Post updated.');
+  }else{
+    const row={
+      author_id:currentUser.id,
+      author_name:currentUser.name,
+      author_tier:currentUser.tier||'silver',
+      body,
+      image_url:imageUrl||null,
+      video_url:videoUrl||null,
+      reactions:{likes:0,thumbsup:0,support:0,wow:0,celebrate:0},
+    };
+    const{error}=await sb.from('member_posts').insert(row);
+    if(error){toast('⚠ Could not publish post. Check Supabase RLS policies.');console.error(error);return}
+    toast('✅ Post published!');
+  }
+
+  // Reset form
+  document.getElementById('post-body').value='';
+  document.getElementById('post-img-prev').innerHTML='';
+  document.getElementById('post-vid-prev').innerHTML='';
+  document.getElementById('post-edit-id').value='';
+  document.getElementById('post-modal-title').textContent='Create a Post';
+  const wc=document.getElementById('post-word-count');if(wc)wc.textContent='';
+  postImageData=null;
+  postVideoFile=null;
+  closeModal('m-create-post');
+  await loadPosts();renderPosts();renderAdminPosts();
+}
+
+function editPost(id){
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  if(currentUser.id!==p.author_id&&currentUser.role!=='admin'){toast('You can only edit your own posts.');return}
+  document.getElementById('post-edit-id').value=id;
+  document.getElementById('post-modal-title').textContent='Edit Post';
+  document.getElementById('post-body').value=p.body||'';
+  document.getElementById('post-img-prev').innerHTML='';
+  document.getElementById('post-vid-prev').innerHTML='';
+  postImageData=null;
+  postVideoFile=null;
+  openModal('m-create-post');
+}
+
+async function deletePost(id){
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  const isOwner=currentUser&&currentUser.id===p.author_id;
+  const isAdmin=currentUser&&currentUser.role==='admin';
+  if(!isOwner&&!isAdmin){toast('You do not have permission to remove this post.');return}
+  const msg=isAdmin&&!isOwner
+    ?'Remove this post for violating community standards?'
+    :'Delete your post permanently?';
+  if(!confirm(msg))return;
+  const{error}=await sb.from('member_posts').delete().eq('id',id);
+  if(error){toast('⚠ Could not remove post.');console.error(error);return}
+  document.getElementById('post-'+id)?.remove();
+  POSTS=POSTS.filter(x=>x.id!==id);
+  renderAdminPosts();
+  toast(isAdmin&&!isOwner?'Post removed.':'Post deleted.');
+}
+
+async function reactToPost(id,key,btn){
+  if(!currentUser){toast('Sign in to react.');return}
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  const myReacts=LS.get('post_reacts',{});
+  const reactions={...p.reactions};
+  const prev=myReacts[id];
+  if(prev===key){reactions[key]=Math.max(0,(reactions[key]||0)-1);delete myReacts[id];}
+  else{if(prev)reactions[prev]=Math.max(0,(reactions[prev]||0)-1);reactions[key]=(reactions[key]||0)+1;myReacts[id]=key;}
+  p.reactions=reactions;
+  LS.set('post_reacts',myReacts);
+  await sb.from('member_posts').update({reactions}).eq('id',id);
+  // Update just this button's count without full re-render
+  btn.parentNode.querySelectorAll('.post-react-btn').forEach(b=>b.classList.remove('active'));
+  if(myReacts[id])btn.classList.add('active');
+  btn.querySelector('span').textContent=reactions[key]||0;
+}
+
+function filterAdminPosts(f){renderAdminPosts(f)}
+function renderAdminPosts(filter){
+  const el=document.getElementById('admin-posts-list');if(!el)return;
+  const items=POSTS;
+  if(!items.length){el.innerHTML='<p style="color:var(--muted);font-size:.87rem">No posts yet.</p>';return}
+  el.innerHTML=items.map(p=>
+    '<div class="adm-card" style="border-left:4px solid var(--canopy-lt);margin-bottom:.75rem">'+
+      '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem">'+
+        '<div>'+
+          '<div style="font-weight:700;font-size:.88rem;color:var(--canopy)">'+p.author_name+' <span style="font-weight:400;color:var(--muted)">('+p.author_tier+')</span></div>'+
+          '<div style="font-size:.72rem;color:var(--muted);margin-bottom:.45rem">'+(p.created_at||'').slice(0,16).replace('T',' ')+'</div>'+
+          '<div style="font-size:.83rem;color:var(--text);line-height:1.6;margin-bottom:.35rem">'+(p.body||'')+'</div>'+
+          (p.image_url?'<img src="'+p.image_url+'" style="max-width:200px;border-radius:var(--r-sm);margin-top:.4rem"/>':'')+
+          (p.video_url?'<div style="font-size:.75rem;color:var(--canopy-lt);margin-top:.35rem">📹 '+p.video_url+'</div>':'')+
+        '</div>'+
+        '<button class="btn btn-danger btn-sm" style="flex-shrink:0" onclick="deletePost(\''+p.id+'\')">Remove</button>'+
+      '</div>'+
+    '</div>'
+  ).join('');
+}
+
+/* ═══ LEAVE MEMBERSHIP & UNSUBSCRIBE ═══ */
+async function confirmLeave(){
+  const val=document.getElementById('leave-confirm').value.trim().toUpperCase();
+  if(val!=='LEAVE'){toast('⚠ Type LEAVE in capitals to confirm.');return}
+  if(!currentUser){return}
+  const{error}=await sb.from('members').update({status:'inactive',role:'left'}).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not process. Please email info@ugandabiodiversityfund.org.');console.error(error);return}
+  closeModal('m-leave');
+  toast('You have left the Friends of Biodiversity programme. Goodbye and thank you for your contribution.');
+  setTimeout(()=>doLogout(),2500);
+}
+
+/* ═══ ADMIN — REMOVE MEMBER ═══ */
+async function adminRemoveMember(id,name){
+  if(!confirm('Remove '+name+' from the membership? This will deactivate their account.'))return;
+  const{error}=await sb.from('members').update({status:'removed',role:'removed'}).eq('id',id);
+  if(error){toast('⚠ Could not remove member.');console.error(error);return}
+  await loadMembers();renderAdminMembers();
+  toast('✅ '+name+' has been removed from the membership.');
+}
+
+/* ═══ EDIT / DELETE FOOTPRINT STAT ═══ */
+function editFootprintStat(key){
+  const extra=getExtraStats();
+  const s=extra.find(e=>e.key===key);
+  if(!s){toast('Default stats can only have their proof link edited, not the figures. Use Edit Link.');return}
+  document.getElementById('nfs-ico').value=s.ico||'';
+  document.getElementById('nfs-val').value=s.val||'';
+  document.getElementById('nfs-prefix').value=s.prefix||'';
+  document.getElementById('nfs-suffix').value=s.suffix||'';
+  document.getElementById('nfs-label').value=s.label||'';
+  const links=getStatLinks();
+  const link=links[key]||{};
+  document.getElementById('nfs-url').value=link.url||'';
+  document.getElementById('nfs-desc').value=link.desc||'';
+  // Repurpose modal to edit mode
+  document.querySelector('#m-add-footprint h2').textContent='Edit Stat';
+  document.querySelector('#m-add-footprint .btn-canopy').textContent='Save Changes';
+  document.querySelector('#m-add-footprint .btn-canopy').setAttribute('onclick','saveEditedStat(\''+key+'\')');
+  openModal('m-add-footprint');
+}
+function saveEditedStat(key){
+  const extra=getExtraStats();
+  const idx=extra.findIndex(e=>e.key===key);if(idx===-1)return;
+  extra[idx]={
+    ...extra[idx],
+    ico:document.getElementById('nfs-ico').value.trim()||extra[idx].ico,
+    val:parseInt(document.getElementById('nfs-val').value)||extra[idx].val,
+    prefix:document.getElementById('nfs-prefix').value.trim(),
+    suffix:document.getElementById('nfs-suffix').value.trim(),
+    label:document.getElementById('nfs-label').value.trim()||extra[idx].label,
+  };
+  LS.set('extra_stats',extra);
+  const url=document.getElementById('nfs-url').value.trim();
+  if(url){const links=getStatLinks();links[key]={url,desc:document.getElementById('nfs-desc').value.trim(),label:extra[idx].label};LS.set('stat_links',links);}
+  // Reset modal back to add mode
+  document.querySelector('#m-add-footprint h2').textContent='Add New Footprint Stat';
+  document.querySelector('#m-add-footprint .btn-canopy').textContent='Add to Homepage';
+  document.querySelector('#m-add-footprint .btn-canopy').setAttribute('onclick','addFootprintStat()');
+  ['nfs-ico','nfs-val','nfs-prefix','nfs-suffix','nfs-label','nfs-url','nfs-desc'].forEach(id=>document.getElementById(id).value='');
+  closeModal('m-add-footprint');
+  // Update DOM cell
+  const cell=document.querySelector('.stat-cell[data-key="'+key+'"]');
+  if(cell){
+    const stat=extra[idx];
+    cell.querySelector('.stat-ico').textContent=stat.ico;
+    cell.querySelector('.stat-l').textContent=stat.label;
+  }
+  renderFootprintAdmin();renderStatHints();
+  toast('✅ Stat updated.');
 }
 
 /* ═══ TOAST ═══ */
