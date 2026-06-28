@@ -194,6 +194,7 @@ function subscribeRealtime(){
   sb.channel('public:members').on('postgres_changes',{event:'*',schema:'public',table:'members'},async()=>{await loadMembers();renderAdminMembers()}).subscribe();
   sb.channel('public:payment_details').on('postgres_changes',{event:'*',schema:'public',table:'payment_details'},async()=>{await loadPayment();renderPaymentUI()}).subscribe();
   sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();}).subscribe();
+  sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
 }
 
 function updatePostCreateBtn(){
@@ -1306,17 +1307,46 @@ let postImageData=null;
 let currentPostFilter='all';
 
 async function loadPosts(){
-  const{data,error}=await sb.from('member_posts').select('*').order('created_at',{ascending:false});
+  const{data:posts,error}=await sb.from('member_posts')
+    .select('*')
+    .order('created_at',{ascending:false});
   if(error){console.error('loadPosts',error);return}
-  POSTS=data||[];
+
+  // Load comments separately — more reliable than FK join
+  const{data:comments}=await sb.from('post_comments')
+    .select('*')
+    .order('created_at',{ascending:true});
+
+  POSTS=(posts||[]).map(p=>({
+    ...p,
+    comments:(comments||[]).filter(c=>c.post_id===p.id)
+  }));
 }
 
 function renderPosts(filter){
   currentPostFilter=filter||currentPostFilter;
   const el=document.getElementById('posts-feed');if(!el)return;
-  let items=POSTS;
+  const items=POSTS;
+
+  // LinkedIn-style "Start a post" bar at top
+  const promptHtml=currentUser?
+    '<div class="post-prompt" onclick="openModal(\'m-create-post\')">'+
+      '<div class="post-prompt-avatar">'+
+        (currentUser.photo_url
+          ?'<img src="'+currentUser.photo_url+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>'
+          :'<div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--gold);font-size:.9rem">'+currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase()+'</div>')+
+      '</div>'+
+      '<div class="post-prompt-input">Share a conservation story, project update...</div>'+
+    '</div>'+
+    '<div class="post-prompt-actions">'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">📷 Photo</button>'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">🎬 Video</button>'+
+      '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">✍ Write</button>'+
+    '</div>'
+    :'';
+
   if(!items.length){
-    el.innerHTML='<div class="post-empty"><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    el.innerHTML=promptHtml+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
     return;
   }
   const myReacts=LS.get('post_reacts',{});
@@ -1327,7 +1357,7 @@ function renderPosts(filter){
     {key:'wow',emoji:'😮',label:'Wow'},
     {key:'celebrate',emoji:'🎉',label:'Celebrate'},
   ];
-  el.innerHTML=items.map(p=>{
+  el.innerHTML=promptHtml+items.map(p=>{
     const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
     // Find author's photo from loaded members
@@ -1338,33 +1368,128 @@ function renderPosts(filter){
       :'<div class="post-avatar">'+initials+'</div>';
     const isOwner=currentUser&&currentUser.id===p.author_id;
     const isAdmin=currentUser&&currentUser.role==='admin';
-    const ytMatch=null; // no external links — all videos are direct uploads
-    const ytEmbed='';
-    const vimeoEmbed='';
+    const pComments=p.comments||[];
+    const commentCount=pComments.length;
+    const totalReacts=Object.values(p.reactions||{}).reduce((a,b)=>a+(b||0),0);
     return '<div class="post-card" id="post-'+p.id+'">'+
       '<div class="post-header">'+
         avatarHtml+
         '<div class="post-meta">'+
-          '<div class="post-author">'+p.author_name+' '+td.emoji+'</div>'+
-          '<div class="post-tier">'+td.label+' Member</div>'+
+          '<div class="post-author">'+p.author_name+'</div>'+
+          '<div class="post-tier">'+td.emoji+' '+td.label+' · '+(p.created_at||'').slice(0,10)+'</div>'+
         '</div>'+
-        '<div class="post-time">'+(p.created_at||'').slice(0,10)+'</div>'+
+        (isOwner||isAdmin?
+          '<div class="post-menu-wrap">'+
+            '<button class="post-menu-btn" onclick="togglePostMenu(\'menu-'+p.id+'\')">⋯</button>'+
+            '<div class="post-menu" id="menu-'+p.id+'" style="display:none">'+
+              (isOwner?'<button onclick="editPost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'">✏ Edit</button>':'')+
+              '<button onclick="deletePost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'" style="color:var(--rust)">'+(isAdmin&&!isOwner?'🚫 Remove':'🗑 Delete')+'</button>'+
+            '</div>'+
+          '</div>'
+        :'')+
       '</div>'+
       (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
-      (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image"/>':'')+
-      (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline style="width:100%;border-radius:var(--r-sm);max-height:360px;background:#000"></video></div>':'')+
+      (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image" onclick="openImageFull(\''+p.image_url+'\')"/>':'')+
+      (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline preload="metadata"></video></div>':'')+
+      (totalReacts>0?'<div class="post-react-summary">'+POST_EMOJIS.filter(r=>(p.reactions[r.key]||0)>0).map(r=>r.emoji+' '+p.reactions[r.key]).join('  ')+'<span style="margin-left:auto">'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>':'<div class="post-react-summary"><span>'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>')+
       '<div class="post-reactions">'+
-        POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)">'+r.emoji+' <span>'+(p.reactions[r.key]||0)+'</span></button>').join('')+
-        '<div class="post-actions">'+
-          (isOwner?'<button class="btn btn-ghost btn-sm" onclick="editPost(\''+p.id+'\')">✏</button>':'')+''+
-          (isOwner||isAdmin?'<button class="btn btn-danger btn-sm" onclick="deletePost(\''+p.id+'\')">🗑'+(isAdmin&&!isOwner?' Remove':'')+'</button>':'')+
-        '</div>'+
+        POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' '+r.label+'</button>').join('')+
+        '<button class="post-react-btn comment-btn" onclick="focusPostComment(\'pci-'+p.id+'\')">💬 Comment</button>'+
+      '</div>'+
+      '<div class="post-comments-wrap" id="pcomments-'+p.id+'">'+
+        (pComments.length?pComments.map(c=>{
+          const cM=MEMBERS.find(m=>m.id===c.author_id);
+          const cP=cM&&cM.photo_url;
+          const cI=(c.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+          const cTd=TIERS_DATA[c.author_tier]||TIERS_DATA.silver;
+          const canDel=currentUser&&(currentUser.id===c.author_id||currentUser.role==='admin');
+          return '<div class="post-comment" id="pcomment-'+c.id+'">'+
+            '<div class="pc-avatar">'+(cP?'<img src="'+cP+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':cI)+'</div>'+
+            '<div class="pc-bubble">'+
+              '<span class="pc-name">'+c.author_name+' <span class="pc-tier">'+cTd.emoji+'</span></span>'+
+              '<div class="pc-text">'+escHtml(c.body)+'</div>'+
+              '<div class="pc-time">'+(c.created_at||'').slice(0,16).replace('T',' ')+'</div>'+
+            '</div>'+
+            (canDel?'<button class="pc-del" onclick="deletePostComment(\''+c.id+'\',\''+p.id+'\')">✕</button>':'')+
+          '</div>';
+        }).join(''):'<div class="pc-empty">No comments yet — be the first!</div>')+
+        (currentUser?
+          '<div class="post-comment-input-wrap">'+
+            '<div class="pc-avatar">'+(currentUser.photo_url?'<img src="'+currentUser.photo_url+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase())+'</div>'+
+            '<div class="pc-input-row">'+
+              '<input id="pci-'+p.id+'" class="pc-input" placeholder="Write a comment..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitPostComment(\''+p.id+'\')}" />'+
+              '<button class="pc-send" onclick="submitPostComment(\''+p.id+'\')">➤</button>'+
+            '</div>'+
+          '</div>'
+        :'<p style="font-size:.78rem;color:var(--muted);padding:.6rem 1.25rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment</p>')+
       '</div>'+
     '</div>';
   }).join('');
 }
 
-function escHtml(t){return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function escHtml(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+
+/* Post comment helpers */
+function focusPostComment(inputId){
+  const el=document.getElementById(inputId);
+  if(el){el.focus();el.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  else if(!currentUser){openModal('m-login');}
+}
+
+function togglePostMenu(menuId){
+  const menu=document.getElementById(menuId);
+  if(!menu)return;
+  const isOpen=menu.style.display!=='none';
+  // Close all other menus first
+  document.querySelectorAll('.post-menu').forEach(m=>m.style.display='none');
+  menu.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    // Close on outside click
+    setTimeout(()=>{
+      const handler=e=>{if(!menu.contains(e.target)){menu.style.display='none';document.removeEventListener('click',handler);}};
+      document.addEventListener('click',handler);
+    },10);
+  }
+}
+
+function openImageFull(url){
+  const ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:999;display:flex;align-items:center;justify-content:center;cursor:zoom-out';
+  ov.onclick=()=>ov.remove();
+  ov.innerHTML='<img src="'+url+'" style="max-width:96vw;max-height:92vh;object-fit:contain;border-radius:8px"/>';
+  document.body.appendChild(ov);
+}
+
+async function submitPostComment(postId){
+  if(!currentUser){toast('Sign in to comment.');return}
+  const input=document.getElementById('pci-'+postId);
+  if(!input)return;
+  const body=input.value.trim();
+  if(!body){return}
+  input.disabled=true;
+  const row={
+    post_id:postId,
+    author_id:currentUser.id,
+    author_name:currentUser.name,
+    author_tier:currentUser.tier||'silver',
+    body,
+  };
+  const{error}=await sb.from('post_comments').insert(row);
+  if(error){toast('⚠ Could not post comment.');console.error(error);input.disabled=false;return}
+  input.value='';
+  input.disabled=false;
+  await loadPosts();renderPosts();
+}
+
+async function deletePostComment(commentId,postId){
+  if(!currentUser){return}
+  const{error}=await sb.from('post_comments').delete().eq('id',commentId);
+  if(error){toast('⚠ Could not delete comment.');console.error(error);return}
+  const el=document.getElementById('pcomment-'+commentId);
+  if(el){el.style.opacity='0';el.style.transition='opacity .2s';setTimeout(()=>el.remove(),200);}
+  await loadPosts();renderPosts();
+}
+
 
 function handlePostImage(e){
   const f=e.target.files[0];if(!f)return;
@@ -1612,3 +1737,76 @@ function toast(msg){
 /* ═══ GO ═══ */
 bootstrapApp();
 showEP(true);
+
+/* ═══ PWA — SERVICE WORKER REGISTRATION & INSTALL PROMPT ═══ */
+let pwaInstallPrompt=null;
+
+// Register service worker
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('/sw.js')
+      .then(reg=>console.log('FoB PWA: Service worker registered',reg.scope))
+      .catch(err=>console.log('FoB PWA: Service worker failed',err));
+  });
+}
+
+// Capture the install prompt before it fires
+window.addEventListener('beforeinstallprompt',e=>{
+  e.preventDefault();
+  pwaInstallPrompt=e;
+  showPWABanner();
+});
+
+// Show a friendly install banner
+function showPWABanner(){
+  if(LS.get('pwa_dismissed',false))return;
+  const existing=document.getElementById('pwa-banner');
+  if(existing)return;
+  const banner=document.createElement('div');
+  banner.id='pwa-banner';
+  banner.innerHTML=
+    '<div style="display:flex;align-items:center;gap:.75rem;flex:1">'+
+      '<img src="icon-96.png" style="width:42px;height:42px;border-radius:10px;flex-shrink:0"/>'+
+      '<div>'+
+        '<div style="font-weight:700;font-size:.88rem;color:var(--canopy)">Install Friends of Biodiversity</div>'+
+        '<div style="font-size:.76rem;color:var(--muted);margin-top:.1rem">Add to your home screen for quick access</div>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:.5rem;flex-shrink:0">'+
+      '<button onclick="installPWA()" style="padding:.45rem 1rem;background:var(--canopy);color:#fff;border:none;border-radius:var(--r-sm);font-weight:700;font-size:.8rem;cursor:pointer">Install</button>'+
+      '<button onclick="dismissPWABanner()" style="padding:.45rem .75rem;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:var(--r-sm);font-size:.8rem;cursor:pointer">Not now</button>'+
+    '</div>';
+  banner.style.cssText=
+    'position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%);'+
+    'width:calc(100vw - 2rem);max-width:520px;'+
+    'background:#fff;border-radius:var(--r);padding:1rem 1.1rem;'+
+    'box-shadow:0 4px 24px rgba(0,0,0,.18);z-index:700;'+
+    'display:flex;align-items:center;gap:1rem;flex-wrap:wrap;'+
+    'border-top:3px solid var(--canopy-lt);'+
+    'animation:slideUp .4s ease;';
+  document.body.appendChild(banner);
+}
+
+async function installPWA(){
+  if(!pwaInstallPrompt)return;
+  pwaInstallPrompt.prompt();
+  const result=await pwaInstallPrompt.userChoice;
+  if(result.outcome==='accepted'){
+    toast('🌿 App installed! Find "FoB Green Card" on your home screen.');
+    dismissPWABanner();
+  }
+  pwaInstallPrompt=null;
+}
+
+function dismissPWABanner(){
+  const banner=document.getElementById('pwa-banner');
+  if(banner)banner.remove();
+  LS.set('pwa_dismissed',true);
+}
+
+// Show success message if app was launched from home screen
+if(window.matchMedia('(display-mode: standalone)').matches){
+  window.addEventListener('load',()=>{
+    setTimeout(()=>toast('🌿 Welcome to the Friends of Biodiversity app!'),1000);
+  });
+}

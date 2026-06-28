@@ -8,10 +8,20 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="styles.css"/>
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FoB Green Card"/>
+<meta name="msapplication-TileColor" content="#0B2618"/>
+<meta name="theme-color" content="#0B2618"/>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
 <link rel="shortcut icon" href="favicon.png"/>
-<link rel="apple-touch-icon" href="favicon.png"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png"/>
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png"/>
 <!-- Preload critical images so hero and logos render instantly -->
 <link rel="preload" as="image" href="slide-1.jpg"/>
 <link rel="preload" as="image" href="slide-2.jpg"/>
@@ -142,16 +152,18 @@
 
     <!-- COMMUNITY POSTS FEED -->
     <div id="community-feed-wrap" style="margin-top:3rem">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
-        <div>
-          <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
-          <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+      <div class="feed-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
+          <div>
+            <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
+            <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+          </div>
+          <div id="post-create-btn-wrap" style="display:none">
+            <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
+          </div>
         </div>
-        <div id="post-create-btn-wrap" style="display:none">
-          <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
-        </div>
+        <div id="posts-feed"></div>
       </div>
-      <div id="posts-feed"></div>
     </div>
   </div>
 </section>
