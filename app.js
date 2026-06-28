@@ -689,8 +689,32 @@ function renderPublicAnnounces(){
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  const initials=u.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const avatarHtml=u.photo_url
+    ?'<img src="'+u.photo_url+'" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid rgba(200,168,75,.5);box-shadow:0 2px 12px rgba(0,0,0,.3)"/>'
+    :'<div style="width:80px;height:80px;border-radius:50%;background:linear-gradient(135deg,var(--canopy-lt),var(--canopy));display:flex;align-items:center;justify-content:center;font-family:var(--ff-d);font-size:1.8rem;font-weight:700;color:var(--gold);border:3px solid rgba(200,168,75,.4);box-shadow:0 2px 12px rgba(0,0,0,.3)">'+initials+'</div>';
   document.getElementById('mem-greeting').textContent='Welcome back, '+u.name.split(' ')[0]+' '+td.emoji;
   document.getElementById('mem-sub').textContent=td.label+' Member · '+u.year+(u.org?' · '+u.org:'');
+  // Inject avatar into header
+  let avatarWrap=document.getElementById('mem-avatar-wrap');
+  if(!avatarWrap){
+    avatarWrap=document.createElement('div');
+    avatarWrap.id='mem-avatar-wrap';
+    avatarWrap.style.cssText='display:flex;align-items:center;gap:1.25rem;margin-bottom:1.25rem';
+    const hdr=document.querySelector('.mem-hdr');
+    if(hdr)hdr.insertBefore(avatarWrap,hdr.querySelector('h1'));
+  }
+  avatarWrap.innerHTML=
+    '<div style="position:relative;flex-shrink:0">'+
+      avatarHtml+
+      '<label for="profile-photo-input" style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 1px 6px rgba(0,0,0,.3);font-size:.8rem" title="Change photo">📷</label>'+
+      '<input type="file" id="profile-photo-input" accept="image/*" style="display:none" onchange="uploadProfilePhoto(event)"/>'+
+    '</div>'+
+    '<div>'+
+      '<div style="font-family:var(--ff-d);font-size:1.3rem;color:var(--gold-lt);font-weight:700">'+u.name+'</div>'+
+      '<div style="font-size:.82rem;color:rgba(255,255,255,.55);margin-top:.2rem">'+td.emoji+' '+td.label+' Member</div>'+
+      (u.org?'<div style="font-size:.78rem;color:rgba(255,255,255,.4)">'+u.org+'</div>':'')+
+    '</div>';
   const accessible=CONTENT.filter(c=>ACCESS_RANK[c.access]<=(td.r||1));
   document.getElementById('mem-strip').innerHTML=
     '<div class="mem-mini"><div class="val">'+td.emoji+'</div><div class="lbl">'+td.label+' Tier</div></div>'+
@@ -721,6 +745,22 @@ function renderMemberView(){
 
 /* ═══ CERTIFICATE ═══ */
 /* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
+/* ═══ PROFILE PHOTO UPLOAD ═══ */
+async function uploadProfilePhoto(e){
+  const f=e.target.files[0];if(!f||!currentUser)return;
+  toast('⬆ Uploading profile photo...');
+  const path='profiles/'+currentUser.id+'.'+f.name.split('.').pop().toLowerCase();
+  const{error:upErr}=await sb.storage.from('fame-photos').upload(path,f,{upsert:true,contentType:f.type});
+  if(upErr){toast('⚠ Upload failed. Try a smaller image.');console.error(upErr);return}
+  const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
+  const photoUrl=data.publicUrl+'?t='+Date.now();// cache-bust
+  const{error}=await sb.from('members').update({photo_url:photoUrl}).eq('id',currentUser.id);
+  if(error){toast('⚠ Could not save photo.');console.error(error);return}
+  currentUser.photo_url=photoUrl;
+  toast('✅ Profile photo updated!');
+  renderMemberView();
+}
+
 async function changePassword(){
   if(!currentUser){toast('⚠ You must be signed in.');return}
   const current=document.getElementById('cp-current').value;
@@ -1290,6 +1330,12 @@ function renderPosts(filter){
   el.innerHTML=items.map(p=>{
     const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
     const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
+    // Find author's photo from loaded members
+    const authorMember=MEMBERS.find(m=>m.id===p.author_id);
+    const authorPhoto=authorMember&&authorMember.photo_url;
+    const avatarHtml=authorPhoto
+      ?'<img src="'+authorPhoto+'" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,168,75,.3)"/>'
+      :'<div class="post-avatar">'+initials+'</div>';
     const isOwner=currentUser&&currentUser.id===p.author_id;
     const isAdmin=currentUser&&currentUser.role==='admin';
     const ytMatch=null; // no external links — all videos are direct uploads
@@ -1297,7 +1343,7 @@ function renderPosts(filter){
     const vimeoEmbed='';
     return '<div class="post-card" id="post-'+p.id+'">'+
       '<div class="post-header">'+
-        '<div class="post-avatar">'+initials+'</div>'+
+        avatarHtml+
         '<div class="post-meta">'+
           '<div class="post-author">'+p.author_name+' '+td.emoji+'</div>'+
           '<div class="post-tier">'+td.label+' Member</div>'+
