@@ -195,3 +195,19 @@ create policy "posts_select" on member_posts for select using (true);
 create policy "posts_insert" on member_posts for insert with check (true);
 create policy "posts_update" on member_posts for update using (true);
 create policy "posts_delete" on member_posts for delete using (true);
+
+-- ── POST COMMENTS (comments on member posts) ──
+create table if not exists post_comments (
+  id uuid primary key default gen_random_uuid(),
+  post_id uuid references member_posts(id) on delete cascade,
+  author_id uuid,
+  author_name text,
+  author_tier text,
+  body text not null,
+  created_at timestamp without time zone default now()
+);
+
+alter table post_comments enable row level security;
+create policy "pcomments_select" on post_comments for select using (true);
+create policy "pcomments_insert" on post_comments for insert with check (true);
+create policy "pcomments_delete" on post_comments for delete using (true);
