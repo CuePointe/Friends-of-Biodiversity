@@ -7,7 +7,7 @@
 <meta name="description" content="Join the UBF Friends of Biodiversity Green Card Programme. Protecting Uganda's ecosystems for now and the future."/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
-<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="styles.css?v=20260629"/>
 <!-- PWA manifest -->
 <link rel="manifest" href="manifest.json"/>
 <meta name="mobile-web-app-capable" content="yes"/>
@@ -222,24 +222,31 @@
     <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Contributions can be made via bank transfer or Mobile Money. After payment, complete the enrollment form below and attach your payment reference.</p>
     <div class="pay-grid">
       <div class="pay-card reveal">
-        <h3>🏦 Bank Transfer</h3>
+        <div class="pay-card-header">
+          <div class="pay-card-icon">🏦</div>
+          <div><div class="pay-card-label">Bank Transfer</div><div class="pay-card-sub">Stanbic · Absa · Centenary</div></div>
+        </div>
         <div class="pay-row"><span class="lbl">Bank Name</span><span class="val" id="pay-bank-name">To be updated by UBF Admin</span></div>
         <div class="pay-row"><span class="lbl">Account Name</span><span class="val" id="pay-acc-name">Uganda Biodiversity Fund</span></div>
         <div class="pay-row"><span class="lbl">Account Number</span><span class="val" id="pay-acc-no">To be updated by UBF Admin</span></div>
         <p class="pay-note">Use your full name as the payment reference. Send proof of payment to <strong>info@ugandabiodiversityfund.org</strong></p>
       </div>
       <div class="pay-card reveal">
-        <h3>📱 Mobile Money — MTN MoMo</h3>
-        <div class="pay-row"><span class="lbl">MTN MoMo Number</span><span class="val" id="pay-mtn">To be updated by UBF Admin</span></div>
+        <div class="pay-card-header">
+          <div class="pay-card-icon">📲</div>
+          <div><div class="pay-card-label">MTN Mobile Money</div><div class="pay-card-sub">Dial *165# → Send Money</div></div>
+        </div>
+        <div class="pay-row"><span class="lbl">MoMo Number</span><span class="val" id="pay-mtn">To be updated by UBF Admin</span></div>
         <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
-        <div class="pay-coming">📲 Dial *165# → Send Money → Enter number above</div>
         <p class="pay-note">Screenshot your MoMo confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
       </div>
       <div class="pay-card reveal">
-        <h3>📱 Mobile Money — Airtel</h3>
-        <div class="pay-row"><span class="lbl">Airtel Money Number</span><span class="val" id="pay-airtel">To be updated by UBF Admin</span></div>
+        <div class="pay-card-header">
+          <div class="pay-card-icon">📲</div>
+          <div><div class="pay-card-label">Airtel Money</div><div class="pay-card-sub">Dial *185# → Send Money</div></div>
+        </div>
+        <div class="pay-row"><span class="lbl">Airtel Number</span><span class="val" id="pay-airtel">To be updated by UBF Admin</span></div>
         <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
-        <div class="pay-coming">📲 Dial *185# → Send Money → Enter number above</div>
         <p class="pay-note">Screenshot your Airtel Money confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
       </div>
     </div>
@@ -380,10 +387,14 @@
 <!-- ═══ MEMBER DASHBOARD ═══ -->
 <div id="view-member" class="view">
   <div class="mem-hdr">
-    <h1 id="mem-greeting">Welcome back</h1>
-    <p id="mem-sub">Your membership dashboard</p>
+    <!-- profile-header-card injected here by renderMemberView -->
+    <div id="mem-avatar-wrap"></div>
+    <!-- inline stats strip below profile card -->
     <div class="mem-strip" id="mem-strip"></div>
   </div>
+  <!-- hidden elements kept for JS compatibility -->
+  <h1 id="mem-greeting" style="display:none">Welcome back</h1>
+  <p id="mem-sub" style="display:none">Your membership dashboard</p>
   <div class="mem-body" id="mem-body"></div>
 </div>
 
@@ -789,6 +800,42 @@
     <div class="fg"><label>Type <strong>LEAVE</strong> to confirm</label><input id="leave-confirm" placeholder="Type LEAVE here"/></div>
     <button class="btn btn-danger btn-full" onclick="confirmLeave()">Permanently Leave &amp; Unsubscribe</button>
     <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="closeModal('m-leave')">Cancel — Stay as Member</button>
+  </div>
+</div>
+
+<!-- MEMBER PROFILE MODAL — public view of any member -->
+<div class="overlay" id="m-member-profile">
+  <div class="modal profile-modal" style="max-width:560px;padding:0;overflow:hidden">
+    <button class="modal-close" style="position:absolute;top:.75rem;right:.75rem;z-index:10;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="closeModal('m-member-profile')">✕</button>
+    <div id="profile-modal-body"></div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL — for own profile -->
+<div class="overlay" id="m-edit-profile">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-edit-profile')">✕</button>
+    <h2>Edit Your Profile</h2>
+    <p class="msub">Your profile is visible to all members.</p>
+    <div class="fg">
+      <label>Profile Photo</label>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem">
+        <div id="ep-photo-prev" style="width:60px;height:60px;border-radius:50%;overflow:hidden;background:var(--canopy);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:1.1rem;flex-shrink:0"></div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">📷 Change Photo<input type="file" id="ep-photo-input" accept="image/*" style="display:none" onchange="previewEPPhoto(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Cover Wallpaper</label>
+      <div id="ep-wallpaper-prev" style="width:100%;height:80px;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));margin-bottom:.5rem;overflow:hidden;position:relative">
+        <label class="btn btn-ghost btn-sm" style="position:absolute;bottom:.4rem;right:.4rem;cursor:pointer;background:rgba(0,0,0,.5);color:#fff;border:none">🖼 Change Wallpaper<input type="file" id="ep-wallpaper-input" accept="image/*" style="display:none" onchange="previewEPWallpaper(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Bio <span style="font-size:.75rem;color:var(--muted)">(max 160 characters)</span></label>
+      <textarea id="ep-bio" rows="3" maxlength="160" placeholder="Tell the community about your passion for biodiversity conservation..."></textarea>
+      <div id="ep-bio-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:.2rem">0 / 160</div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="saveProfile()">Save Profile</button>
   </div>
 </div>
 
