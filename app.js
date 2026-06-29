@@ -618,21 +618,19 @@ async function submitUpload(){
 function renderFame(){
   const el=document.getElementById('fame-grid');if(!el)return;
   if(!FAME.length){
-    el.innerHTML='<div class="fame-empty"><h4>Our Champions Will Appear Here</h4><p>Conservation champions will be featured here with their stories.</p></div>';
+    el.innerHTML='<div class="fame-empty"><h4>Our Champions Will Appear Here</h4><p>Conservation champions will be featured here with photos and stories.</p></div>';
     return;
   }
   el.innerHTML=FAME.map(m=>{
     const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
     const initials=m.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
     return '<div class="fame-card">'+
-      '<div class="fame-img-placeholder">'+
-        (m.photo
-          ?'<img src="'+m.photo+'" alt="'+m.name+'" style="width:64px;height:64px;border-radius:50%;object-fit:cover"/>'
-          :'<div class="fame-initials">'+initials+'</div>')+
-      '</div>'+
+      (m.photo
+        ?'<img src="'+m.photo+'" alt="'+m.name+'" style="width:100%;height:200px;object-fit:cover"/>'
+        :'<div class="fame-img-placeholder"><div class="fame-initials">'+initials+'</div></div>')+
       '<div class="fame-body">'+
         '<div class="fame-name">'+m.name+'</div>'+
-        '<div class="fame-tier">'+td.label+'</div>'+
+        '<div class="fame-tier">'+td.emoji+' '+td.label+'</div>'+
         (m.caption?'<div class="fame-caption">'+m.caption+'</div>':'')+
         '<div class="fame-year">'+m.year+'</div>'+
       '</div>'+
