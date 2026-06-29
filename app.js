@@ -701,7 +701,7 @@ function renderMemberView(){
     avatarWrap.className='profile-header-card';
     avatarWrap.innerHTML=
       '<div class="profile-wallpaper" style="'+(u.wallpaper_url
-        ?'background-image:url(\''+u.wallpaper_url+'\');background-size:cover;background-position:center'
+        ?'background-image:url(\''+u.wallpaper_url.split('?')[0]+'?t='+Date.now()+'\');background-size:cover;background-position:center'
         :'background:linear-gradient(135deg,#0B2618 0%,#174530 50%,#2D6A4F 100%)'
       )+'"></div>'+
       '<div class="profile-avatar-row">'+
@@ -807,7 +807,9 @@ function openEditProfile(){
   }
   const wallPrev=document.getElementById('ep-wallpaper-prev');
   if(wallPrev&&u.wallpaper_url){
-    wallPrev.style.backgroundImage='url(\''+u.wallpaper_url+'\')';
+    // Strip old timestamp and add fresh one to force browser reload
+    const baseUrl=u.wallpaper_url.split('?')[0];
+    wallPrev.style.backgroundImage='url(\''+baseUrl+'?t='+Date.now()+'\')';
     wallPrev.style.backgroundSize='cover';
     wallPrev.style.backgroundPosition='center';
   }
@@ -855,7 +857,7 @@ async function saveProfile(){
     if(!error||error.message==='The resource already exists'){
       const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
       // Add cache-bust only for display — strip it from DB value
-      updates.photo_url=data.publicUrl;
+      updates.photo_url=data.publicUrl+'?t='+Date.now();
     }else{console.error('photo upload',error);}
   }
 
@@ -865,7 +867,7 @@ async function saveProfile(){
     const{error}=await sb.storage.from('fame-photos').upload(path,epWallpaperFile,{upsert:true,contentType:epWallpaperFile.type});
     if(!error||error.message==='The resource already exists'){
       const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
-      updates.wallpaper_url=data.publicUrl;
+      updates.wallpaper_url=data.publicUrl+'?t='+Date.now();
     }else{console.error('wallpaper upload',error);}
   }
 
