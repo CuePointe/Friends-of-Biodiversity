@@ -1,3 +1,4 @@
+/* FoB styles v202606290543 */
 :root{
   --canopy:#0B2618;--canopy-mid:#174530;--canopy-lt:#2D6A4F;
   --gold:#C8A84B;--gold-lt:#E4C97A;--gold-dk:#8A6E1E;
@@ -216,7 +217,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .comment-input-row button{padding:.52rem .88rem;font-size:.76rem}
 
 /* WALL OF FAME */
-#wallfame{background:var(--canopy);padding:5rem 1.5rem}
+#wallfame{background:var(--canopy)!important}
 .fame-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1px;margin-top:2.5rem;background:rgba(255,255,255,.06)}
 .fame-card{background:var(--canopy);padding:1.75rem 1.5rem;transition:background .2s;cursor:default}
 .fame-card:hover{background:rgba(255,255,255,.04)}
@@ -469,8 +470,6 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 /* ── GLOBAL UI REFINEMENTS ── */
 /* Smoother modal */
 .modal{background:var(--white);border-radius:20px;padding:2rem;width:calc(100% - 2rem);max-width:560px;max-height:90vh;overflow-y:auto;position:relative;box-shadow:0 8px 40px rgba(0,0,0,.2)}
-/* Tier cards */
-.tier-card{border-radius:16px}
 /* Admin cards */
 .adm-card{border-radius:14px}
 /* Buttons */
