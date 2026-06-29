@@ -313,6 +313,7 @@ function updateNav(){
   document.getElementById('upload-btn-slot').style.display=adm?'':'none';
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
   renderContent();
+  renderPosts();
   updatePostCreateBtn();
 }
 
@@ -1795,20 +1796,25 @@ async function deletePost(id){
 }
 
 async function reactToPost(id,key,btn){
-  if(!currentUser){toast('Sign in to react.');return}
+  if(!currentUser){toast('Sign in to react.');openModal('m-login');return}
   const p=POSTS.find(x=>x.id===id);if(!p)return;
   const myReacts=LS.get('post_reacts',{});
   const reactions={...p.reactions};
   const prev=myReacts[id];
-  if(prev===key){reactions[key]=Math.max(0,(reactions[key]||0)-1);delete myReacts[id];}
-  else{if(prev)reactions[prev]=Math.max(0,(reactions[prev]||0)-1);reactions[key]=(reactions[key]||0)+1;myReacts[id]=key;}
+  if(prev===key){
+    reactions[key]=Math.max(0,(reactions[key]||0)-1);
+    delete myReacts[id];
+  }else{
+    if(prev)reactions[prev]=Math.max(0,(reactions[prev]||0)-1);
+    reactions[key]=(reactions[key]||0)+1;
+    myReacts[id]=key;
+  }
   p.reactions=reactions;
   LS.set('post_reacts',myReacts);
   await sb.from('member_posts').update({reactions}).eq('id',id);
-  // Update just this button's count without full re-render
-  btn.parentNode.querySelectorAll('.post-react-btn').forEach(b=>b.classList.remove('active'));
-  if(myReacts[id])btn.classList.add('active');
-  btn.querySelector('span').textContent=reactions[key]||0;
+  // Re-render just this post card to update reaction counts and states
+  await loadPosts();
+  renderPosts();
 }
 
 function filterAdminPosts(f){renderAdminPosts(f)}
