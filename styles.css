@@ -45,7 +45,7 @@ section{padding:4.5rem 1.5rem}
 
 .brand-strip{display:flex;align-items:center;gap:.75rem;flex-shrink:0}
 .logo-ubf-wrap,.logo-fob-wrap{display:flex;flex-direction:column;align-items:center;gap:2px}
-.logo-ubf-wrap img,.logo-fob-wrap img{width:52px;height:52px;object-fit:contain;border-radius:50%}
+.logo-ubf-wrap img,.logo-fob-wrap img{width:52px;height:52px;object-fit:contain;background:none}
 .logo-ubf-sub{font-size:.48rem;color:var(--gold-lt);letter-spacing:.06em;text-transform:uppercase;text-align:center;line-height:1.2;white-space:nowrap}
 .logo-fob-sub{font-size:.48rem;color:rgba(255,255,255,.55);letter-spacing:.05em;text-transform:uppercase;text-align:center;line-height:1.2;white-space:nowrap}
 .logo-divider{width:1px;height:40px;background:rgba(200,168,75,.3);flex-shrink:0}
@@ -290,7 +290,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .cert-modal{max-width:540px}
 .cert-preview{background:linear-gradient(135deg,var(--canopy) 0%,var(--canopy-mid) 100%);border:2px solid var(--gold);border-radius:var(--r);padding:2.5rem;text-align:center;margin-bottom:1.25rem}
 .cert-preview .cert-logo{display:flex;gap:1rem;justify-content:center;margin-bottom:1.25rem;align-items:center}
-.cert-preview .cert-logo img{width:48px;height:48px;object-fit:contain}
+.cert-preview .cert-logo img{height:52px;width:auto;object-fit:contain;background:none}
 .cert-preview h2{font-family:var(--ff-d);font-size:1.2rem;color:var(--gold-lt);margin-bottom:.25rem}
 .cert-preview .cert-name{font-family:var(--ff-d);font-size:1.75rem;font-weight:700;color:var(--white);margin:.75rem 0}
 .cert-preview p{font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.65}
@@ -381,7 +381,7 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(255,255,255,.07)}
 .footer-brand p{font-size:.83rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:.88rem;max-width:280px}
 .footer-logo-strip{display:flex;align-items:center;gap:.75rem}
-.footer-logo-strip img{height:44px;width:44px;object-fit:contain}
+.footer-logo-strip img{height:44px;width:auto;object-fit:contain;background:none}
 .footer-logo-divider{width:1px;height:32px;background:rgba(200,168,75,.3)}
 .footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:.88rem}
 .footer-col a{display:block;font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:.42rem;transition:color var(--tr)}
