@@ -299,20 +299,17 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 
 /* MEMBER DASHBOARD */
 #view-member{background:var(--mist)}
-.mem-hdr{background:linear-gradient(135deg,var(--canopy),var(--canopy-mid));padding:5.5rem 1.5rem 2.5rem;color:var(--white)}
-.mem-hdr h1{font-family:var(--ff-d);font-size:1.55rem;color:var(--gold-lt);margin-bottom:.22rem}
-.mem-hdr p{font-size:.84rem;color:rgba(255,255,255,.55)}
-.mem-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:1rem;margin-top:1.7rem}
-.mem-mini{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:1.2rem;text-align:center}
-.mem-mini .val{font-family:var(--ff-d);font-size:1.55rem;font-weight:700;color:var(--gold-lt)}
-.mem-mini .lbl{font-size:.73rem;color:rgba(255,255,255,.5);margin-top:.22rem}
-.mem-body{padding:2rem 1.5rem;max-width:1100px;margin:0 auto}
-.perk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:1rem;margin-top:1rem}
-.perk-card{background:var(--white);border-radius:var(--r);padding:1.4rem;box-shadow:var(--sh);transition:transform var(--tr)}
-.perk-card:hover{transform:translateY(-2px)}
-.pk-icon{font-size:1.7rem;margin-bottom:.55rem}
-.pk-title{font-family:var(--ff-d);font-size:.97rem;font-weight:700;color:var(--canopy);margin-bottom:.3rem}
-.pk-desc{font-size:.79rem;color:var(--muted);line-height:1.6}
+/* ── MEMBER DASHBOARD — REDESIGNED ── */
+.mem-hdr{background:var(--white);padding:0;border-bottom:1px solid var(--border)}
+.mem-hdr h1{display:none}/* greeting moved into profile card */
+.mem-hdr>p{display:none}/* sub moved into profile card */
+.mem-body{padding:1.5rem;max-width:720px;margin:0 auto}
+/* Stats strip — inline metadata, not boxes */
+.mem-strip{display:flex;gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white)}
+.mem-mini{flex:1;padding:.85rem .5rem;text-align:center;border-right:1px solid var(--border)}
+.mem-mini:last-child{border-right:none}
+.mem-mini .val{font-size:1.1rem;font-weight:700;color:var(--canopy);font-family:var(--ff-d);display:block}
+.mem-mini .lbl{font-size:.67rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:.1rem;display:block;line-height:1.3}
 .mem-announce-card{background:var(--white);border-radius:var(--r);padding:1.35rem;box-shadow:var(--sh);border-left:4px solid var(--canopy-lt);margin-bottom:.9rem}
 .mac-type{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--canopy-lt);margin-bottom:.3rem}
 .mac-title{font-family:var(--ff-d);font-size:.98rem;color:var(--canopy);margin-bottom:.28rem}
@@ -484,7 +481,7 @@ input,select,textarea{border-radius:10px!important;transition:border-color .15s,
 input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)!important}
 
 /* ── LINKEDIN-STYLE PROFILE HEADER ── */
-.profile-header-card{background:var(--white);border-radius:16px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.08);border:1px solid var(--border);margin-bottom:1.5rem}
+.profile-header-card{background:var(--white);overflow:hidden;border-bottom:1px solid var(--border)}
 .profile-wallpaper{height:120px;position:relative;background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)}
 .profile-avatar-row{display:flex;justify-content:space-between;align-items:flex-end;padding:0 1.25rem;margin-top:-40px;margin-bottom:.5rem}
 .profile-avatar-wrap{position:relative}
