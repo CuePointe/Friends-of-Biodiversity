@@ -737,23 +737,52 @@ function renderMemberView(){
     '<div class="mem-mini"><div class="val">'+((PERKS_MAP[u.tier]||[]).length)+'</div><div class="lbl">Active Perks</div></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
-    '<div class="mem-sec-title">Your Perks</div>'+
-    '<div class="perk-grid">'+perks.map(p=>'<div class="perk-card"><div class="pk-icon">'+p.split(' ')[0]+'</div><div class="pk-title">'+p.replace(/^[^\s]+\s/,'')+'</div></div>').join('')+'</div>'+
-    '<div class="mem-sec-title" style="display:flex;justify-content:space-between;align-items:center">Your Certificate <button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download Certificate</button></div>'+
-    '<div style="margin-bottom:1.5rem;display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button><button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Change Password</button></div>'+
-    '<div class="mem-sec-title">Announcements</div>'+
-    (ANNOUNCES.length?ANNOUNCES.slice(0,5).map(a=>'<div class="mem-announce-card"><div class="mac-type">'+a.type+'</div><div class="mac-title">'+a.title+'</div><p class="mac-body">'+a.body+'</p><div class="mac-meta">'+a.date+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No announcements yet.</p>')+
-    '<div class="mem-sec-title">Financial Reports</div>'+
-    (FIN_REPORTS.length?FIN_REPORTS.map(r=>'<div class="mem-announce-card"><div class="mac-type">Financial Report · '+r.period+'</div><div class="mac-title">'+r.title+'</div><p class="mac-body">'+r.summary+'</p><div class="mac-meta">'+r.date+(r.url&&r.url!=='#'?' &nbsp;<a href="'+r.url+'" target="_blank" style="color:var(--canopy-lt);font-weight:600">⬇ Download</a>':'')+'</div></div>').join(''):'<p style="color:var(--muted);font-size:.87rem">No reports published yet.</p>')+
-    '<div style="margin-top:2rem;display:flex;gap:.75rem;flex-wrap:wrap">'+
-      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),200)">Go to Learning Exchange →</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'wallfame\').scrollIntoView({behavior:\'smooth\'}),200)">Wall of Fame →</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✏ Create Post</button>'+
+    // Benefits — clean chips
+    '<div class="mem-sec-title">Your Green Card Benefits</div>'+
+    '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
+    // Certificate
+    '<div class="mem-cert-row">'+
+      '<div><div class="mem-cert-title">Green Card Certificate</div><div class="mem-cert-sub">Your official UBF Friends of Biodiversity membership certificate</div></div>'+
+      '<button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download</button>'+
     '</div>'+
-    '<div style="margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid var(--border)">'+
-      '<p style="font-size:.8rem;color:var(--muted);margin-bottom:.75rem;line-height:1.6">Want to leave the Friends of Biodiversity programme or unsubscribe from communications?</p>'+
-      '<button class="btn btn-sm" style="background:rgba(181,69,27,.08);color:var(--rust);border:1.5px solid rgba(181,69,27,.25)" onclick="openModal(\'m-leave\')">Leave Membership &amp; Unsubscribe</button>'+
-    '</div>'
+    // Actions
+    '<div class="mem-action-row">'+
+      '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
+    '</div>'+
+    // Announcements
+    '<div class="mem-sec-title" style="margin-top:1.5rem">Latest from UBF</div>'+
+    (ANNOUNCES.length
+      ?ANNOUNCES.slice(0,5).map(a=>
+        '<div class="ann-editorial">'+
+          '<div class="ann-ed-type">'+a.type+'</div>'+
+          '<div class="ann-ed-title">'+a.title+'</div>'+
+          (a.body?'<p class="ann-ed-body">'+a.body+'</p>':'')+
+          '<div class="ann-ed-date">'+a.date+'</div>'+
+        '</div>'
+      ).join('')
+      :'<div class="empty-state"><span>📢</span><p>No announcements yet.</p></div>')+
+    // Financial Reports
+    '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div>'+
+    (FIN_REPORTS.length
+      ?FIN_REPORTS.map(r=>
+        '<div class="report-row">'+
+          '<div class="report-icon">📄</div>'+
+          '<div class="report-body">'+
+            '<div class="report-title">'+r.title+'</div>'+
+            '<div class="report-meta">'+r.period+' &nbsp;·&nbsp; '+r.date+'</div>'+
+            (r.summary?'<p class="report-sum">'+r.summary+'</p>':'')+
+          '</div>'+
+          (r.url&&r.url!=='#'?'<a href="'+r.url+'" target="_blank" class="report-dl">⬇ Download</a>':'')+
+        '</div>'
+      ).join('')
+      :'<div class="empty-state"><span>📊</span><p>No reports published yet.</p></div>')+
+    // Leave
+    '<div class="leave-row">'+
+      '<p>Need to leave or unsubscribe from UBF communications?</p>'+
+      '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>';
 }
 
@@ -816,30 +845,45 @@ async function saveProfile(){
   toast('⬆ Saving profile...');
   const updates={};
 
-  // Upload photo if changed
+  // Upload photo if changed — fixed path per user so upsert always works
   if(epPhotoFile){
-    const path='profiles/photo_'+currentUser.id+'.'+epPhotoFile.name.split('.').pop().toLowerCase();
-    const{error}=await sb.storage.from('fame-photos').upload(path,epPhotoFile,{upsert:true,contentType:epPhotoFile.type});
-    if(!error){const{data}=sb.storage.from('fame-photos').getPublicUrl(path);updates.photo_url=data.publicUrl+'?t='+Date.now();}
+    const path='profiles/photo_'+currentUser.id;
+    const{error,data:upData}=await sb.storage.from('fame-photos').upload(path,epPhotoFile,{upsert:true,contentType:epPhotoFile.type});
+    if(!error||error.message==='The resource already exists'){
+      const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
+      // Add cache-bust only for display — strip it from DB value
+      updates.photo_url=data.publicUrl;
+    }else{console.error('photo upload',error);}
   }
 
-  // Upload wallpaper if changed
+  // Upload wallpaper if changed — fixed path per user
   if(epWallpaperFile){
-    const path='profiles/wall_'+currentUser.id+'.'+epWallpaperFile.name.split('.').pop().toLowerCase();
+    const path='profiles/wall_'+currentUser.id;
     const{error}=await sb.storage.from('fame-photos').upload(path,epWallpaperFile,{upsert:true,contentType:epWallpaperFile.type});
-    if(!error){const{data}=sb.storage.from('fame-photos').getPublicUrl(path);updates.wallpaper_url=data.publicUrl+'?t='+Date.now();}
+    if(!error||error.message==='The resource already exists'){
+      const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
+      updates.wallpaper_url=data.publicUrl;
+    }else{console.error('wallpaper upload',error);}
   }
 
   // Bio
-  const bio=document.getElementById('ep-bio').value.trim().slice(0,160);
-  updates.bio=bio;
+  const bioEl=document.getElementById('ep-bio');
+  if(bioEl)updates.bio=bioEl.value.trim().slice(0,160);
+
+  if(Object.keys(updates).length===0){closeModal('m-edit-profile');toast('No changes to save.');return}
 
   const{error}=await sb.from('members').update(updates).eq('id',currentUser.id);
-  if(error){toast('⚠ Could not save profile.');console.error(error);return}
+  if(error){toast('⚠ Could not save profile. Check your connection.');console.error(error);return}
 
+  // Update in-memory currentUser and MEMBERS list
   Object.assign(currentUser,updates);
+  const idx=MEMBERS.findIndex(m=>m.id===currentUser.id);
+  if(idx!==-1)Object.assign(MEMBERS[idx],updates);
+
+  epPhotoFile=null;epWallpaperFile=null;
   closeModal('m-edit-profile');
   renderMemberView();
+  renderPosts();// refresh post avatars
   toast('✅ Profile saved!');
 }
 
