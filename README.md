@@ -127,7 +127,7 @@ should be completed as a priority:
 
 - **Password hashing** (bcrypt) and login via a secure database function
 - **Tighter Row-Level-Security policies** so members can only edit their own
-  records and only admins can modify content, payments, and reports
+  records, and only admins can modify content, payments, and reports
 - Restricting public bucket file-listing
 
 > Contributors: do **not** commit Supabase service-role keys or any secrets to
