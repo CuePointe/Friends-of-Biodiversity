@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Friends of Biodiversity — Uganda Biodiversity Fund</title>
+<meta name="description" content="Join the UBF Friends of Biodiversity Green Card Programme. Protecting Uganda's ecosystems for now and the future."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@300;400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="styles.css?v=20260629"/>
+<!-- PWA manifest -->
+<link rel="manifest" href="manifest.json"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="FoB Green Card"/>
+<meta name="msapplication-TileColor" content="#0B2618"/>
+<meta name="theme-color" content="#0B2618"/>
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
+<link rel="shortcut icon" href="favicon.png"/>
+<link rel="apple-touch-icon" href="icon-192.png"/>
+<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png"/>
+<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png"/>
+<!-- Preload critical images so hero and logos render instantly -->
+<!-- DOMPurify — sanitizes any HTML built from user-supplied strings -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
+<link rel="preload" as="image" href="slide-1.jpg"/>
+<link rel="preload" as="image" href="slide-2.jpg"/>
+<link rel="preload" as="image" href="slide-3.jpg"/>
+<link rel="preload" as="image" href="fob-logo.png"/>
+<link rel="preload" as="image" href="ubf-logo.png"/>
+<link rel="preload" as="image" href="footprint-globe.jpg"/>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══ -->
+<header id="hdr">
+<div class="nav-inner">
+  <div class="brand-strip">
+    <!-- UBF Logo: blue diamond + green globe, "For now & the future" -->
+    <div class="logo-ubf-wrap">
+      <img src="ubf-logo.png" alt="Uganda Biodiversity Fund logo" title="Uganda Biodiversity Fund — For now & the future"/>
+      <span class="logo-ubf-sub">For now &amp; the future</span>
+    </div>
+    <div class="logo-divider"></div>
+    <!-- FoB Logo: hand holding trees, "Friends of Biodiversity" -->
+    <div class="logo-fob-wrap">
+      <img src="fob-logo.png" alt="Friends of Biodiversity logo" title="Friends of Biodiversity — Demonstrating care for Uganda's biodiversity"/>
+      <span class="logo-fob-sub">Demonstrating care for biodiversity</span>
+    </div>
+    <div class="brand-name">
+      <span class="b1">Friends of Biodiversity</span>
+      <span class="b2">Uganda Biodiversity Fund</span>
+    </div>
+  </div>
+  <nav>
+    <ul>
+      <li><a href="#" onclick="showView('main');return false">Home</a></li>
+      <li><a href="#themes">Programmes</a></li>
+      <li><a href="#learn">Learning Exchange</a></li>
+      <li><a href="#impact">Our Footprint</a></li>
+      <li><a href="#greencard">Green Card</a></li>
+      <li><a href="#wallfame">Wall of Fame</a></li>
+      <li id="n-mem-li" style="display:none"><a href="#" onclick="showView('member');return false" id="n-mem-name">Dashboard</a></li>
+      <li id="n-adm-li" style="display:none"><a href="#" onclick="showView('admin');return false" class="adm-link">⚙ Admin</a></li>
+      <li id="n-login-li"><a href="#" onclick="openModal('m-login');return false" class="cta">Sign In / Join</a></li>
+      <li id="n-logout-li" style="display:none"><a href="#" onclick="doLogout();return false">Sign Out</a></li>
+    </ul>
+  </nav>
+  <button class="ham" id="ham" aria-label="Menu"><span></span><span></span><span></span></button>
+</div>
+</header>
+
+<div class="mob-menu" id="mob-menu">
+  <a href="#" onclick="showView('main');closeMob();return false">Home</a>
+  <a href="#themes" onclick="closeMob()">Programmes</a>
+  <a href="#learn" onclick="closeMob()">Learning Exchange</a>
+  <a href="#impact" onclick="closeMob()">Our Footprint</a>
+  <a href="#greencard" onclick="closeMob()">Green Card</a>
+  <a href="#wallfame" onclick="closeMob()">Wall of Fame</a>
+  <a href="#" id="mob-dash" style="display:none" onclick="showView('member');closeMob();return false">My Dashboard</a>
+  <a href="#" id="mob-adm" style="display:none" onclick="showView('admin');closeMob();return false">⚙ Admin Panel</a>
+  <a href="#" id="mob-login" onclick="openModal('m-login');closeMob();return false" class="cta">Sign In / Join</a>
+  <a href="#" id="mob-logout" style="display:none" onclick="doLogout();closeMob();return false">Sign Out</a>
+</div>
+
+<!-- ═══ MAIN VIEW ═══ -->
+<div id="view-main" class="view active">
+
+<!-- HERO -->
+<section class="hero">
+  <div id="slide-track"></div>
+  <div class="hero-veil"></div>
+  <div class="hero-content">
+    <p class="hero-eyebrow">Uganda Biodiversity Fund · Green Card Programme 2026</p>
+    <h1 class="hero-title">Become a<br><em>Friend of Biodiversity.</em></h1>
+    <p class="hero-desc">Protecting Uganda's ecosystems across multiple landscapes — Albertine Rift, West Nile, Karamoja, and Central Uganda — through Nature Finance, Resilient Landscapes, and One Health.</p>
+    <div class="hero-acts">
+      <a href="#greencard" class="btn btn-gold">Choose Your Tier</a>
+      <a href="#impact" class="btn btn-outline">Our Footprint</a>
+      <a href="#" onclick="openModal('m-login');return false" class="btn btn-outline">Member Sign In</a>
+    </div>
+  </div>
+  <div class="slide-dots" id="slide-dots"></div>
+  <div class="slide-count" id="slide-count">1 / 13</div>
+</section>
+
+<!-- OUR IMPACT -->
+<section id="impact">
+  <div class="inner">
+    <p class="eyebrow reveal" style="color:var(--gold-lt)">Conservation Footprint</p>
+    <h2 class="sec-title reveal" style="color:var(--white)">Our <em style="color:var(--gold-lt)">Footprint</em> <img src="footprint-globe.jpg" alt="" aria-hidden="true" style="width:104px;height:104px;border-radius:50%;object-fit:cover;vertical-align:middle;display:inline-block;margin-left:.4rem;box-shadow:0 2px 10px rgba(0,0,0,.4);border:1.5px solid rgba(200,168,75,.4)"/></h2>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Every contribution flows directly to field projects across Uganda's landscapes — tracked through our accountability dashboard and audited annually.</p>
+    <div class="stats-strip reveal" id="stats-strip-inner">
+      <div class="stat-cell" data-key="endowments" onclick="openStatLink('endowments')"><div class="stat-ico">💰</div><span class="stat-n" data-t="14" data-prefix="$" data-suffix="M+">0</span><span class="stat-l">Raised in total endowments (USD)</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="projects" onclick="openStatLink('projects')"><div class="stat-ico">📋</div><span class="stat-n" data-t="25">0</span><span class="stat-l">Grantee projects funded</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="households" onclick="openStatLink('households')"><div class="stat-ico">🏠</div><span class="stat-n" data-t="3000" data-suffix="+">0</span><span class="stat-l">Households with improved livelihoods</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlots" onclick="openStatLink('woodlots')"><div class="stat-ico">🌲</div><span class="stat-n" data-t="2500" data-suffix="Ha">0</span><span class="stat-l">Woodlots established across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="woodlands" onclick="openStatLink('woodlands')"><div class="stat-ico">🌳</div><span class="stat-n" data-t="3000" data-suffix="Ha">0</span><span class="stat-l">Woodlands restored through natural regeneration</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="agriculture" onclick="openStatLink('agriculture')"><div class="stat-ico">🌾</div><span class="stat-n" data-t="2000" data-suffix="Ha">0</span><span class="stat-l">Agricultural land under Sustainable Land Management</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="forests" onclick="openStatLink('forests')"><div class="stat-ico">🌿</div><span class="stat-n" data-t="1000" data-suffix="Ha">0</span><span class="stat-l">Natural forests restored — Albertine &amp; West Nile</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="wetlands" onclick="openStatLink('wetlands')"><div class="stat-ico">💧</div><span class="stat-n" data-t="500" data-suffix="Ha">0</span><span class="stat-l">Wetlands restored across landscapes</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell" data-key="vegetation" onclick="openStatLink('vegetation')"><div class="stat-ico">📈</div><span class="stat-n" data-t="19" data-suffix="%">0</span><span class="stat-l">Increased vegetation cover across regions</span><span class="stat-link-hint">🔗</span></div>
+      <div class="stat-cell stat-cell-sm" data-key="packaging" onclick="openStatLink('packaging')"><div class="stat-ico">♻️</div><span class="stat-n" data-t="10000" data-suffix="Kg">0</span><span class="stat-l">Biodegradable packaging supported</span><span class="stat-link-hint">🔗</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROGRAMMES -->
+<section id="themes">
+  <div class="inner">
+    <p class="eyebrow reveal">Strategic Framework</p>
+    <h2 class="sec-title reveal">Three Themes. <em>Five Programme Windows.</em></h2>
+    <p class="sec-body reveal">UBF's work is anchored in three core thematic priorities, delivered through five strategic programme windows.</p>
+    <div class="theme-tabs reveal" id="theme-tabs"></div>
+    <div id="theme-panels"></div>
+  </div>
+</section>
+
+<!-- LEARNING EXCHANGE -->
+<section id="learn">
+  <div class="inner">
+    <p class="eyebrow reveal">Knowledge Hub</p>
+    <h2 class="sec-title reveal">Learning <em>Exchange</em></h2>
+    <p class="sec-body reveal">Videos, documentaries, podcasts, interviews, articles and research — organised by programme window. Full access for registered members.</p>
+    <div class="content-toolbar reveal">
+      <div class="filter-row" id="content-filters"></div>
+      <div class="content-search-row">
+        <input id="content-search" type="search" placeholder="Search resources…" oninput="setContentSearch(this.value)" autocomplete="off" spellcheck="false"/>
+        <div id="upload-btn-slot" style="display:none">
+          <button class="btn btn-canopy btn-sm" onclick="openModal('m-upload')">⬆ Upload Content</button>
+        </div>
+      </div>
+    </div>
+    <div class="content-grid" id="content-grid"></div>
+
+    <!-- COMMUNITY POSTS FEED -->
+    <div id="community-feed-wrap" style="margin-top:3rem">
+      <div class="feed-inner">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding-bottom:.75rem;border-bottom:2px solid var(--border)">
+          <div>
+            <p class="eyebrow" style="margin-bottom:.2rem">Community Feed</p>
+            <h3 style="font-family:var(--ff-d);font-size:1.3rem;color:var(--canopy)">Member Posts</h3>
+          </div>
+          <div id="post-create-btn-wrap" style="display:none">
+            <button class="btn btn-canopy btn-sm" onclick="openModal('m-create-post')">✏ Create Post</button>
+          </div>
+        </div>
+        <div id="posts-feed"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GREEN CARD TIERS -->
+<section id="greencard">
+  <div class="inner">
+    <p class="eyebrow reveal">UBF Green Card</p>
+    <h2 class="sec-title reveal">Select Your <em>Membership Tier</em></h2>
+    <p class="sec-body reveal">Annual contributions in Uganda Shillings (UGX). Select a tier to unlock your perks and complete enrollment.</p>
+    <div class="tier-grid">
+      <div class="tier-card reveal" data-tier="student" onclick="selectTier('student')">
+        <div class="tier-badge" style="background:rgba(45,106,79,.12)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2D6A4F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-3.3 2.6-5.5 6.5-5.5C18.5 11 15.9 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/><path d="M12 13c0-3.3-2.6-5.5-6.5-5.5C5.5 11 8.1 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/></svg></div>
+        <div class="tier-name" style="color:var(--canopy-lt)">Student</div>
+        <div class="tier-range">Individual: <strong>In-kind / Youth Project</strong><br>Registration: <strong>Free</strong></div>
+        <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship &amp; leadership development package</li></ul>
+        <button class="tier-btn" style="background:rgba(45,106,79,.15);color:var(--canopy)">Select Student</button>
+      </div>
+      <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
+        <div class="tier-badge" style="background:rgba(144,144,144,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#8a8a8a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.5c0-8 6-13 13-13 0 8-6 13-13 13z" fill="#9a9a9a" fill-opacity=".2"/><path d="M5.5 18.5C9.5 14.5 13.5 10.5 17.5 8.5"/></svg></div>
+        <div class="tier-name">Silver</div>
+        <div class="tier-range">Individual: <strong>500K–1M UGX</strong><br>Institution: <strong>2M–5M UGX</strong></div>
+        <ul class="tier-perks"><li>Eco-friendly welcome kit &amp; certificates</li><li>Contribution &amp; accountability dashboard</li><li>Learning Exchange library access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li></ul>
+        <button class="tier-btn">Select Silver</button>
+      </div>
+      <div class="tier-card reveal" data-tier="gold" onclick="selectTier('gold')">
+        <div class="tier-badge" style="background:rgba(200,168,75,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#B8901F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#C8A84B" fill-opacity=".22"><ellipse cx="12" cy="6.5" rx="2.3" ry="3.3"/><ellipse cx="12" cy="17.5" rx="2.3" ry="3.3"/><ellipse cx="6.5" cy="12" rx="3.3" ry="2.3"/><ellipse cx="17.5" cy="12" rx="3.3" ry="2.3"/></g><circle cx="12" cy="12" r="2.4" fill="#C8A84B"/></svg></div>
+        <div class="tier-name">Gold</div>
+        <div class="tier-range">Individual: <strong>1.5M–2M UGX</strong><br>Institution: <strong>6M–10M UGX</strong></div>
+        <ul class="tier-perks"><li>All Silver benefits</li><li>Visibility in conservation projects</li><li>Exclusive networking events</li><li>Priority event invitations</li><li>Quarterly impact report</li></ul>
+        <button class="tier-btn">Select Gold</button>
+      </div>
+      <div class="tier-card reveal" data-tier="platinum" onclick="selectTier('platinum')">
+        <div class="tier-badge" style="background:rgba(91,196,191,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1A7A76" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M12 3 6.5 11h11z" fill="#5BC4BF" fill-opacity=".2"/><path d="M12 8 7.5 15.5h9z" fill="#5BC4BF" fill-opacity=".2"/></svg></div>
+        <div class="tier-name">Platinum</div>
+        <div class="tier-range">Individual: <strong>2.5M–4.5M UGX</strong><br>Institution: <strong>20M–40M UGX</strong></div>
+        <ul class="tier-perks"><li>All Gold benefits</li><li>Co-branding on project materials</li><li>Strategic partnership access</li><li>Named in annual report</li><li>Private ED briefing</li></ul>
+        <button class="tier-btn">Select Platinum</button>
+      </div>
+      <div class="tier-card reveal" data-tier="diamond" onclick="selectTier('diamond')">
+        <div class="tier-badge" style="background:rgba(126,184,201,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2E7D9A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="#7EB8C9" fill-opacity=".2"/><path d="M3.5 12h17M12 3.5c2.6 2.6 2.6 14.4 0 17M12 3.5c-2.6 2.6-2.6 14.4 0 17"/></svg></div>
+        <div class="tier-name">Diamond</div>
+        <div class="tier-range">Individual: <strong>5M+ UGX</strong><br>Institution: <strong>50M+ UGX</strong></div>
+        <ul class="tier-perks"><li>All Platinum benefits</li><li>Named conservation project/corridor</li><li>Board-level engagement</li><li>Bespoke ESG reporting package</li><li>Media &amp; PR recognition</li><li>Annual CEO briefing</li><li>Exposure visits to project sites</li></ul>
+        <button class="tier-btn">Select Diamond</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PAYMENT SECTION -->
+<section id="payment">
+  <div class="inner">
+    <p class="eyebrow reveal" style="color:var(--gold-lt)">Make Your Commitment</p>
+    <h2 class="sec-title reveal" style="color:var(--white)">How to <em style="color:var(--gold-lt)">Pay</em></h2>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Contributions can be made via bank transfer or Mobile Money. After payment, complete the enrollment form below and attach your payment reference.</p>
+    <div class="pay-grid">
+      <div class="pay-card reveal">
+        <div class="pay-card-header">
+          <div class="pay-card-icon"><svg width="44" height="40" viewBox="0 0 44 40" role="img" aria-label="Bank transfer"><rect width="44" height="40" rx="9" fill="#003B7A"/><g fill="#fff"><path d="M22 8 34 15.5H10z"/><rect x="12.5" y="18" width="3" height="10"/><rect x="20.5" y="18" width="3" height="10"/><rect x="28.5" y="18" width="3" height="10"/><rect x="10" y="29.5" width="24" height="3" rx="1"/></g></svg></div>
+          <div><div class="pay-card-label">Bank Transfer</div><div class="pay-card-sub">Stanbic · Absa · Centenary</div></div>
+        </div>
+        <div class="pay-row"><span class="lbl">Bank Name</span><span class="val" id="pay-bank-name">To be updated by UBF Admin</span></div>
+        <div class="pay-row"><span class="lbl">Account Name</span><span class="val" id="pay-acc-name">Uganda Biodiversity Fund</span></div>
+        <div class="pay-row"><span class="lbl">Account Number</span><span class="val" id="pay-acc-no">To be updated by UBF Admin</span></div>
+        <p class="pay-note">Use your full name as the payment reference. Send proof of payment to <strong>info@ugandabiodiversityfund.org</strong></p>
+      </div>
+      <div class="pay-card reveal">
+        <div class="pay-card-header">
+          <div class="pay-card-icon"><svg width="46" height="40" viewBox="0 0 46 40" role="img" aria-label="MTN Mobile Money"><rect width="46" height="40" rx="9" fill="#FFCB05"/><ellipse cx="23" cy="20" rx="16" ry="8.6" fill="none" stroke="#111" stroke-width="2.1"/><text x="23" y="23.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="9.6" fill="#111" letter-spacing="-.2">MTN</text></svg></div>
+          <div><div class="pay-card-label">MTN Mobile Money</div><div class="pay-card-sub">Dial *165# → Send Money</div></div>
+        </div>
+        <div class="pay-row"><span class="lbl">MoMo Number</span><span class="val" id="pay-mtn">To be updated by UBF Admin</span></div>
+        <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
+        <p class="pay-note">Screenshot your MoMo confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
+      </div>
+      <div class="pay-card reveal">
+        <div class="pay-card-header">
+          <div class="pay-card-icon"><svg width="50" height="40" viewBox="0 0 50 40" role="img" aria-label="Airtel Money"><rect width="50" height="40" rx="9" fill="#fff" stroke="#eee" stroke-width="1"/><path d="M17 23.5c-.6-8 5.5-13.5 13-11.7 5.5 1.3 7 6.6 3.6 9.4-2.4 2-6 1.4-7.2-1.1" fill="none" stroke="#E40000" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><text x="25" y="35" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="8.2" fill="#E40000" letter-spacing=".2">airtel</text></svg></div>
+          <div><div class="pay-card-label">Airtel Money</div><div class="pay-card-sub">Dial *185# → Send Money</div></div>
+        </div>
+        <div class="pay-row"><span class="lbl">Airtel Number</span><span class="val" id="pay-airtel">To be updated by UBF Admin</span></div>
+        <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
+        <p class="pay-note">Screenshot your Airtel Money confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ANNOUNCEMENTS (public) -->
+<section id="announce-strip">
+  <div class="inner">
+    <p class="eyebrow" style="color:var(--gold-lt)">Latest Updates</p>
+    <h2 class="sec-title" style="color:var(--white)">Announcements</h2>
+    <div class="announce-list-pub" id="announce-pub-list">
+      <p style="color:rgba(255,255,255,.4);font-size:.88rem">No announcements yet.</p>
+    </div>
+  </div>
+</section>
+
+<!-- WALL OF FAME -->
+<section id="wallfame">
+  <div class="inner">
+    <p class="eyebrow reveal">Conservation Champions</p>
+    <h2 class="sec-title reveal">Wall of <em>Fame</em></h2>
+    <p class="sec-body reveal">Our Friends of Biodiversity — members and partners who demonstrate care for Uganda's natural heritage.</p>
+    <div class="fame-grid reveal" id="fame-grid">
+      <div class="fame-empty"><h4>Our Champions Will Appear Here</h4><p>The UBF admin team is curating our Wall of Fame.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ENROLL -->
+<section id="enroll">
+  <div class="inner">
+    <p class="eyebrow reveal">Membership Registration</p>
+    <h2 class="sec-title reveal">Enroll in the <em style="color:var(--gold-lt)">Green Card Programme</em></h2>
+    <p class="sec-body reveal">Complete the form below. Our team will contact you within 48 hours to confirm your membership and dispatch your welcome kit.</p>
+    <div class="enroll-layout">
+      <div class="form-shell reveal">
+        <div class="tier-chosen" id="tier-chosen"></div>
+        <form id="enroll-form" novalidate>
+          <div class="frow2">
+            <div><label>Full Name *</label><input id="ef-name" placeholder="Jane Akello" required/></div>
+            <div><label>Organisation</label><input id="ef-org" placeholder="Company / NGO"/></div>
+          </div>
+          <div class="frow2">
+            <div><label>Phone *</label><input id="ef-tel" type="tel" placeholder="+256 700 000 000" required/></div>
+            <div><label>Email *</label><input id="ef-email" type="email" placeholder="jane@example.com" required/></div>
+          </div>
+          <div class="frow2">
+            <div><label>Member Type *</label>
+              <select id="ef-type" required><option value="">Select...</option><option value="individual">Individual</option><option value="institution">Institution / Corporate</option></select>
+            </div>
+            <div><label>Green Card Tier *</label>
+              <select id="ef-tier" required><option value="">Select...</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+            </div>
+          </div>
+          <div class="frow2">
+            <div><label>Annual Commitment (UGX) *</label><input id="ef-amount" type="number" placeholder="e.g. 1500000" required/></div>
+            <div><label>Membership Year *</label><input id="ef-year" type="number" placeholder="2026" min="2024" max="2035" required/></div>
+          </div>
+          <div><label>Payment Reference (from bank/MoMo)</label><input id="ef-payref" placeholder="e.g. MTN Ref #12345 or Bank TXN ID"/></div>
+          <div><label>Engagement Preferences</label><textarea id="ef-engage" rows="2" placeholder="e.g. Nature Finance, One Health, co-branding..."></textarea></div>
+          <div><label>Create Password *</label><input id="ef-pass" type="password" placeholder="Minimum 8 characters" required/></div>
+          <small style="color:rgba(255,255,255,.3);font-size:.7rem;display:block;margin-top:-.6rem;margin-bottom:.9rem">Creates your member login account</small>
+          <button type="submit" class="btn btn-gold btn-full">Submit Enrollment →</button>
+          <p style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.7rem">Your data is handled in confidence and used solely for membership administration.</p>
+        </form>
+        <div class="success-box" id="enroll-success">
+          <div class="si">🌿</div>
+          <h3>Enrollment Submitted!</h3>
+          <p>Thank you for joining Friends of Biodiversity. Your enrollment is <strong>pending payment verification</strong>. Our team will review your payment reference and activate your account within 48 hours. You will receive a confirmation email once approved.</p>
+          <p style="margin-top:.7rem;font-size:.82rem;opacity:.75">Already paid and need help? Email <a href="mailto:info@ugandabiodiversityfund.org" style="color:var(--gold-lt)">info@ugandabiodiversityfund.org</a></p>
+        </div>
+      </div>
+      <div class="reveal">
+        <div class="sb-block">
+          <h4>📞 Contact UBF</h4>
+          <div class="sb-row"><span class="ico">✉</span><span>info@ugandabiodiversityfund.org</span></div>
+          <div class="sb-row"><span class="ico">🌐</span><span>www.ugandabiodiversityfund.org</span></div>
+          <div class="sb-row"><span class="ico">📱</span><span>+256 (039) 3216445 / +256 (200) 916 445</span></div>
+        </div>
+        <div class="sb-block">
+          <h4>🌱 All Members Receive</h4>
+          <div class="sb-row"><span class="ico">📊</span><span>Accountability dashboard access</span></div>
+          <div class="sb-row"><span class="ico">🎓</span><span>Learning Exchange content library</span></div>
+          <div class="sb-row"><span class="ico">🏆</span><span>Wall of Fame listing</span></div>
+          <div class="sb-row"><span class="ico">📜</span><span>Downloadable digital certificate</span></div>
+        </div>
+        <div class="sb-block">
+          <h4>🔒 Transparent &amp; Audited</h4>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.5);line-height:1.65">94% of contributions deployed directly to field conservation. Annual audited accounts published on our website.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo-strip">
+          <img src="ubf-logo.png" alt="Uganda Biodiversity Fund"/>
+          <div class="footer-logo-divider"></div>
+          <img src="fob-logo.png" alt="Friends of Biodiversity"/>
+        </div>
+        <p>Protecting Uganda's rich biological heritage across multiple landscapes — Albertine Rift, West Nile, Karamoja, and Central Uganda — demonstrating care for Uganda's biodiversity.</p>
+      </div>
+      <div class="footer-col">
+        <h5>Programme</h5>
+        <a href="#themes">Strategic Framework</a>
+        <a href="#greencard">Green Card Tiers</a>
+        <a href="#learn">Learning Exchange</a>
+        <a href="#payment">How to Pay</a>
+        <a href="#wallfame">Wall of Fame</a>
+      </div>
+      <div class="footer-col">
+        <h5>Contact</h5>
+        <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>
+        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">ugandabiodiversityfund.org</a>
+        <a href="tel:+256393216445">+256 (039) 3216445</a>
+        <a href="tel:+256200916445">+256 (200) 916 445</a>
+        <a href="#" onclick="openSubscribePopup();return false">🌿 Subscribe for Updates</a>
+      </div>
+    </div>
+    <div class="footer-btm">
+      <p>© 2026 Uganda Biodiversity Fund. All rights reserved.</p>
+      <div class="footer-logo-strip">
+        <img src="ubf-logo.png" alt="UBF" style="height:30px;width:30px"/>
+        <div class="footer-logo-divider" style="height:22px"></div>
+        <img src="fob-logo.png" alt="FoB" style="height:30px;width:30px"/>
+      </div>
+    </div>
+  </div>
+</footer>
+</div><!-- /view-main -->
+
+<!-- ═══ MEMBER DASHBOARD ═══ -->
+<div id="view-member" class="view">
+  <div class="mem-hdr">
+    <!-- profile-header-card injected here by renderMemberView -->
+    <div id="mem-avatar-wrap"></div>
+    <!-- inline stats strip below profile card -->
+    <div class="mem-strip" id="mem-strip"></div>
+  </div>
+  <!-- hidden elements kept for JS compatibility -->
+  <h1 id="mem-greeting" style="display:none">Welcome back</h1>
+  <p id="mem-sub" style="display:none">Your membership dashboard</p>
+  <div class="mem-body" id="mem-body"></div>
+</div>
+
+<!-- ═══ ADMIN VIEW ═══ -->
+<div id="view-admin" class="view">
+  <div class="adm-hdr">
+    <h1>⚙ Admin Control Panel</h1>
+    <p id="adm-user-info">Authenticated</p>
+    <button class="btn btn-outline btn-sm" style="margin-top:.75rem" onclick="openModal('m-change-pass')">🔑 Change My Password</button>
+  </div>
+  <div class="adm-tabs">
+    <button class="atab active" data-ap="ap-members">Members</button>
+    <button class="atab" data-ap="ap-content">Content Library</button>
+    <button class="atab" data-ap="ap-fame">Wall of Fame</button>
+    <button class="atab" data-ap="ap-announce">Announcements</button>
+    <button class="atab" data-ap="ap-finance">Financial Reports</button>
+    <button class="atab" data-ap="ap-payment">Payment Details</button>
+    <button class="atab" data-ap="ap-email">Email Campaigns</button>
+    <button class="atab" data-ap="ap-slides">Slide Images</button>
+    <button class="atab" data-ap="ap-footprint">Our Footprint</button>
+    <button class="atab" data-ap="ap-posts">Community Posts</button>
+  </div>
+
+  <div id="ap-members" class="adm-panel active">
+    <div class="adm-sec"><span>Registered Members</span><button class="btn btn-canopy btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
+    <div style="display:flex;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
+      <input id="adm-member-search" type="search" placeholder="Search by name, email or tier…" oninput="renderAdminMembers()" style="flex:1;min-width:200px;padding:.45rem .8rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.84rem"/>
+      <select id="adm-member-tier-filter" onchange="renderAdminMembers()" style="padding:.45rem .8rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.84rem">
+        <option value="">All Tiers</option>
+        <option value="student">Student</option>
+        <option value="silver">Silver</option>
+        <option value="gold">Gold</option>
+        <option value="platinum">Platinum</option>
+        <option value="diamond">Diamond</option>
+      </select>
+      <select id="adm-member-status-filter" onchange="renderAdminMembers()" style="padding:.45rem .8rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.84rem">
+        <option value="">All Statuses</option>
+        <option value="active">Active</option>
+        <option value="pending">Pending</option>
+        <option value="removed">Removed</option>
+      </select>
+    </div>
+    <div class="adm-card" style="overflow-x:auto"><table class="dtable"><thead><tr><th>Name</th><th>Email</th><th>Type</th><th>Tier</th><th>UGX Commitment</th><th>Year</th><th>Pay Ref</th><th>Status</th><th>Role</th><th>Actions</th></tr></thead><tbody id="members-tbody"></tbody></table></div>
+    <div id="adm-members-pagination" style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem;align-items:center;flex-wrap:wrap"></div>
+  </div>
+
+  <div id="ap-content" class="adm-panel">
+    <div class="adm-sec"><span>Content Library</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-upload')">⬆ Upload New</button></div>
+    <div class="adm-card" style="overflow-x:auto"><table class="dtable"><thead><tr><th>Title</th><th>Type</th><th>Window</th><th>Date</th><th>Access</th><th>Actions</th></tr></thead><tbody id="adm-content-tbody"></tbody></table></div>
+  </div>
+
+  <div id="ap-fame" class="adm-panel">
+    <div class="adm-sec"><span>Wall of Fame — Conservation Champions</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-fame-add')">+ Add Champion</button></div>
+    <div id="adm-fame-list"></div>
+  </div>
+
+  <div id="ap-announce" class="adm-panel">
+    <div class="adm-sec"><span>Announcements &amp; Project Updates</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-announce')">+ New Announcement</button></div>
+    <div id="announce-admin-list"></div>
+  </div>
+
+  <div id="ap-finance" class="adm-panel">
+    <div class="adm-sec"><span>Financial Accountability Reports</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-finance')">+ Add Report</button></div>
+    <div class="agrid2">
+      <div class="adm-card"><h4>📊 Fund Deployment — FY 2025/26</h4><div id="fin-bars"></div></div>
+      <div class="adm-card"><h4>📋 Published Reports</h4><div id="fin-list"></div></div>
+    </div>
+  </div>
+
+  <div id="ap-payment" class="adm-panel">
+    <div class="adm-sec"><span>Payment Details</span></div>
+    <div class="adm-card" style="max-width:600px">
+      <h4>Update Payment Information</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">These details appear publicly on the website's "How to Pay" section. Fill in your actual bank and Mobile Money numbers.</p>
+      <div class="fg"><label>Bank Name</label><input id="pd-bank" placeholder="e.g. Stanbic Bank Uganda"/></div>
+      <div class="fg"><label>Account Number</label><input id="pd-accno" placeholder="e.g. 9030012345678"/></div>
+      <div class="fg"><label>MTN MoMo Number</label><input id="pd-mtn" placeholder="e.g. 0771234567"/></div>
+      <div class="fg"><label>Airtel Money Number</label><input id="pd-airtel" placeholder="e.g. 0701234567"/></div>
+      <button class="btn btn-gold" onclick="savePaymentDetails()">Save Payment Details</button>
+    </div>
+  </div>
+
+  <div id="ap-email" class="adm-panel">
+    <div class="adm-sec"><span>Email Campaign Manager</span></div>
+    <div class="agrid2">
+      <div class="adm-card">
+        <h4>✉ Compose Campaign</h4>
+        <div style="background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:.85rem;font-size:.78rem;color:var(--canopy);margin-bottom:1rem;line-height:1.6">
+          <strong>How it works:</strong> Compose your message and select your audience, then click <em>Send Campaign</em>. A ready-to-send panel will appear with the recipient list, subject, and message body — each with a <em>Copy</em> button. Open your UBF email (Outlook or Gmail), create a new email, and paste each field in. This ensures the email comes directly from your official UBF address.
+        </div>
+        <div class="fg"><label>Subject</label><input id="em-subj" placeholder="UBF Update: ..."/></div>
+        <div class="fg"><label>Audience</label>
+          <select id="em-audience"><option value="all">All Members</option><option value="silver">Silver+</option><option value="gold">Gold+</option><option value="platinum">Platinum+</option><option value="diamond">Diamond Only</option></select>
+        </div>
+        <div class="fg"><label>Message</label><textarea id="em-body" rows="5" placeholder="Write your message..."></textarea></div>
+        <button class="btn btn-ghost btn-sm" onclick="previewEmail()">Preview</button>
+        <button class="btn btn-gold btn-sm" style="margin-left:.45rem" onclick="sendEmail()">Send Campaign</button>
+        <div class="email-prev" id="email-prev" style="display:none"></div>
+      </div>
+      <div class="adm-card"><h4>📬 Sent Campaigns</h4><div id="email-log-list"></div></div>
+    </div>
+    <!-- COPY-READY SEND PANEL — appears after clicking Send Campaign -->
+    <div id="email-send-panel" style="display:none" class="adm-card">
+      <h4>📋 Ready to Send</h4>
+      <p style="font-size:.8rem;color:var(--muted);margin-bottom:1rem;line-height:1.6">Two options below — use whichever suits your setup:</p>
+      <div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-bottom:1.5rem;padding:1rem;background:rgba(45,106,79,.06);border-radius:var(--r-sm);border:1px solid rgba(45,106,79,.15)">
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📬 Option A — Open in Gmail</div>
+          <p style="font-size:.76rem;color:var(--muted);margin-bottom:.6rem;line-height:1.55">Opens Gmail with recipients and message pre-filled. Make sure you switch to your UBF account in Gmail before sending.</p>
+          <a id="esp-gmail-btn" href="#" target="_blank" rel="noopener" class="btn btn-canopy btn-sm">Open in Gmail →</a>
+        </div>
+        <div style="width:1px;background:var(--border);flex-shrink:0"></div>
+        <div style="flex:1;min-width:200px">
+          <div style="font-weight:700;font-size:.82rem;color:var(--canopy);margin-bottom:.3rem">📋 Option B — Copy &amp; Paste into Outlook</div>
+          <p style="font-size:.76rem;color:var(--muted);line-height:1.55">Use the Copy buttons below to paste each field into Outlook or any other email client. Guarantees the email comes from your UBF address.</p>
+        </div>
+      </div>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">To (Recipients) <button class="btn btn-gold btn-sm" onclick="copyField('esp-to','Recipients')">Copy</button></label>
+        <textarea id="esp-to" rows="3" style="font-size:.75rem;font-family:monospace;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <div class="fg" style="margin-bottom:.75rem">
+        <label style="display:flex;justify-content:space-between;align-items:center">Subject <button class="btn btn-gold btn-sm" onclick="copyField('esp-subj','Subject')">Copy</button></label>
+        <input id="esp-subj" style="background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;font-size:.84rem" readonly/>
+      </div>
+      <div class="fg">
+        <label style="display:flex;justify-content:space-between;align-items:center">Message Body <button class="btn btn-gold btn-sm" onclick="copyField('esp-body','Message body')">Copy</button></label>
+        <textarea id="esp-body" rows="7" style="font-size:.8rem;background:var(--mist);border:1.5px solid var(--border);border-radius:var(--r-sm);padding:.7rem;width:100%;resize:vertical" readonly></textarea>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="margin-top:.5rem" onclick="document.getElementById('email-send-panel').style.display='none'">✕ Close</button>
+    </div>
+  </div>
+
+  <div id="ap-slides" class="adm-panel">
+    <div class="adm-sec"><span>Hero Slideshow Images</span></div>
+    <div class="adm-card">
+      <h4>Upload Additional Slide Images</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">Upload new images to add to the hero slideshow for this session. Currently <strong id="slide-count-adm">12 slides</strong> loaded.</p>
+      <div class="fame-uploader" onclick="document.getElementById('slide-file-input').click()">
+        <div style="font-size:2rem;margin-bottom:.5rem">🏞</div>
+        <strong>Click to upload slide images</strong>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">JPG or PNG, landscape orientation (1920×1080px ideal).</p>
+      </div>
+      <input type="file" id="slide-file-input" accept="image/*" multiple style="display:none" onchange="handleSlideUpload(event)"/>
+      <div id="slide-preview-list"></div>
+      <p style="font-size:.75rem;color:var(--muted);margin-top:.75rem;line-height:1.55">For permanent additions, upload new image files (e.g. <code>slide-14.jpg</code>) to the repo root alongside index.html, then update the count in the <code>SLIDE_IMAGES</code> line in <code>app.js</code>.</p>
+    </div>
+  </div>
+  <!-- OUR FOOTPRINT ADMIN PANEL -->
+  <div id="ap-footprint" class="adm-panel">
+    <div class="adm-sec"><span>Our Footprint — Stat Boxes &amp; Proof Links</span><button class="btn btn-canopy btn-sm" onclick="openModal('m-add-footprint')">+ Add New Stat</button></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Each stat box on the public homepage can link to a report, article, photo album, or document that proves the achievement. Click <strong>Edit Link</strong> on any stat to attach a URL. Visitors who click the box will be taken to that proof.</p>
+    <div id="footprint-admin-list"></div>
+  </div>
+
+  <!-- COMMUNITY POSTS ADMIN PANEL -->
+  <div id="ap-posts" class="adm-panel">
+    <div class="adm-sec"><span>Community Posts — Member Submissions</span></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Member posts appear instantly and publicly. Your role here is to remove any post that violates UBF community standards — disrespectful, unethical, or inappropriate content. Click <strong>Remove Post</strong> on any item to delete it immediately.</p>
+    <div style="display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap">
+      <button class="btn btn-ghost btn-sm" onclick="filterAdminPosts('all')">All Posts</button>
+    </div>
+    <div id="admin-posts-list"></div>
+  </div>
+
+</div><!-- /view-admin -->
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- LOGIN -->
+<div class="overlay" id="m-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('m-login')">✕</button>
+    <h2>Sign In</h2>
+    <p class="msub">Access your member dashboard and the Learning Exchange library.</p>
+    <div class="fg"><label>Email Address</label><input id="li-email" type="email" placeholder="you@example.com"/></div>
+    <div class="fg"><label>Password</label><input id="li-pass" type="password" placeholder="Your password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="doLogin()">Sign In</button>
+    <div class="dtext">or</div>
+    <button class="btn btn-gold btn-full" onclick="closeModal('m-login');document.getElementById('enroll').scrollIntoView({behavior:'smooth'})">Create a New Account →</button>
+    <div class="auth-sw">Admin? <a onclick="openModal('m-admin-login');closeModal('m-login')">Admin sign in →</a></div>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN -->
+<div class="overlay" id="m-admin-login">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('m-admin-login')">✕</button>
+    <h2>Admin Sign In</h2>
+    <div class="admin-note">🔒 Restricted to verified UBF work email accounts (@ugandabiodiversityfund.org)</div>
+    <p class="msub">Enter your UBF credentials. Default password for first login: <strong>UBF@2026!</strong></p>
+    <div class="fg"><label>UBF Email</label><input id="al-email" type="email" placeholder="i.amani@ugandabiodiversityfund.org"/></div>
+    <div class="fg"><label>Password</label><input id="al-pass" type="password" placeholder="Admin password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="doAdminLogin()">Sign In as Admin</button>
+    <div class="auth-sw"><a onclick="openModal('m-login');closeModal('m-admin-login')">← Member login</a></div>
+  </div>
+</div>
+
+<!-- UPLOAD CONTENT -->
+<div class="overlay" id="m-upload">
+  <div class="modal" style="max-width:530px">
+    <button class="modal-close" onclick="closeModal('m-upload')">✕</button>
+    <h2>Upload Content</h2>
+    <p class="msub">Add videos, documentaries, podcasts, interviews, articles, or research to the Learning Exchange.</p>
+    <div class="fg"><label>Title *</label><input id="up-title" placeholder="e.g. Albertine Rift Biodiversity Forum 2026"/></div>
+    <div class="fr2">
+      <div class="fg"><label>Content Type *</label>
+        <select id="up-type"><option value="">Select...</option><option value="video">Video</option><option value="documentary">Documentary</option><option value="podcast">Podcast</option><option value="interview">Interview</option><option value="article">Article</option><option value="research">Research</option></select>
+      </div>
+      <div class="fg"><label>Programme Window *</label>
+        <select id="up-window"><option value="">Select...</option><option value="Nature Finance &amp; Markets">Nature Finance &amp; Markets</option><option value="Resilient Landscapes">Resilient Landscapes &amp; Catchments</option><option value="Nature-Positive Food">Nature-Positive Food Systems</option><option value="Circular Economy">Circular Economy &amp; Green Cities</option><option value="One Health">One Health &amp; Bioeconomy</option></select>
+      </div>
+    </div>
+    <div class="fr2">
+      <div class="fg"><label>Thematic Area</label>
+        <select id="up-theme"><option value="Biodiversity">Reducing Biodiversity Degradation</option><option value="Climate">Climate Resilience &amp; Adaptation</option><option value="Livelihoods">Community Livelihoods</option></select>
+      </div>
+      <div class="fg"><label>Access Level</label>
+        <select id="up-access"><option value="member">Members Only (Silver+)</option><option value="gold">Gold+ Members</option><option value="platinum">Platinum+ Members</option><option value="public">Public</option></select>
+      </div>
+    </div>
+    <div class="fg"><label>Description</label><textarea id="up-desc" rows="2" placeholder="Brief description..."></textarea></div>
+    <div class="fg"><label>Author / Organisation</label><input id="up-author" placeholder="Dr. Okello, UBF Research Team..."/></div>
+    <div class="fg"><label>Video / Audio File (plays inline in the app)</label>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('up-file').click()" ondragover="onDragOver(event)" ondragleave="document.getElementById('upload-zone').classList.remove('drag')" ondrop="onDrop(event)">
+        <div class="uz-icon">📁</div>
+        <strong>Click to browse or drag &amp; drop</strong>
+        <p style="font-size:.8rem;color:var(--muted);margin-top:.35rem">MP4, MOV, MP3, WAV — plays directly in the Learning Exchange, no external link needed.</p>
+      </div>
+      <input type="file" id="up-file" accept=".mp4,.mov,.mp3,.wav" style="display:none" onchange="onFileSelect(event)"/>
+      <div id="file-prev-wrap"></div>
+    </div>
+    <div class="fg"><label>Article / Research Full Text (for Article or Research types — read in-app)</label><textarea id="up-fulltext" rows="4" placeholder="Paste the full article or research text here so members can read it directly in the app..."></textarea></div>
+    <div class="fg"><label>External URL (optional — YouTube / Vimeo / Drive, only if not uploading a file directly)</label><input id="up-url" placeholder="https://..."/></div>
+    <button class="btn btn-gold btn-full" onclick="submitUpload()">Publish to Learning Exchange →</button>
+  </div>
+</div>
+
+<!-- ANNOUNCEMENT MODAL -->
+<div class="overlay" id="m-announce">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('m-announce')">✕</button>
+    <h2>New Announcement</h2>
+    <div class="fg"><label>Type</label>
+      <select id="ann-type"><option value="Project Update">Project Update</option><option value="Event">Event</option><option value="Financial Report">Financial Report</option><option value="Conservation Alert">Conservation Alert</option><option value="Partnership">New Partnership</option><option value="Membership">Membership News</option></select>
+    </div>
+    <div class="fg"><label>Title *</label><input id="ann-title" placeholder="Announcement title..."/></div>
+    <div class="fg"><label>Body *</label><textarea id="ann-body" rows="4" placeholder="Full announcement text..."></textarea></div>
+    <div class="fg">
+      <label>Notify Members by Email</label>
+      <div class="toggle-wrap"><label class="tgsw"><input type="checkbox" id="ann-notify" checked><span class="tgsl"></span></label><span style="font-size:.8rem;color:var(--muted);text-transform:none;letter-spacing:0">Send email notification to all members</span></div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="postAnnouncement()">Post Announcement</button>
+  </div>
+</div>
+
+<!-- FINANCE MODAL -->
+<div class="overlay" id="m-finance">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('m-finance')">✕</button>
+    <h2>Add Financial Report</h2>
+    <div class="fg"><label>Report Title *</label><input id="fin-title" placeholder="e.g. Q2 2026 Financial Report"/></div>
+    <div class="fg"><label>Period</label><input id="fin-period" placeholder="e.g. April–June 2026"/></div>
+    <div class="fg"><label>Summary</label><textarea id="fin-summary" rows="3" placeholder="Key financial highlights..."></textarea></div>
+    <div class="fg"><label>Report URL / File Link</label><input id="fin-url" placeholder="https://drive.google.com/..."/></div>
+    <button class="btn btn-canopy btn-full" onclick="addFinReport()">Publish Report</button>
+  </div>
+</div>
+
+<!-- ADD FAME CHAMPION -->
+<div class="overlay" id="m-fame-add">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('m-fame-add')">✕</button>
+    <h2>Add Conservation Champion</h2>
+    <p class="msub">Add a member or partner to the Wall of Fame with a photo and caption.</p>
+    <div class="fg"><label>Name *</label><input id="fame-name" placeholder="Full name or organisation name"/></div>
+    <div class="fg"><label>Caption / Description *</label><textarea id="fame-caption" rows="2" placeholder="e.g. Diamond member since 2025. Supporter of the Albertine Rift restoration."></textarea></div>
+    <div class="fr2">
+      <div class="fg"><label>Tier</label>
+        <select id="fame-tier"><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option><option value="partner">Partner</option></select>
+      </div>
+      <div class="fg"><label>Year</label><input id="fame-year" type="number" placeholder="2026" value="2026"/></div>
+    </div>
+    <div class="fg"><label>Photo (optional)</label>
+      <div class="upload-zone" onclick="document.getElementById('fame-photo-input').click()">
+        <div class="uz-icon">🖼</div>
+        <strong>Click to upload photo</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.3rem">JPG or PNG, square crop ideal</p>
+      </div>
+      <input type="file" id="fame-photo-input" accept="image/*" style="display:none" onchange="handleFamePhoto(event)"/>
+      <div id="fame-photo-prev"></div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="addFameChampion()">Add to Wall of Fame</button>
+  </div>
+</div>
+
+<!-- CONTENT VIEWER -->
+<div class="overlay" id="m-content">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('m-content')">✕</button>
+    <div id="content-modal-body"></div>
+  </div>
+</div>
+
+<!-- CERTIFICATE MODAL -->
+<div class="overlay" id="m-cert">
+  <div class="modal cert-modal">
+    <button class="modal-close" onclick="closeModal('m-cert')">✕</button>
+    <div class="cert-preview" id="cert-preview">
+      <div class="cert-logo">
+        <img src="ubf-logo.png" alt="UBF"/>
+        <div style="width:1px;height:36px;background:rgba(200,168,75,.3)"></div>
+        <img src="fob-logo.png" alt="FoB"/>
+      </div>
+      <h2>Certificate of Membership</h2>
+      <p style="font-size:.75rem;color:rgba(255,255,255,.5)">Uganda Biodiversity Fund — Friends of Biodiversity Programme</p>
+      <div class="cert-name" id="cert-name">Member Name</div>
+      <p id="cert-desc">Is hereby recognised as a committed Friend of Biodiversity.</p>
+      <div class="cert-tier" id="cert-tier-badge">Silver Member</div>
+      <div class="cert-date" id="cert-date">2026</div>
+      <div class="cert-foot">
+        <div class="cert-sign-block">
+          <svg class="cert-sign" viewBox="0 0 220 64" width="160" height="46" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="signature">
+            <path d="M10 44 C16 12 24 14 22 42 C30 18 33 44 40 30 C45 20 49 40 57 30 C66 20 63 44 72 36 C84 26 92 16 102 32 C107 40 102 48 95 43 C88 38 97 28 110 31 C126 35 138 30 162 24"/>
+            <path d="M44 53 C90 45 140 45 192 51" stroke-width="1.5" opacity=".8"/>
+          </svg>
+          <div class="cert-sign-line"></div>
+          <div class="cert-sign-name">Ivan Amanigaruhanga</div>
+          <div class="cert-sign-title">Executive Director</div>
+        </div>
+        <div class="cert-seal" aria-label="Official seal">
+          <svg viewBox="0 0 120 120" width="88" height="88">
+            <defs><path id="sealArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
+            <circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/>
+            <circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/>
+            <circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/>
+            <text fill="#E9D9A8" font-size="8.4" font-weight="700" letter-spacing="1.7"><textPath href="#sealArc" startOffset="0">UGANDA BIODIVERSITY FUND ★ FRIENDS OF BIODIVERSITY ★ </textPath></text>
+            <path d="M60 43 C50 51 50 65 60 74 C70 65 70 51 60 43 Z" fill="none" stroke="#C8A84B" stroke-width="1.8"/>
+            <path d="M60 51 V70" stroke="#C8A84B" stroke-width="1.1"/>
+            <text x="60" y="92" text-anchor="middle" fill="#E9D9A8" font-size="8" font-weight="800" letter-spacing="2">OFFICIAL</text>
+          </svg>
+        </div>
+      </div>
+      <div class="cert-issue" id="cert-issue">Issued: —</div>
+    </div>
+    <button class="btn btn-gold btn-full" onclick="downloadCert()">⬇ Download Certificate</button>
+    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.6rem">Downloads as a text certificate. For a designed PDF certificate, contact info@ugandabiodiversityfund.org</p>
+  </div>
+</div>
+
+<!-- EMAIL POPUP -->
+<div id="ep">
+  <div class="ep-hdr">
+    <h4>Stay Updated 🌿</h4>
+    <p>Get UBF conservation news, events &amp; impact reports.</p>
+    <button class="ep-x" onclick="dismissEP()">✕</button>
+  </div>
+  <div class="ep-body">
+    <input type="email" id="ep-email" placeholder="your@email.com"/>
+    <button class="btn btn-gold btn-sm" onclick="subscribeEP()">Subscribe</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="app.js"></script>
+<!-- STAT PROOF LINK MODAL — shown to public when they click a stat box -->
+<div class="overlay" id="m-stat-proof">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-stat-proof')">✕</button>
+    <div id="stat-proof-body"></div>
+  </div>
+</div>
+
+<!-- EDIT STAT LINK MODAL — admin only -->
+<div class="overlay" id="m-edit-stat-link">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-edit-stat-link')">✕</button>
+    <h2>Edit Stat Proof Link</h2>
+    <p class="msub">Attach a URL to this stat box — a report, photo album, project page, or any document that proves this achievement.</p>
+    <input type="hidden" id="esl-key"/>
+    <div class="fg"><label>Stat Label</label><input id="esl-label" placeholder="e.g. Grantee projects funded" readonly style="background:var(--mist)"/></div>
+    <div class="fg"><label>Proof URL *</label><input id="esl-url" type="url" placeholder="https://drive.google.com/... or https://ugandabiodiversityfund.org/..."/></div>
+    <div class="fg"><label>Link Description (shown to visitors)</label><input id="esl-desc" placeholder="e.g. View our 2024 Annual Report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="saveStatLink()">Save Proof Link</button>
+    <button class="btn btn-danger btn-full" style="margin-top:.5rem" onclick="removeStatLink()">Remove Link</button>
+  </div>
+</div>
+
+<!-- ADD NEW FOOTPRINT STAT MODAL — admin only -->
+<div class="overlay" id="m-add-footprint">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-add-footprint')">✕</button>
+    <h2>Add New Footprint Stat</h2>
+    <p class="msub">Add a new achievement figure to the Our Footprint section on the homepage.</p>
+    <div class="fg"><label>Icon (emoji)</label><input id="nfs-ico" placeholder="e.g. 🌍" maxlength="4" style="font-size:1.5rem;width:80px"/></div>
+    <div class="fg"><label>Figure *</label><input id="nfs-val" type="number" placeholder="e.g. 5000"/></div>
+    <div class="fr2">
+      <div class="fg"><label>Prefix</label><input id="nfs-prefix" placeholder="e.g. $" maxlength="5"/></div>
+      <div class="fg"><label>Suffix</label><input id="nfs-suffix" placeholder="e.g. Ha or %" maxlength="10"/></div>
+    </div>
+    <div class="fg"><label>Label *</label><input id="nfs-label" placeholder="e.g. Trees planted in Karamoja"/></div>
+    <div class="fg"><label>Proof URL</label><input id="nfs-url" type="url" placeholder="https://..."/></div>
+    <div class="fg"><label>Link Description</label><input id="nfs-desc" placeholder="e.g. See project report"/></div>
+    <button class="btn btn-canopy btn-full" onclick="addFootprintStat()">Add to Homepage</button>
+  </div>
+</div>
+
+<!-- CREATE / EDIT POST MODAL -->
+<div class="overlay" id="m-create-post">
+  <div class="modal" style="max-width:600px">
+    <button class="modal-close" onclick="closeModal('m-create-post')">✕</button>
+    <h2 id="post-modal-title">Create a Post</h2>
+    <p class="msub">Share thoughts, updates, or conservation stories with the UBF community. Maximum 400 words. Posts appear instantly and are visible to all members.</p>
+    <input type="hidden" id="post-edit-id"/>
+    <div class="fg"><label>What's on your mind? *</label><textarea id="post-body" class="post-body-lg" rows="8" placeholder="Share your conservation story, project update, or community experience..."></textarea></div>
+    <div class="fg"><label>Image (optional)</label>
+      <div class="upload-zone" onclick="document.getElementById('post-img-input').click()" style="padding:1rem">
+        <div class="uz-icon">🖼</div><strong>Click to attach an image</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">JPG or PNG</p>
+      </div>
+      <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
+      <div id="post-img-prev"></div>
+    </div>
+    <div class="fg"><label>Video (optional — upload directly)</label>
+      <div class="upload-zone" onclick="document.getElementById('post-vid-input').click()" style="padding:1rem">
+        <div class="uz-icon">🎬</div><strong>Click to upload a video</strong>
+        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">MP4 or MOV — plays directly in the app</p>
+      </div>
+      <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
+      <div id="post-vid-prev"></div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="submitPost()">Submit Post for Review →</button>
+  </div>
+</div>
+
+<!-- LEAVE MEMBERSHIP MODAL -->
+<div class="overlay" id="m-leave">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('m-leave')">✕</button>
+    <h2>Leave Membership</h2>
+    <p class="msub" style="color:var(--rust)">⚠ This will permanently deactivate your membership and unsubscribe you from all UBF communications.</p>
+    <p style="font-size:.84rem;color:var(--muted);margin-bottom:1.25rem;line-height:1.65">If you have any concerns about your membership, please contact us first at <strong>info@ugandabiodiversityfund.org</strong> — we'd love to hear your feedback.</p>
+    <div class="fg"><label>Type <strong>LEAVE</strong> to confirm</label><input id="leave-confirm" placeholder="Type LEAVE here"/></div>
+    <button class="btn btn-danger btn-full" onclick="confirmLeave()">Permanently Leave &amp; Unsubscribe</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="closeModal('m-leave')">Cancel — Stay as Member</button>
+  </div>
+</div>
+
+<!-- MEMBER PROFILE MODAL — public view of any member -->
+<div class="overlay" id="m-member-profile">
+  <div class="modal profile-modal" style="max-width:560px;padding:0;overflow:hidden">
+    <button class="modal-close" style="position:absolute;top:.75rem;right:.75rem;z-index:10;background:rgba(0,0,0,.45);color:#fff;border:none;border-radius:50%;width:32px;height:32px;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center" onclick="closeModal('m-member-profile')">✕</button>
+    <div id="profile-modal-body"></div>
+  </div>
+</div>
+
+<!-- EDIT PROFILE MODAL — for own profile -->
+<div class="overlay" id="m-edit-profile">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-edit-profile')">✕</button>
+    <h2>Edit Your Profile</h2>
+    <p class="msub">Your profile is visible to all members.</p>
+    <div class="fg">
+      <label>Profile Photo</label>
+      <div style="display:flex;align-items:center;gap:1rem;margin-bottom:.5rem">
+        <div id="ep-photo-prev" style="width:60px;height:60px;border-radius:50%;overflow:hidden;background:var(--canopy);display:flex;align-items:center;justify-content:center;color:var(--gold);font-weight:700;font-size:1.1rem;flex-shrink:0"></div>
+        <label class="btn btn-ghost btn-sm" style="cursor:pointer">📷 Change Photo<input type="file" id="ep-photo-input" accept="image/*" style="display:none" onchange="previewEPPhoto(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Cover Wallpaper</label>
+      <div id="ep-wallpaper-prev" style="width:100%;height:80px;border-radius:var(--r-sm);background:linear-gradient(135deg,var(--canopy),var(--canopy-lt));margin-bottom:.5rem;overflow:hidden;position:relative">
+        <label class="btn btn-ghost btn-sm" style="position:absolute;bottom:.4rem;right:.4rem;cursor:pointer;background:rgba(0,0,0,.5);color:#fff;border:none">🖼 Change Wallpaper<input type="file" id="ep-wallpaper-input" accept="image/*" style="display:none" onchange="previewEPWallpaper(event)"/></label>
+      </div>
+    </div>
+    <div class="fg">
+      <label>Bio <span style="font-size:.75rem;color:var(--muted)">(max 160 characters)</span></label>
+      <textarea id="ep-bio" rows="3" maxlength="160" placeholder="Tell the community about your passion for biodiversity conservation..."></textarea>
+      <div id="ep-bio-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:.2rem">0 / 160</div>
+    </div>
+    <button class="btn btn-canopy btn-full" onclick="saveProfile()">Save Profile</button>
+  </div>
+</div>
+
+<!-- CHANGE PASSWORD MODAL -->
+<div class="overlay" id="m-change-pass">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-close" onclick="closeModal('m-change-pass')">✕</button>
+    <h2>Change Password</h2>
+    <p class="msub">Set a new password for your account. Minimum 8 characters.</p>
+    <div class="fg"><label>Current Password *</label><input id="cp-current" type="password" placeholder="Your current password"/></div>
+    <div class="fg"><label>New Password *</label><input id="cp-new" type="password" placeholder="Minimum 8 characters"/></div>
+    <div class="fg"><label>Confirm New Password *</label><input id="cp-confirm" type="password" placeholder="Repeat new password"/></div>
+    <button class="btn btn-canopy btn-full" onclick="changePassword()">Update Password</button>
+  </div>
+</div>
+
+</body>
+</html>
