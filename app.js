@@ -112,6 +112,7 @@ async function restoreSession(){
 /* ═══ APP STATE — populated from Supabase on load, kept live ═══ */
 let MEMBERS=[];
 let MY_FOLLOWING=new Set();// ids the current user follows (for the Discover Members directory)
+let DASH_META={};let DASH_ITEMS=[];// accountability dashboard (admin-editable, Supabase-backed)
 let CONTENT=[];
 let ANNOUNCES=[];
 let FIN_REPORTS=[];
@@ -162,6 +163,13 @@ async function loadPayment(){
   if(error){console.error('loadPayment',error);return}
   PAYMENT=data||{};
 }
+async function loadDashboard(){
+  const {data:meta}=await sb.from('dashboard_meta').select('*').eq('id',1).maybeSingle();
+  DASH_META=meta||{};
+  const {data:items,error}=await sb.from('dashboard_items').select('*').order('sort',{ascending:true});
+  if(error){console.error('loadDashboard',error);return}
+  DASH_ITEMS=items||[];
+}
 
 /* ═══ INIT ADMIN ACCOUNTS IF MISSING (runs once against Supabase) ═══ */
 async function initAdmins(){
@@ -198,7 +206,7 @@ function renderPaymentUI(){
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showLoadingToast();
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -228,6 +236,8 @@ function subscribeRealtime(){
   sb.channel('public:fin_reports').on('postgres_changes',{event:'*',schema:'public',table:'fin_reports'},async()=>{await loadFinReports();renderFinancials()}).subscribe();
   sb.channel('public:members').on('postgres_changes',{event:'*',schema:'public',table:'members'},async()=>{await loadMembers();renderAdminMembers()}).subscribe();
   sb.channel('public:payment_details').on('postgres_changes',{event:'*',schema:'public',table:'payment_details'},async()=>{await loadPayment();renderPaymentUI()}).subscribe();
+  sb.channel('public:dashboard_items').on('postgres_changes',{event:'*',schema:'public',table:'dashboard_items'},async()=>{await loadDashboard();renderAccountabilityDashboard();renderDashboardAdmin()}).subscribe();
+  sb.channel('public:dashboard_meta').on('postgres_changes',{event:'*',schema:'public',table:'dashboard_meta'},async()=>{await loadDashboard();renderAccountabilityDashboard();renderDashboardAdmin()}).subscribe();
   sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();}).subscribe();
   sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
 }
@@ -792,6 +802,8 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
+    // Accountability dashboard (rendered separately so it can refresh in realtime)
+    '<div id="accountability-dash"></div>'+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
@@ -845,6 +857,85 @@ function renderMemberView(){
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>';
   populateMembersDirectory();
+  renderAccountabilityDashboard();
+}
+
+/* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
+function _dashItems(section){return DASH_ITEMS.filter(i=>i.section===section)}
+function renderAccountabilityDashboard(){
+  const el=document.getElementById('accountability-dash');
+  if(!el)return;
+  if(!currentUser){el.innerHTML='';return}
+  const kpis=_dashItems('kpi');
+  const alloc=_dashItems('allocation');
+  const windows=_dashItems('window');
+  const impact=_dashItems('impact');
+  // Donut segments from allocation percentages
+  let offset=25;// start at top
+  const donutSegs=alloc.map(a=>{
+    const pct=parseFloat(a.val1)||0;
+    const seg='<circle cx="21" cy="21" r="15.915" fill="none" stroke="'+esc(a.val2||'#2D6A4F')+'" stroke-width="6" stroke-dasharray="'+pct+' '+(100-pct)+'" stroke-dashoffset="'+offset+'"></circle>';
+    offset-=pct;
+    return seg;
+  }).join('');
+  // "to the field" = everything except administration
+  const adminItem=alloc.find(a=>/admin/i.test(a.label));
+  const fieldPct=adminItem?Math.round(100-(parseFloat(adminItem.val1)||0)):(alloc.length?Math.round(parseFloat(alloc[0].val1)||0):0);
+  // Programme window bars (relative to max amount)
+  const maxAmt=Math.max(1,...windows.map(w=>parseFloat(w.val1)||0));
+  const bars=windows.map(w=>{
+    const amt=parseFloat(w.val1)||0;
+    return '<div class="adb-bar-row"><div class="adb-bt"><span>'+esc(w.label)+'</span><b>UGX '+esc(w.val1||'0')+'M</b></div><div class="adb-track"><div class="adb-fill" style="width:'+Math.round(amt/maxAmt*100)+'%"></div></div></div>';
+  }).join('');
+  // Personal contribution + estimated impact
+  const u=currentUser;const amt=u.amount||0;
+  const tpm=parseInt(DASH_META.trees_per_million)||320;
+  const trees=Math.round(amt/1e6*tpm);
+  const ha=Math.max(0,Math.round(trees/40));
+  const projects=Math.max(1,Math.round(amt/500000));
+  const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+
+  el.innerHTML=
+    '<div class="adb-head">'+
+      '<div class="adb-head-l">'+
+        '<div class="adb-logos">'+
+          '<img src="ubf-logo.png" alt="Uganda Biodiversity Fund"/>'+
+          '<span class="adb-logo-div"></span>'+
+          '<img src="fob-logo.png" alt="Friends of Biodiversity"/>'+
+        '</div>'+
+        '<div><div class="adb-title">Accountability Dashboard</div>'+
+          (DASH_META.intro_note?'<div class="adb-sub">'+esc(DASH_META.intro_note)+'</div>':'')+'</div>'+
+      '</div>'+
+      '<div class="adb-badges"><span class="adb-badge">✔ Independently Audited</span>'+(DASH_META.updated_label?'<span class="adb-badge gold">'+esc(DASH_META.updated_label)+'</span>':'')+'</div>'+
+    '</div>'+
+    // KPI strip
+    (kpis.length?'<div class="adb-kpis">'+kpis.map(k=>
+      '<div class="adb-kpi"><div class="adb-kpi-lbl">'+esc(k.label)+'</div><div class="adb-kpi-val">'+esc(k.val1||'—')+'</div>'+(k.val2?'<div class="adb-kpi-delta">'+esc(k.val2)+'</div>':'')+'</div>'
+    ).join('')+'</div>':'')+
+    // Charts row
+    '<div class="adb-row2">'+
+      (alloc.length?'<div class="adb-card"><h4>Where Contributions Go</h4><div class="adb-cardsub">Allocation of every UGX received</div>'+
+        '<div class="adb-donut-wrap">'+
+          '<svg width="132" height="132" viewBox="0 0 42 42"><circle cx="21" cy="21" r="15.915" fill="none" stroke="#eef2ee" stroke-width="6"></circle>'+donutSegs+
+            '<text x="21" y="20.5" text-anchor="middle" font-size="6" font-weight="800" fill="#1B4332">'+fieldPct+'%</text>'+
+            '<text x="21" y="25.5" text-anchor="middle" font-size="2.5" fill="#6b7a72">to the field</text></svg>'+
+          '<div class="adb-legend">'+alloc.map(a=>'<div><span class="adb-dot" style="background:'+esc(a.val2||'#2D6A4F')+'"></span>'+esc(a.label)+'<span class="adb-pct">'+esc(a.val1||'0')+'%</span></div>').join('')+'</div>'+
+        '</div></div>':'')+
+      (windows.length?'<div class="adb-card"><h4>Spend by Programme Window</h4><div class="adb-cardsub">Deployment across the strategic windows</div><div class="adb-bars">'+bars+'</div></div>':'')+
+    '</div>'+
+    // Personal + collective
+    '<div class="adb-row3">'+
+      '<div class="adb-card adb-you"><h4>Your Contribution &amp; Impact</h4>'+
+        '<div class="adb-you-big">'+(amt?'UGX '+amt.toLocaleString():'—')+'</div>'+
+        '<div class="adb-you-meta">'+esc(td.label)+' tier · '+esc(String(u.year||''))+'</div>'+
+        (amt?'<div class="adb-you-line">Your contribution helped restore an estimated <b>'+ha+' hectare'+(ha===1?'':'s')+'</b> and supported <b>'+projects+' community project'+(projects===1?'':'s')+'</b>.</div>'+
+          '<span class="adb-chip">🌿 Equivalent to ~'+trees.toLocaleString()+' indigenous trees</span>':'<div class="adb-you-line">Your impact estimate will appear once your contribution is recorded.</div>')+
+      '</div>'+
+      (impact.length?'<div class="adb-card"><h4 style="margin-bottom:.75rem">Collective Impact</h4><div class="adb-impact">'+impact.map(i=>
+        '<div class="adb-imp"><div class="adb-imp-n">'+esc(i.val1||'—')+'</div><div class="adb-imp-l">'+esc(i.label)+'</div></div>'
+      ).join('')+'</div></div>':'')+
+    '</div>'+
+    (FIN_REPORTS.length?'<div class="adb-foot"><span>Source: UBF audited accounts &amp; M&amp;E field reports</span><a href="#" onclick="showView(\'member\');return false">⬇ Financial reports below →</a></div>':'');
 }
 
 /* ═══ DISCOVER MEMBERS DIRECTORY — search & follow members/institutions ═══ */
@@ -1206,7 +1297,84 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();}
+function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();}
+
+/* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
+function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
+function renderDashboardAdmin(){
+  const el=document.getElementById('dash-admin');if(!el)return;
+  const m=DASH_META||{};
+  const sec=(title,key,hint)=>{
+    const items=_dashItems(key);
+    return '<div class="dadm-sec"><div class="dadm-sec-head"><span>'+title+'</span><button class="btn btn-canopy btn-sm" onclick="openDashItem(\''+key+'\')">+ Add</button></div>'+
+      (hint?'<p style="font-size:.74rem;color:var(--muted);margin:-.3rem 0 .6rem">'+hint+'</p>':'')+
+      (items.length?items.map(i=>'<div class="dadm-row"><div class="dadm-row-main"><b>'+esc(i.label)+'</b><span>'+esc(i.val1||'')+(i.val2?' · '+esc(i.val2):'')+'</span></div><div class="dadm-row-act"><button class="btn btn-ghost btn-sm" onclick="openDashItem(\''+key+'\',\''+i.id+'\')">Edit</button><button class="btn btn-danger btn-sm" onclick="deleteDashItem(\''+i.id+'\')">Delete</button></div></div>').join(''):'<p style="font-size:.8rem;color:var(--muted)">No items yet.</p>')+
+    '</div>';
+  };
+  el.innerHTML=
+    '<div class="dadm-sec"><div class="dadm-sec-head"><span>Header &amp; Settings</span></div>'+
+      '<div class="fg"><label>Updated label (shown as a badge)</label><input id="dm-updated" value="'+esc(m.updated_label||'')+'"/></div>'+
+      '<div class="fg"><label>Intro note</label><input id="dm-intro" value="'+esc(m.intro_note||'')+'"/></div>'+
+      '<div class="fg"><label>Trees per UGX million (for each member’s personal impact estimate)</label><input id="dm-tpm" type="number" value="'+esc(String(m.trees_per_million||320))+'"/></div>'+
+      '<button class="btn btn-canopy btn-sm" onclick="saveDashMeta()">Save Settings</button>'+
+    '</div>'+
+    sec('KPI Cards','kpi','The four headline numbers at the top.')+
+    sec('Where Contributions Go (donut)','allocation','Value = percentage (number only). Secondary = colour hex (e.g. #2D6A4F).')+
+    sec('Spend by Programme Window (bars)','window','Value = amount in UGX millions (number only, e.g. 128).')+
+    sec('Collective Impact','impact','Value = the figure shown (e.g. 128K, 42, 19%).');
+}
+function openDashItem(section,id){
+  document.getElementById('dash-item-section').value=section;
+  document.getElementById('dash-item-id').value=id||'';
+  const item=id?DASH_ITEMS.find(i=>i.id===id):null;
+  document.getElementById('dash-item-title').textContent=(id?'Edit ':'Add ')+_dashSectionName(section);
+  document.getElementById('dash-item-label').value=item?item.label:'';
+  document.getElementById('dash-item-val1').value=item?(item.val1||''):'';
+  document.getElementById('dash-item-val2').value=item?(item.val2||''):'';
+  document.getElementById('dash-item-sort').value=item?(item.sort||0):(_dashItems(section).length+1);
+  const v1=document.getElementById('dash-item-val1-lbl');
+  const v2fg=document.getElementById('dash-item-val2-fg');
+  const v2=document.getElementById('dash-item-val2-lbl');
+  if(section==='kpi'){v1.textContent='Value (e.g. UGX 412M)';v2.textContent='Trend (e.g. ▲ 18% vs 2025)';v2fg.style.display='';}
+  else if(section==='allocation'){v1.textContent='Percentage — number only (e.g. 74)';v2.textContent='Colour — hex (e.g. #2D6A4F)';v2fg.style.display='';}
+  else if(section==='window'){v1.textContent='Amount in UGX millions — number only (e.g. 128)';v2fg.style.display='none';}
+  else{v1.textContent='Value (e.g. 128K)';v2fg.style.display='none';}
+  openModal('m-dash-item');
+}
+async function saveDashItem(){
+  const id=document.getElementById('dash-item-id').value;
+  const section=document.getElementById('dash-item-section').value;
+  const label=document.getElementById('dash-item-label').value.trim();
+  if(!label){toast('⚠ Enter a label.');return}
+  const row={section,label,
+    val1:document.getElementById('dash-item-val1').value.trim(),
+    val2:document.getElementById('dash-item-val2').value.trim(),
+    sort:parseInt(document.getElementById('dash-item-sort').value)||0};
+  let res;
+  if(id)res=await sb.from('dashboard_items').update(row).eq('id',id);
+  else res=await sb.from('dashboard_items').insert(row);
+  if(res.error){toast('⚠ Could not save.');console.error(res.error);return}
+  closeModal('m-dash-item');
+  await loadDashboard();renderDashboardAdmin();renderAccountabilityDashboard();
+  toast('✅ Dashboard updated.');
+}
+async function deleteDashItem(id){
+  if(!confirm('Delete this dashboard item? This cannot be undone.'))return;
+  const{error}=await sb.from('dashboard_items').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadDashboard();renderDashboardAdmin();renderAccountabilityDashboard();
+  toast('🗑 Item deleted.');
+}
+async function saveDashMeta(){
+  const row={id:1,
+    updated_label:document.getElementById('dm-updated').value.trim(),
+    intro_note:document.getElementById('dm-intro').value.trim(),
+    trees_per_million:parseInt(document.getElementById('dm-tpm').value)||320};
+  const{error}=await sb.from('dashboard_meta').upsert(row);
+  if(error){toast('⚠ Could not save settings.');console.error(error);return}
+  await loadDashboard();renderDashboardAdmin();renderAccountabilityDashboard();
+  toast('✅ Settings saved.');
+}
 
 /* Render any extra stats saved by admin into the DOM on page load */
 function renderExtraStats(){
