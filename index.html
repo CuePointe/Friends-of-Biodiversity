@@ -811,29 +811,36 @@
 
 <!-- CREATE / EDIT POST MODAL -->
 <div class="overlay" id="m-create-post">
-  <div class="modal" style="max-width:520px">
+  <div class="modal" style="max-width:600px">
     <button class="modal-close" onclick="closeModal('m-create-post')">✕</button>
     <h2 id="post-modal-title">Create a Post</h2>
     <p class="msub">Share thoughts, updates, or conservation stories with the UBF community. Maximum 400 words. Posts appear instantly and are visible to all members.</p>
     <input type="hidden" id="post-edit-id"/>
-    <div class="fg"><label>What's on your mind? *</label><textarea id="post-body" rows="4" placeholder="Share your conservation story, project update, or community experience..."></textarea></div>
-    <div class="fg"><label>Image (optional)</label>
-      <div class="upload-zone" onclick="document.getElementById('post-img-input').click()" style="padding:1rem">
-        <div class="uz-icon">🖼</div><strong>Click to attach an image</strong>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">JPG or PNG</p>
+    <div class="fg"><label>What's on your mind? *</label><textarea id="post-body" class="post-body-lg" rows="8" placeholder="Share your conservation story, project update, or community experience..."></textarea></div>
+    <div class="composer-tools">
+      <span class="composer-tools-label">Add to your post</span>
+      <div class="composer-icons">
+        <button type="button" class="composer-icon" onclick="document.getElementById('post-img-input').click()" title="Add a photo">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#0a8f5f" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.8"/><path d="M21 16l-5-5L5 20"/></svg>
+          <span>Photo</span>
+        </button>
+        <button type="button" class="composer-icon" onclick="document.getElementById('post-vid-input').click()" title="Add a video">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#c0392b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="14" height="14" rx="2.5"/><path d="M17 9l4-2.5v11L17 15z"/></svg>
+          <span>Video</span>
+        </button>
+        <button type="button" class="composer-icon" onclick="document.getElementById('post-doc-input').click()" title="Add a document (PDF, Word, etc.)">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2c6cbf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
+          <span>Document</span>
+        </button>
       </div>
-      <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
-      <div id="post-img-prev"></div>
     </div>
-    <div class="fg"><label>Video (optional — upload directly)</label>
-      <div class="upload-zone" onclick="document.getElementById('post-vid-input').click()" style="padding:1rem">
-        <div class="uz-icon">🎬</div><strong>Click to upload a video</strong>
-        <p style="font-size:.78rem;color:var(--muted);margin-top:.25rem">MP4 or MOV — plays directly in the app</p>
-      </div>
-      <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
-      <div id="post-vid-prev"></div>
-    </div>
-    <button class="btn btn-canopy btn-full" onclick="submitPost()">Submit Post for Review →</button>
+    <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
+    <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
+    <input type="file" id="post-doc-input" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,application/pdf" style="display:none" onchange="handlePostDoc(event)"/>
+    <div id="post-img-prev"></div>
+    <div id="post-vid-prev"></div>
+    <div id="post-doc-prev"></div>
+    <button class="btn btn-canopy btn-full" style="margin-top:1rem" onclick="submitPost()">Submit Post for Review →</button>
   </div>
 </div>
 

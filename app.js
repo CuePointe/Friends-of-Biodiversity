@@ -111,6 +111,7 @@ async function restoreSession(){
 
 /* ═══ APP STATE — populated from Supabase on load, kept live ═══ */
 let MEMBERS=[];
+let MY_FOLLOWING=new Set();// ids the current user follows (for the Discover Members directory)
 let CONTENT=[];
 let ANNOUNCES=[];
 let FIN_REPORTS=[];
@@ -806,8 +807,13 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
     '</div>'+
+    // Discover / follow other members
+    '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
+    '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
+    '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
+    '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
     // Announcements
-    '<div class="mem-sec-title" style="margin-top:1.5rem">Latest from UBF</div>'+
+    '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
     (ANNOUNCES.length
       ?ANNOUNCES.slice(0,5).map(a=>
         '<div class="ann-editorial">'+
@@ -838,6 +844,79 @@ function renderMemberView(){
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>';
+  populateMembersDirectory();
+}
+
+/* ═══ DISCOVER MEMBERS DIRECTORY — search & follow members/institutions ═══ */
+let _memberDirQuery='';
+async function populateMembersDirectory(){
+  const el=document.getElementById('members-directory');
+  if(!el||!currentUser)return;
+  // Load who the current user already follows (so buttons show the right state)
+  const{data:fl}=await sb.from('follows').select('following_id').eq('follower_id',currentUser.id);
+  MY_FOLLOWING=new Set((fl||[]).map(f=>f.following_id));
+  _memberDirQuery='';
+  renderMemberDir('');
+}
+function _memberCardHtml(m){
+  const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
+  const initials=esc((m.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase());
+  const following=MY_FOLLOWING.has(m.id);
+  const safeName=esc(m.name).replace(/'/g,'');
+  const sub=esc(td.label)+(m.org?' · '+esc(m.org):'')+' · '+(m.followers_count||0)+' follower'+((m.followers_count||0)===1?'':'s');
+  return '<div class="mdir-card">'+
+    '<div class="mdir-top" onclick="viewMemberProfile(\''+m.id+'\')">'+
+      (m.photo_url?'<img src="'+esc(m.photo_url)+'" class="mdir-av" alt=""/>':'<div class="mdir-av mdir-av-init">'+initials+'</div>')+
+      '<div class="mdir-meta">'+
+        '<div class="mdir-name">'+esc(m.name)+'</div>'+
+        '<div class="mdir-tier">'+sub+'</div>'+
+      '</div>'+
+    '</div>'+
+    '<button id="dfollow-'+m.id+'" class="btn '+(following?'btn-ghost':'btn-canopy')+' btn-sm mdir-follow" onclick="dirToggleFollow(\''+m.id+'\',\''+safeName+'\')">'+(following?'✓ Following':'+ Follow')+'</button>'+
+  '</div>';
+}
+function renderMemberDir(query){
+  const el=document.getElementById('members-directory');
+  if(!el||!currentUser)return;
+  const q=(query||'').trim().toLowerCase();
+  let list=MEMBERS.filter(m=>m.id!==currentUser.id&&m.role==='member'&&m.status==='active');
+  if(q)list=list.filter(m=>(m.name||'').toLowerCase().includes(q)||(m.org||'').toLowerCase().includes(q));
+  list.sort((a,b)=>(b.followers_count||0)-(a.followers_count||0));
+  if(!list.length){
+    el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">'+(q?'No members or institutions match “'+esc(query.trim())+'”.':'No other members yet — check back as the community grows.')+'</p>';
+    return;
+  }
+  // Default view (no search): show a few suggested influential members. Search: show up to 30 matches.
+  const shown=q?list.slice(0,30):list.slice(0,6);
+  const hint=q
+    ?'<div class="mdir-hint">'+list.length+' result'+(list.length===1?'':'s')+'</div>'
+    :'<div class="mdir-hint">Suggested — most-followed members'+(list.length>shown.length?' · type to search all '+list.length:'')+'</div>';
+  el.innerHTML=hint+shown.map(_memberCardHtml).join('');
+}
+function searchMembers(val){_memberDirQuery=val;renderMemberDir(val);}
+
+async function dirToggleFollow(id,name){
+  if(!currentUser){toast('Sign in to follow members.');return}
+  if(id===currentUser.id)return;
+  const btn=document.getElementById('dfollow-'+id);
+  const following=MY_FOLLOWING.has(id);
+  const cur=(MEMBERS.find(m=>m.id===id)||{}).followers_count||0;
+  if(following){
+    await sb.from('follows').delete().eq('follower_id',currentUser.id).eq('following_id',id);
+    await sb.from('members').update({followers_count:Math.max(0,cur-1)}).eq('id',id);
+    MY_FOLLOWING.delete(id);
+    if(btn){btn.textContent='+ Follow';btn.className='btn btn-canopy btn-sm mdir-follow';}
+    toast('Unfollowed '+name);
+  }else{
+    const{error}=await sb.from('follows').insert({follower_id:currentUser.id,following_id:id});
+    if(error&&error.code!=='23505'){toast('⚠ Could not follow.');return}
+    if(!error)await sb.from('members').update({followers_count:cur+1}).eq('id',id);
+    MY_FOLLOWING.add(id);
+    if(btn){btn.textContent='✓ Following';btn.className='btn btn-ghost btn-sm mdir-follow';}
+    toast('Now following '+name+'!');
+  }
+  await loadMembers();
+  renderMemberDir(_memberDirQuery);
 }
 
 /* ═══ CERTIFICATE ═══ */
@@ -1722,6 +1801,7 @@ function renderPosts(filter){
       (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
       (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image" onclick="openImageFull(\''+p.image_url+'\')"/>':'')+
       (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline preload="metadata"></video></div>':'')+
+      (p.doc_url?'<a class="post-doc" href="'+esc(p.doc_url)+'" target="_blank" rel="noopener"><span class="post-doc-ico">📄</span><span class="post-doc-meta"><span class="post-doc-name">'+esc(p.doc_name||'Document')+'</span><span class="post-doc-sub">Tap to open · PDF / document</span></span><span class="post-doc-dl">⬇</span></a>':'')+
       (totalReacts>0?'<div class="post-react-summary">'+POST_EMOJIS.filter(r=>(p.reactions[r.key]||0)>0).map(r=>r.emoji+' '+p.reactions[r.key]).join('  ')+'<span style="margin-left:auto">'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>':'<div class="post-react-summary"><span>'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>')+
       '<div class="post-reactions">'+
         POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' '+r.label+'</button>').join('')+
@@ -1845,6 +1925,19 @@ function handlePostVideo(e){
     '</div>';
 }
 
+let postDocFile=null;
+function handlePostDoc(e){
+  const f=e.target.files[0];if(!f)return;
+  postDocFile=f;
+  document.getElementById('post-doc-prev').innerHTML=
+    '<div style="display:flex;align-items:center;gap:.5rem;margin-top:.5rem;padding:.5rem;background:var(--mist);border-radius:var(--r-sm)">'+
+      '<span style="font-size:1.2rem">📄</span>'+
+      '<span style="font-size:.82rem;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(f.name)+'</span>'+
+      '<span style="font-size:.72rem;color:var(--muted)">'+(f.size/1024/1024).toFixed(1)+'MB</span>'+
+      '<button onclick="postDocFile=null;document.getElementById(\'post-doc-prev\').innerHTML=\'\'" style="background:none;border:none;cursor:pointer;color:var(--muted);font-size:1rem">✕</button>'+
+    '</div>';
+}
+
 // Word count live feedback
 document.addEventListener('input',e=>{
   if(e.target.id==='post-body'){
@@ -1860,7 +1953,7 @@ async function submitPost(){
   if(!currentUser){toast('Sign in to post.');return}
   const body=document.getElementById('post-body').value.trim();
   const editId=document.getElementById('post-edit-id').value;
-  if(!body&&!postImageData&&!postVideoFile){toast('⚠ Write something or attach an image or video.');return}
+  if(!body&&!postImageData&&!postVideoFile&&!postDocFile){toast('⚠ Write something or attach a photo, video, or document.');return}
   const words=body.split(/\s+/).filter(Boolean).length;
   if(words>400){toast('⚠ Post exceeds 400 words. Please shorten it.');return}
   toast('⬆ Publishing...');
@@ -1883,10 +1976,20 @@ async function submitPost(){
     else{console.error('video upload',upErr);toast('⚠ Video upload failed — check your Supabase storage bucket size limit.');}
   }
 
+  let docUrl='';let docName='';
+  if(postDocFile){
+    const ext=(postDocFile.name.split('.').pop()||'file').toLowerCase();
+    const path='posts/doc_'+Date.now()+'_'+currentUser.id+'.'+ext;
+    const{error:upErr}=await sb.storage.from('content-files').upload(path,postDocFile,{contentType:postDocFile.type||'application/octet-stream'});
+    if(!upErr){const{data}=sb.storage.from('content-files').getPublicUrl(path);docUrl=data.publicUrl;docName=postDocFile.name;}
+    else{console.error('doc upload',upErr);toast('⚠ Document upload failed — try a smaller file.');}
+  }
+
   if(editId){
     const updates={body};
     if(imageUrl)updates.image_url=imageUrl;
     if(videoUrl)updates.video_url=videoUrl;
+    if(docUrl){updates.doc_url=docUrl;updates.doc_name=docName;}
     const{error}=await sb.from('member_posts').update(updates).eq('id',editId);
     if(error){toast('⚠ Could not update post.');console.error(error);return}
     toast('✅ Post updated.');
@@ -1898,6 +2001,8 @@ async function submitPost(){
       body,
       image_url:imageUrl||null,
       video_url:videoUrl||null,
+      doc_url:docUrl||null,
+      doc_name:docName||null,
       reactions:{likes:0,thumbsup:0,support:0,wow:0,celebrate:0},
     };
     const{error}=await sb.from('member_posts').insert(row);
@@ -1909,11 +2014,13 @@ async function submitPost(){
   document.getElementById('post-body').value='';
   document.getElementById('post-img-prev').innerHTML='';
   document.getElementById('post-vid-prev').innerHTML='';
+  const dp=document.getElementById('post-doc-prev');if(dp)dp.innerHTML='';
   document.getElementById('post-edit-id').value='';
   document.getElementById('post-modal-title').textContent='Create a Post';
   const wc=document.getElementById('post-word-count');if(wc)wc.textContent='';
   postImageData=null;
   postVideoFile=null;
+  postDocFile=null;
   closeModal('m-create-post');
   await loadPosts();renderPosts();renderAdminPosts();
 }
@@ -1926,8 +2033,10 @@ function editPost(id){
   document.getElementById('post-body').value=p.body||'';
   document.getElementById('post-img-prev').innerHTML='';
   document.getElementById('post-vid-prev').innerHTML='';
+  const dp=document.getElementById('post-doc-prev');if(dp)dp.innerHTML='';
   postImageData=null;
   postVideoFile=null;
+  postDocFile=null;
   openModal('m-create-post');
 }
 
