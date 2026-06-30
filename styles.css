@@ -128,7 +128,8 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .tier-card[data-tier=gold].sel{border-color:var(--gold)}
 .tier-card[data-tier=platinum].sel{border-color:var(--plat)}
 .tier-card[data-tier=diamond].sel{border-color:var(--diamond)}
-.tier-badge{display:none}
+.tier-badge{display:flex;align-items:center;justify-content:center;width:50px;height:50px;border-radius:50%;margin-bottom:1rem}
+.tier-badge svg{display:block}
 .tier-name{font-family:var(--ff-d);font-size:1.3rem;font-weight:700;margin-bottom:.3rem}
 .tier-card[data-tier=silver] .tier-name{color:var(--silver)}
 .tier-card[data-tier=gold] .tier-name{color:var(--gold)}
@@ -151,7 +152,8 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .pay-card{background:rgba(255,255,255,.06);border:1px solid rgba(200,168,75,.18);border-radius:16px;padding:1.75rem;transition:background .2s,border-color .2s}
 .pay-card:hover{background:rgba(255,255,255,.09);border-color:rgba(200,168,75,.35)}
 .pay-card-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid rgba(255,255,255,.07)}
-.pay-card-icon{width:40px;height:40px;border-radius:10px;background:rgba(200,168,75,.12);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.pay-card-icon{height:40px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.pay-card-icon svg{display:block;border-radius:9px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
 .pay-card-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt)}
 .pay-card-sub{font-size:.75rem;color:rgba(255,255,255,.35);margin-top:.1rem}
 .pay-card h3{display:none}
@@ -293,7 +295,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .cert-modal{max-width:540px}
 .cert-preview{background:linear-gradient(135deg,var(--canopy) 0%,var(--canopy-mid) 100%);border:2px solid var(--gold);border-radius:var(--r);padding:2.5rem;text-align:center;margin-bottom:1.25rem}
 .cert-preview .cert-logo{display:flex;gap:1rem;justify-content:center;margin-bottom:1.25rem;align-items:center}
-.cert-preview .cert-logo img{width:48px;height:48px;object-fit:contain}
+.cert-preview .cert-logo img{width:54px;height:54px;object-fit:contain;border-radius:50%;background:#fff;padding:6px;box-shadow:0 3px 10px rgba(0,0,0,.22)}
 .cert-preview h2{font-family:var(--ff-d);font-size:1.2rem;color:var(--gold-lt);margin-bottom:.25rem}
 .cert-preview .cert-name{font-family:var(--ff-d);font-size:1.75rem;font-weight:700;color:var(--white);margin:.75rem 0}
 .cert-preview p{font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.65}
@@ -384,7 +386,7 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(255,255,255,.07)}
 .footer-brand p{font-size:.83rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:.88rem;max-width:280px}
 .footer-logo-strip{display:flex;align-items:center;gap:.75rem}
-.footer-logo-strip img{height:44px;width:44px;object-fit:contain}
+.footer-logo-strip img{height:46px;width:46px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,.95);padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
 .footer-logo-divider{width:1px;height:32px;background:rgba(200,168,75,.3)}
 .footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:.88rem}
 .footer-col a{display:block;font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:.42rem;transition:color var(--tr)}
