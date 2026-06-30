@@ -7,24 +7,26 @@
    and see the last loaded content.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v1';
+const CACHE_NAME = 'fob-app-v2';
 
-// Core files to cache immediately on install
+// Core files to cache immediately on install.
+// RELATIVE paths so the app works under a GitHub project subpath
+// (e.g. /friends-of-biodiversity/) as well as a custom domain root.
 const CORE_FILES = [
-  '/',
-  '/index.html',
-  '/styles.css',
-  '/app.js',
-  '/manifest.json',
-  '/fob-logo.png',
-  '/ubf-logo.png',
-  '/favicon.png',
-  '/footprint-globe.jpg',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/slide-1.jpg',
-  '/slide-2.jpg',
-  '/slide-3.jpg',
+  './',
+  './index.html',
+  './styles.css',
+  './app.js',
+  './manifest.json',
+  './fob-logo.png',
+  './ubf-logo.png',
+  './favicon.png',
+  './footprint-globe.jpg',
+  './icon-192.png',
+  './icon-512.png',
+  './slide-1.jpg',
+  './slide-2.jpg',
+  './slide-3.jpg',
 ];
 
 // ── INSTALL: cache core files ──
@@ -84,7 +86,7 @@ self.addEventListener('fetch', event => {
           .catch(() => {
             // Offline and not cached — return the main app shell
             if (event.request.destination === 'document') {
-              return caches.match('/index.html');
+              return caches.match('./index.html');
             }
           });
       })
@@ -97,15 +99,15 @@ self.addEventListener('push', event => {
   const data = event.data.json();
   self.registration.showNotification(data.title || 'Friends of Biodiversity', {
     body: data.body || 'New update from Uganda Biodiversity Fund',
-    icon: '/icon-192.png',
-    badge: '/icon-96.png',
-    data: { url: data.url || '/' }
+    icon: './icon-192.png',
+    badge: './icon-96.png',
+    data: { url: data.url || './' }
   });
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   event.waitUntil(
-    clients.openWindow(event.notification.data.url || '/')
+    clients.openWindow(event.notification.data.url || './')
   );
 });

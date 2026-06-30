@@ -2194,7 +2194,7 @@ let pwaInstallPrompt=null;
 // Register service worker
 if('serviceWorker' in navigator){
   window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('sw.js')
       .then(reg=>console.log('FoB PWA: Service worker registered',reg.scope))
       .catch(err=>console.log('FoB PWA: Service worker failed',err));
   });

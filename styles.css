@@ -333,14 +333,15 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .cert-preview .cert-name{font-family:var(--ff-d);font-size:1.75rem;font-weight:700;color:var(--white);margin:.75rem 0}
 .cert-preview p{font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.65}
 .cert-preview .cert-tier{display:inline-block;font-family:var(--ff-m);font-size:.7rem;padding:.3rem .9rem;border-radius:99px;background:rgba(200,168,75,.2);color:var(--gold-lt);margin-top:.75rem}
-.cert-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;margin-top:1.6rem;text-align:left}
-.cert-sign-block{flex:1;min-width:0}
-.cert-sign{display:block;margin:0 0 -.15rem -.3rem}
-.cert-sign-line{width:155px;max-width:100%;height:1px;background:rgba(255,255,255,.4);margin:.2rem 0 .35rem}
+.cert-foot{display:flex;justify-content:space-between;align-items:center;gap:1.25rem;margin-top:1.75rem;text-align:left}
+.cert-sign-block{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start}
+.cert-sign{display:block;height:46px;margin:0 0 -.1rem 0}
+.cert-sign-line{width:165px;max-width:100%;height:1px;background:rgba(255,255,255,.45);margin:.15rem 0 .4rem}
 .cert-sign-name{font-family:var(--ff-d);font-size:.85rem;font-weight:700;color:#fff}
 .cert-sign-title{font-size:.64rem;color:var(--gold-lt);letter-spacing:.07em;text-transform:uppercase;margin-top:.12rem}
-.cert-seal{flex-shrink:0;transform:rotate(-8deg);opacity:.92;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
-.cert-issue{font-size:.64rem;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase;text-align:center;margin-top:1.1rem}
+.cert-seal{flex-shrink:0;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);opacity:.95;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.cert-seal svg{display:block}
+.cert-issue{font-size:.64rem;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase;text-align:center;margin-top:1.25rem}
 .cert-preview .cert-date{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:.75rem}
 
 /* UPLOAD ZONE */

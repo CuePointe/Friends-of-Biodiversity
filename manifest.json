@@ -2,13 +2,13 @@
   "name": "Friends of Biodiversity — Uganda Biodiversity Fund",
   "short_name": "FoB Green Card",
   "description": "The Uganda Biodiversity Fund Friends of Biodiversity Green Card membership platform. Protecting Uganda's ecosystems for now and the future.",
-  "start_url": "/",
+  "start_url": "./",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0B2618",
   "theme_color": "#0B2618",
   "lang": "en",
-  "scope": "/",
+  "scope": "./",
   "categories": ["education", "lifestyle", "social"],
   "icons": [
     {
@@ -71,21 +71,21 @@
       "name": "Learning Exchange",
       "short_name": "Learn",
       "description": "Access conservation videos, articles, research and more",
-      "url": "/#learn",
+      "url": "./#learn",
       "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
     },
     {
       "name": "Green Card Tiers",
       "short_name": "Join",
       "description": "Join the Friends of Biodiversity programme",
-      "url": "/#greencard",
+      "url": "./#greencard",
       "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
     },
     {
       "name": "Our Footprint",
       "short_name": "Impact",
       "description": "See UBF's conservation impact across Uganda",
-      "url": "/#impact",
+      "url": "./#impact",
       "icons": [{ "src": "icon-96.png", "sizes": "96x96" }]
     }
   ]
