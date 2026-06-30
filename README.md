@@ -1,212 +1,160 @@
 # Friends of Biodiversity — Uganda Biodiversity Fund
 
-Web application for the UBF Green Card membership programme. Built as a static
-site for GitHub Pages, ready for Cloudflare in front and Supabase as the backend.
+A membership & community platform for the **Uganda Biodiversity Fund (UBF)**
+"Friends of Biodiversity" Green Card programme — connecting individuals and
+institutions that support the protection of Uganda's ecosystems *for now and the
+future*.
 
-## File Structure
+The app is a fast, installable **Progressive Web App** built with vanilla
+HTML / CSS / JavaScript and backed by **Supabase** (PostgreSQL, Realtime,
+Storage). No build step, no framework — just static files served over HTTPS.
+
+---
+
+## ✨ Key Features
+
+### Public site
+- Hero slideshow of real UBF conservation photography
+- Strategic framework: thematic areas & programme windows
+- **Green Card membership tiers** (Student → Silver → Gold → Platinum → Diamond)
+  with custom nature-progression icons
+- **How to Pay** — branded Bank / MTN Mobile Money / Airtel Money options
+- Wall of Fame, public announcements, impact statistics
+- Searchable Learning Exchange resource library
+
+### Membership
+- Online enrollment with a **pending-approval workflow** (admins activate new
+  members after verifying payment)
+- Login with rate-limiting (lockout after repeated failed attempts) and
+  persistent sessions
+- **Member dashboard**: tier benefits, unlocked resources, announcements,
+  financial reports
+- **Digital Green Card certificate** — with the Executive Director's signature,
+  an official seal, and date of issue
+- Editable profile: avatar, cover wallpaper, bio
+
+### Community (LinkedIn-style)
+- **Member posts** with a large composer and a Photo / Video / Document toolbar
+- Reactions, comments, and an admin moderation view
+- **Discover Members** — a search bar (by member or institution) with Follow
+  buttons, ranked by influence (followers)
+- Rich member profiles showing contributions, tier, "member since", and bio —
+  so members can appreciate a profile before following
+
+### Admin Control Panel
+- Member management: search, tier/status filters, pagination, approve & remove
+- Content library, Wall of Fame, announcements, financial reports
+- Payment details, email-campaign log, slideshow management
+- Confirmation prompts on all destructive actions
+
+### Platform
+- **Installable PWA** (Android "Add to Home Screen", standalone display,
+  full icon set, service worker, offline shell)
+- Fully responsive / mobile-first layout
+- Realtime sync across all users via Supabase channels
+- XSS hardening (HTML escaping + DOMPurify) on all user-generated content
+
+---
+
+## 📁 Project Structure
 
 ```
 /
-├── index.html              ← Main application (single page app)
-├── assets/
-│   ├── styles.css           ← All styles
-│   ├── app.js                ← All application logic & data
-│   ├── logos/
-│   │   ├── ubf-logo.png       ← Uganda Biodiversity Fund logo ("For now & the future")
-│   │   └── fob-logo.png       ← Friends of Biodiversity logo ("Demonstrating care...")
-│   └── images/
-│       ├── slide-1.jpg … slide-13.jpg  ← Hero slideshow (real UBF/conservation photos)
-└── README.md                ← This file
+├── index.html        ← Single-page application markup
+├── styles.css        ← All styles
+├── app.js            ← All application logic (Supabase data layer + UI)
+├── sw.js             ← Service worker (PWA offline shell)
+├── manifest.json     ← PWA manifest (icons, name, theme)
+├── SETUP.sql         ← Database schema reference
+├── ubf-logo.png / fob-logo.png   ← Brand logos
+├── icon-*.png        ← PWA app icons (72 → 512, incl. maskable)
+├── favicon*.png
+├── slide-1.jpg … slide-17.jpg    ← Hero slideshow imagery
+└── README.md         ← This file
 ```
 
-## Deploying to GitHub Pages (today)
+---
 
-1. Create a new repository (e.g. `friends-of-biodiversity`).
-2. Upload all files **preserving the folder structure above** — the
-   `assets/` folder must sit alongside `index.html`.
-3. Go to Settings → Pages → Source: select branch `main`, folder `/ (root)`.
-4. Your site will be live at `https://<your-org>.github.io/friends-of-biodiversity/`
-   within a minute or two.
-5. Point your custom domain (e.g. `www.ugandabiodiversityfund.org`) at GitHub
-   Pages via a CNAME record, then add a `CNAME` file to the repo root containing
-   your domain — or proceed straight to Cloudflare (next section).
+## 🗄️ Backend (Supabase)
 
-## Connecting Cloudflare (for speed / custom domain)
+The app talks directly to Supabase from the browser using the public anon key.
+Core tables:
 
-1. Add your domain to Cloudflare and update your domain's nameservers as
-   Cloudflare instructs.
-2. Create a CNAME DNS record: `www` → `<your-org>.github.io`, proxied (orange cloud) ON.
-3. In GitHub repo Settings → Pages, set your custom domain to `www.ugandabiodiversityfund.org`
-   and enable "Enforce HTTPS".
-4. Cloudflare will now cache and accelerate all static assets (images, CSS, JS)
-   automatically — no extra configuration needed for this app.
-
-## Current Data Mode: Browser localStorage (Demo/Launch Mode)
-
-Right now, **all data — members, content, announcements, Wall of Fame, financial
-reports, payment details — is stored in each visitor's own browser** via
-`localStorage`. This means:
-
-- ✅ The app is **fully functional today** — admins can log in, upload content,
-  post announcements, add Wall of Fame champions, and update payment details.
-- ✅ Members can register, sign in, view their dashboard, and download certificates.
-- ⚠️ **Data does not sync across devices or browsers.** If the Executive Director
-  adds an announcement on their laptop, a member on their phone will not see it
-  until the same action is repeated on a Supabase-backed version.
-- ⚠️ Clearing browser data/cache will reset the local copy of the app's data.
-
-This mode is intentional for **immediate launch** — you can demo the full app,
-onboard your team, and start collecting real member sign-ups in the browser
-right now while Supabase is connected in parallel.
-
-## Migrating to Supabase (next step — for real multi-user data)
-
-Every place that needs to change is marked with `[SUPABASE]` comments inside
-`assets/app.js`. In summary:
-
-1. **Create a Supabase project** at supabase.com (free tier supports up to
-   50,000 monthly active users).
-2. **Create these tables** (SQL Editor in Supabase dashboard):
-
-```sql
-create table members (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  email text unique not null,
-  type text, tier text, amount bigint, year int,
-  org text, engage text, payref text, tel text,
-  role text default 'member', status text default 'active',
-  created_at timestamp default now()
-);
-
-create table content (
-  id uuid primary key default gen_random_uuid(),
-  title text, type text, window_name text, theme text,
-  desc text, author text, access text default 'member',
-  url text, file_path text,
-  reactions jsonb default '{"likes":0,"bookmarks":0}',
-  created_at timestamp default now()
-);
-
-create table comments (
-  id uuid primary key default gen_random_uuid(),
-  content_id uuid references content(id),
-  user_name text, text text, created_at timestamp default now()
-);
-
-create table announcements (
-  id uuid primary key default gen_random_uuid(),
-  type text, title text, body text, created_at timestamp default now()
-);
-
-create table fin_reports (
-  id uuid primary key default gen_random_uuid(),
-  title text, period text, summary text, url text,
-  created_at timestamp default now()
-);
-
-create table wall_of_fame (
-  id uuid primary key default gen_random_uuid(),
-  name text, caption text, tier text, year int, photo_url text
-);
-
-create table payment_details (
-  id int primary key default 1,
-  bank text, accno text, branch text, swift text, mtn text, airtel text
-);
-```
-
-3. **Enable Supabase Auth** (Email/Password provider).
-4. **Set up Row Level Security (RLS)** so:
-   - Anyone can `SELECT` from `content` where `access='public'`.
-   - Authenticated members can `SELECT` content up to their tier rank.
-   - Only emails ending in `@ugandabiodiversityfund.org` AND with `role='admin'`
-     in `members` can `INSERT`/`UPDATE`/`DELETE` on `content`, `announcements`,
-     `wall_of_fame`, `fin_reports`, `payment_details`.
-5. **Create Storage buckets**: `content-files`, `fame-photos`, `slides` (all public-read).
-6. **Add the Supabase JS client** to `index.html`:
-   ```html
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-   ```
-   Initialise near the top of `app.js`:
-   ```js
-   const supabase = window.supabase.createClient(
-     'https://YOUR_PROJECT.supabase.co',
-     'YOUR_ANON_PUBLIC_KEY'
-   );
-   ```
-7. Replace each `LS.get(...)` / `LS.set(...)` pair (marked `[SUPABASE]`) with the
-   corresponding `supabase.from('table').select()/.insert()/.update()/.delete()`
-   calls. The HTML/CSS does not need to change — only the data layer in `app.js`.
-
-## Admin Team Accounts
-
-The following UBF staff emails are pre-authorised for the Admin Control Panel.
-Each is seeded automatically on first run with the **default password
-`UBF@2026!`** — change this immediately after first login by editing the member
-record (or, once Supabase Auth is connected, use the password-reset flow).
-
-| Role | Email |
+| Table | Purpose |
 |---|---|
-| Executive Director | i.amani@ugandabiodiversityfund.org |
-| Projects Officer | o.atuhaire@ugandabiodiversityfund.org |
-| Office Assistant | t.otieno@ugandabiodiversityfund.org |
-| Programs Officer | p.musiime@ugandabiodiversityfund.org |
-| M&E Officer | d.okullu@ugandabiodiversityfund.org |
+| `members` | Member & admin accounts, tier, status, profile (photo, wallpaper, bio, followers) |
+| `content` | Learning Exchange resources (+ reactions, comments) |
+| `member_posts` | Community posts (text, image, video, document) |
+| `post_comments` | Comments on community posts |
+| `follows` | Member follow relationships |
+| `announcements` | UBF announcements |
+| `fin_reports` | Financial / impact reports |
+| `wall_of_fame` | Conservation champions |
+| `payment_details` | Public bank & Mobile Money details |
 
-Admin sign-in is at the "Sign In / Join" button → "Admin sign in" link. The
-system rejects any email that does not end in `@ugandabiodiversityfund.org`
-and is not on the authorised list above.
+**Storage buckets:** `content-files`, `fame-photos` (profile photos, wallpapers,
+post media & documents).
 
-## What Admins Can Do Today (no waiting on Supabase)
+The full schema lives in [`SETUP.sql`](./SETUP.sql).
 
-- **Members tab**: view all registered members, export to CSV for your records/banking.
-- **Content Library**: upload videos, documentaries, podcasts, interviews,
-  articles, research — tagged by programme window, thematic area, and access
-  tier (Members/Gold+/Platinum+/Public).
-- **Wall of Fame**: add real conservation champions with photo + caption + tier
-  + year — no placeholders, only what you add.
-- **Announcements**: post project updates, events, alerts — optionally trigger
-  an email-notification log entry.
-- **Financial Reports**: publish quarterly/annual reports with links to your
-  audited PDF documents (host PDFs on Google Drive and paste the link).
-- **Payment Details**: enter your real bank account and Mobile Money (MTN/Airtel)
-  numbers — these immediately appear on the public "How to Pay" section.
-- **Email Campaigns**: compose and log campaigns by audience tier (actual
-  delivery requires connecting an email provider via Supabase Edge Function —
-  see migration guide).
-- **Slide Images**: add additional hero slideshow images for the current session.
+---
 
-## Adding Permanent Slide Images
+## 🚀 Deployment
 
-The 13 images currently in `assets/images/slide-1.jpg` … `slide-13.jpg` are
-from your uploaded photos. To add more permanently:
+The app is a static site — deployment is simply publishing the files.
 
-1. Add new image files to `assets/images/` (e.g. `slide-14.jpg`).
-2. Open `assets/app.js`, find the line:
-   ```js
-   const SLIDE_IMAGES=Array.from({length:13},(_,i)=>`assets/images/slide-${i+1}.jpg`);
-   ```
-3. Change `13` to your new total count.
-4. Commit and push — the new images appear in the rotation automatically.
+### GitHub Pages
+1. Push all files to the repository root (keep the flat structure above).
+2. **Settings → Pages → Source:** branch `main`, folder `/ (root)`.
+3. Live within a minute at `https://<org>.github.io/<repo>/`.
 
-## Content Types in Learning Exchange
+### Custom domain + Cloudflare (recommended)
+1. Add the domain to Cloudflare; point nameservers as instructed.
+2. DNS: `CNAME www → <org>.github.io` (proxied / orange-cloud on).
+3. GitHub **Settings → Pages → Custom domain:** `www.ugandabiodiversityfund.org`,
+   then enable **Enforce HTTPS**.
+4. Cloudflare caches and accelerates all static assets automatically.
 
-Per your instruction, "PDF" was removed as a content **type** (it's a file
-format, not a content category). The five content types are:
+> **Updating the app:** edit `index.html`, `styles.css`, or `app.js` and commit.
+> Supabase schema changes are made in the Supabase dashboard (SQL Editor).
 
-- **Video**
-- **Documentary**
-- **Podcast**
-- **Interview**
-- **Article**
-- **Research**
+---
 
-Any of these can be delivered as a video file, audio file, document (including
-PDF), or external link (YouTube/Vimeo/Drive) — the upload form has both a file
-picker and a URL field.
+## 🔐 Security Roadmap
 
-## Support
+The platform is functional and live. The following hardening work is planned and
+should be completed as a priority:
 
-For technical questions about this codebase: t.otieno@ugandabiodiversityfund.org
-General enquiries: info@ugandabiodiversityfund.org
+- **Password hashing** (bcrypt) and login via a secure database function
+- **Tighter Row-Level-Security policies** so members can only edit their own
+  records and only admins can modify content, payments, and reports
+- Restricting public bucket file-listing
+
+> Contributors: do **not** commit Supabase service-role keys or any secrets to
+> this repository. Only the public anon key belongs in client code.
+
+---
+
+## 🎨 Brand
+
+- **Uganda Biodiversity Fund** — *For now & the future*
+- **Friends of Biodiversity** — *Demonstrating care for Uganda's biodiversity*
+- Palette: canopy greens, gold, and tier accent colours (see CSS custom
+  properties at the top of `styles.css`).
+
+---
+
+## 👤 Author & Maintainer
+
+**Thomas Otieno** — Data Scientist & SEO Digital Marketer
+Design, development, and platform engineering of the Friends of Biodiversity app.
+
+## 📬 Contact
+
+- Technical / codebase: **thomasotieno583@gmail.com**
+- General enquiries: **info@ugandabiodiversityfund.org**
+- Web: [www.ugandabiodiversityfund.org](https://www.ugandabiodiversityfund.org)
+
+---
+
+© 2026 Uganda Biodiversity Fund. All rights reserved.
