@@ -360,6 +360,48 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .adb-imp-l{font-size:.72rem;color:var(--muted);line-height:1.3;margin-top:.1rem}
 .adb-foot{margin-top:.9rem;display:flex;justify-content:space-between;align-items:center;font-size:.76rem;color:var(--muted);flex-wrap:wrap;gap:.5rem}
 .adb-foot a{color:var(--canopy-lt);font-weight:700;text-decoration:none}
+/* interactive v2 */
+.adb-goal{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:.95rem 1.1rem;margin-bottom:.9rem}
+.adb-goal-top{display:flex;justify-content:space-between;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-bottom:.5rem}
+.adb-goal-top span{font-weight:700;color:var(--canopy);font-size:.88rem}
+.adb-goal-top b{font-size:.8rem;color:var(--gold-dk)}
+.adb-goal-track{height:12px;background:var(--mist);border-radius:99px;overflow:hidden}
+.adb-goal-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--canopy),var(--gold));transition:width .6s ease}
+.adb-slice{cursor:pointer;transition:opacity .15s;transform-box:fill-box;transform-origin:center}
+.adb-slice:hover{opacity:.78}
+.adb-bar-row{cursor:pointer;border-radius:8px;padding:.15rem;transition:background .15s}
+.adb-bar-row:hover{background:var(--mist)}
+.adb-more{font-size:.68rem;color:var(--canopy-lt);font-weight:700;opacity:.7}
+.adb-detail{background:var(--white);border:1px dashed var(--border);border-radius:12px;padding:.85rem 1rem;margin-bottom:.9rem;min-height:52px;display:flex;flex-direction:column;justify-content:center}
+.adb-detail.show{border-style:solid;border-color:var(--canopy-lt)}
+.adb-detail-hint{font-size:.8rem;color:var(--muted)}
+.adb-detail-head{display:flex;align-items:center;gap:.5rem;font-size:.88rem;color:var(--canopy)}
+.adb-detail-dot{width:11px;height:11px;border-radius:3px;flex-shrink:0}
+.adb-detail-val{margin-left:auto;font-weight:800;color:var(--text)}
+.adb-detail p{font-size:.82rem;color:var(--muted);line-height:1.55;margin-top:.4rem}
+.adb-sim-card{margin-bottom:.9rem;background:linear-gradient(135deg,#f4f9f4,#eef5ef);border-color:rgba(45,106,79,.2)}
+.adb-sim-amt{font-size:1.6rem;font-weight:800;color:var(--canopy);margin:.35rem 0 .2rem}
+.adb-slider{width:100%;-webkit-appearance:none;appearance:none;height:8px;border-radius:99px;background:linear-gradient(90deg,var(--canopy-lt),var(--gold));outline:none;margin:.35rem 0 .6rem}
+.adb-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:var(--canopy);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer}
+.adb-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--canopy);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.3);cursor:pointer}
+.adb-sim-tier{font-size:.82rem;color:var(--muted);margin-bottom:.7rem}
+.adb-sim-tier b{color:var(--canopy)}
+.adb-sim-out{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+.adb-sim-cell{background:var(--white);border:1px solid var(--border);border-radius:11px;padding:.7rem;text-align:center}
+.adb-sim-n{font-size:1.35rem;font-weight:800;color:var(--canopy)}
+.adb-sim-l{font-size:.7rem;color:var(--muted);margin-top:.1rem}
+.adb-dl{margin-top:.9rem;background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.35);color:#fff;font-weight:600;font-size:.8rem;padding:.5rem .9rem;border-radius:99px;cursor:pointer;transition:background .15s}
+.adb-dl:hover{background:rgba(255,255,255,.28)}
+.adb-bench{display:flex;flex-direction:column;gap:.6rem;margin-top:.2rem}
+.adb-bench-row{display:flex;align-items:center;gap:.6rem;font-size:.8rem}
+.adb-bench-row>span{width:74px;color:var(--muted);flex-shrink:0}
+.adb-bench-row b{width:90px;text-align:right;color:var(--canopy);flex-shrink:0}
+.adb-bench-track{flex:1;height:10px;background:var(--mist);border-radius:99px;overflow:hidden}
+.adb-bench-fill{height:100%;border-radius:99px;background:var(--silver);transition:width .5s ease}
+.adb-bench-fill.you{background:linear-gradient(90deg,var(--canopy-lt),var(--gold))}
+.adb-bench-note{font-size:.8rem;color:var(--text);margin-top:.7rem;line-height:1.5}
+.adb-bench-note b{color:var(--canopy)}
+@media(max-width:640px){.adb-sim-out{grid-template-columns:1fr 1fr}}
 @media(max-width:720px){.adb-kpis{grid-template-columns:repeat(2,1fr)}.adb-row2,.adb-row3{grid-template-columns:1fr}}
 /* ── Dashboard admin editor ── */
 .dadm-sec{margin-bottom:1.4rem;padding-bottom:1.1rem;border-bottom:1px solid var(--border)}
