@@ -446,6 +446,18 @@ function renderThemes(){
 /* ═══ LEARNING EXCHANGE CONTENT — real thumbnails, inline media ═══ */
 const TYPE_ICONS={video:'🎬',documentary:'🎥',podcast:'🎙',interview:'🎤',article:'📰',research:'🔬'};
 const TYPE_BADGE_CLS={video:'badge-video',documentary:'badge-documentary',podcast:'badge-podcast',interview:'badge-interview',article:'badge-article',research:'badge-research'};
+// Clean line-icons (white) shown on the coloured thumbnail when a resource has no image/video
+function typeIconSvg(t){
+  const P={
+    video:'<rect x="2" y="5" width="14" height="14" rx="2.5"/><path d="M16 9l6-3v12l-6-3z"/>',
+    documentary:'<rect x="2.5" y="6.5" width="19" height="12" rx="2"/><path d="M2.5 10.5h19M7 6.5l-2 4M12 6.5l-2 4M17 6.5l-2 4"/>',
+    podcast:'<rect x="9" y="3" width="6" height="10" rx="3"/><path d="M6 11a6 6 0 0 0 12 0M12 17v4M9 21h6"/>',
+    interview:'<path d="M3 5h9a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H7l-4 3z"/><path d="M21 9.5v6a2 2 0 0 1-2 2h-3.2"/>',
+    article:'<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    research:'<path d="M9 3h6M10 3v6l-4.6 7.6A2 2 0 0 0 7.1 20h9.8a2 2 0 0 0 1.7-3.4L14 9V3"/><path d="M8.5 15h7"/>'
+  };
+  return '<svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" style="filter:drop-shadow(0 2px 6px rgba(0,0,0,.35))">'+(P[t]||P.article)+'</svg>';
+}
 
 function renderFilters(){
   const el=document.getElementById('content-filters');
@@ -486,11 +498,16 @@ function renderContent(){
       const vimeoMatch=c.url.match(/vimeo\.com\/(\d+)/);
       if(ytMatch)ytThumb=`https://img.youtube.com/vi/${ytMatch[1]}/hqdefault.jpg`;
     }
+    // Prefer a real image thumbnail (uploaded image, or an image link); then video; else a clean icon
+    const isImg=u=>/\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(u||'');
+    const imgUrl=(c.mediaUrl&&(c.mediaType==='image'||isImg(c.mediaUrl)))?c.mediaUrl:(isImg(c.url)?c.url:'');
     const thumbContent=ytThumb
       ?`<img src="${ytThumb}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.classList.add('thumb-fallback');this.remove()"/>`
       :(c.mediaUrl&&c.mediaType==='video'
         ?`<video src="${c.mediaUrl}" style="width:100%;height:100%;object-fit:cover" preload="metadata" muted></video>`
-        :`<div class="cc-thumb-icon">${ico}</div>`);
+        :(imgUrl
+          ?`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.classList.add('thumb-fallback');this.remove()"/>`
+          :`<div class="cc-thumb-icon">${typeIconSvg(c.type)}</div>`));
     return '<div class="content-card" id="card-'+c.id+'">'+
       '<div class="cc-thumb '+thumbCls+(ytThumb||c.mediaUrl?' cc-has-media':'')+'" onclick="openContent(\''+c.id+'\')">'+thumbContent+
       '<span class="cc-badge '+bc+'">'+typeLabel+'</span>'+
@@ -859,7 +876,17 @@ function renderMemberView(){
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
-function openDashboardModal(){renderAccountabilityDashboard();openModal('m-dashboard');}
+function openDashboardModal(){
+  const m=document.getElementById('dash-modal');if(m)m.classList.remove('fs');
+  const b=document.getElementById('dash-fs-btn');if(b)b.textContent='⛶';
+  renderAccountabilityDashboard();openModal('m-dashboard');
+}
+function dashToggleFull(){
+  const m=document.getElementById('dash-modal');if(!m)return;
+  m.classList.toggle('fs');
+  const b=document.getElementById('dash-fs-btn');
+  if(b)b.textContent=m.classList.contains('fs')?'🗕':'⛶';
+}
 function _dashItems(section){return DASH_ITEMS.filter(i=>i.section===section)}
 function renderAccountabilityDashboard(){
   const el=document.getElementById('accountability-dash');
@@ -915,7 +942,7 @@ function renderAccountabilityDashboard(){
     '<div class="adb-row3">'+
       '<div class="adb-card adb-you"><h4>Your Contribution &amp; Impact</h4><div class="adb-you-big">'+(amt?'UGX '+amt.toLocaleString():'—')+'</div><div class="adb-you-meta">'+esc(td.label)+' tier · '+esc(String(u.year||''))+'</div>'+
         (amt?'<div class="adb-you-line">Your contribution restored an estimated <b>'+eHa+' hectare'+(eHa===1?'':'s')+'</b> and supported <b>'+eProj+' community project'+(eProj===1?'':'s')+'</b>.</div><span class="adb-chip">🌿 ≈ '+eTrees.toLocaleString()+' indigenous trees</span>':'<div class="adb-you-line">Your impact appears once your contribution is recorded.</div>')+
-        '<button class="adb-dl" onclick="downloadImpactStatement()">⬇ Download my impact statement</button></div>'+
+        '<button class="adb-dl" onclick="openImpactStatement()">📜 My impact statement</button></div>'+
       '<div class="adb-card"><h4>You vs the Community</h4><div class="adb-cardsub">How your giving compares</div><div class="adb-bench">'+
         '<div class="adb-bench-row"><span>You</span><div class="adb-bench-track"><div class="adb-bench-fill you" style="width:'+Math.round(amt/benchMax*100)+'%"></div></div><b>'+(amt?fmtM(amt):'—')+'</b></div>'+
         '<div class="adb-bench-row"><span>Avg member</span><div class="adb-bench-track"><div class="adb-bench-fill" style="width:'+Math.round(avg/benchMax*100)+'%"></div></div><b>'+(avg?fmtM(avg):'—')+'</b></div></div>'+
@@ -939,6 +966,27 @@ function dashDetail(section,i){
   const color=section==='allocation'?esc(it.val2||'#2D6A4F'):'var(--canopy-lt)';
   el.classList.add('show');
   el.innerHTML='<div class="adb-detail-head"><span class="adb-detail-dot" style="background:'+color+'"></span><b>'+esc(it.label)+'</b><span class="adb-detail-val">'+unit+'</span></div>'+(it.detail?'<p>'+esc(it.detail)+'</p>':'<p class="adb-detail-hint">No further detail provided yet.</p>');
+}
+const CERT_SIGN_SVG='<svg class="is-sign-svg" viewBox="0 0 220 64" width="150" height="42" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 44 C16 12 24 14 22 42 C30 18 33 44 40 30 C45 20 49 40 57 30 C66 20 63 44 72 36 C84 26 92 16 102 32 C107 40 102 48 95 43 C88 38 97 28 110 31 C126 35 138 30 162 24"/><path d="M44 53 C90 45 140 45 192 51" stroke-width="1.5" opacity=".8"/></svg>';
+const CONSERV_BADGE_SVG='<svg viewBox="0 0 120 120" width="86" height="86"><defs><path id="isArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/><circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/><text fill="#E9D9A8" font-size="7.6" font-weight="700" letter-spacing="1.2"><textPath href="#isArc" startOffset="0">FRIENDS OF BIODIVERSITY ★ CONSERVATION SUPPORTER ★ </textPath></text><path d="M60 79V65" stroke="#C8A84B" stroke-width="1.5"/><path d="M60 44 66.5 55.5h-13z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><path d="M60 51 67 63.5H53z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><text x="60" y="95" text-anchor="middle" fill="#E9D9A8" font-size="7.5" font-weight="800" letter-spacing="1.4">CERTIFIED</text></svg>';
+function openImpactStatement(){renderImpactStatement();openModal('m-impact');}
+function renderImpactStatement(){
+  const el=document.getElementById('impact-card');if(!el||!currentUser)return;
+  const u=currentUser;const amt=u.amount||0;const tpm=parseInt((DASH_META||{}).trees_per_million)||320;
+  const trees=Math.round(amt/1e6*tpm);const ha=Math.max(0,Math.round(trees/40));const proj=Math.max(1,Math.round(amt/500000));
+  const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  el.innerHTML=
+    '<div class="is-logos"><img src="ubf-logo.png" alt="UBF"/><span class="is-div"></span><img src="fob-logo.png" alt="FoB"/></div>'+
+    '<div class="is-kicker">Uganda Biodiversity Fund · Friends of Biodiversity</div>'+
+    '<h2 class="is-title">Personal Impact Statement</h2>'+
+    '<div class="is-name">'+esc(u.name)+'</div>'+
+    '<div class="is-tier">'+esc(td.label)+' Member · '+esc(String(u.year||''))+'</div>'+
+    '<div class="is-contrib">Contribution: <b>UGX '+amt.toLocaleString()+'</b></div>'+
+    '<div class="is-metrics"><div><div class="is-n">'+trees.toLocaleString()+'</div><div class="is-l">Trees</div></div><div><div class="is-n">'+ha+'</div><div class="is-l">Hectares</div></div><div><div class="is-n">'+proj+'</div><div class="is-l">Projects</div></div></div>'+
+    '<p class="is-thanks">In recognition of your commitment to protecting Uganda\'s biodiversity — for now &amp; the future.</p>'+
+    '<div class="is-foot"><div class="is-sign">'+CERT_SIGN_SVG+'<div class="is-sign-line"></div><div class="is-sign-name">Ivan Amanigaruhanga</div><div class="is-sign-title">Executive Director</div></div>'+
+      '<div class="is-badge">'+CONSERV_BADGE_SVG+'</div></div>'+
+    '<div class="is-date">Issued: '+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'})+'</div>';
 }
 function downloadImpactStatement(){
   if(!currentUser)return;const u=currentUser;const amt=u.amount||0;const tpm=parseInt((DASH_META||{}).trees_per_million)||320;

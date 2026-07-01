@@ -402,6 +402,36 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .adb-bench-note{font-size:.8rem;color:var(--text);margin-top:.7rem;line-height:1.5}
 .adb-bench-note b{color:var(--canopy)}
 @media(max-width:640px){.adb-sim-out{grid-template-columns:1fr 1fr}}
+/* Dashboard modal: wider + expand/restore */
+.dash-modal{max-width:1040px;padding-top:2.7rem;transition:max-width .2s ease}
+.dash-modal.fs{max-width:none;width:96vw;height:92vh;max-height:92vh}
+.dash-fs-btn{position:absolute;top:.9rem;right:3.1rem;background:none;border:none;font-size:1.15rem;cursor:pointer;color:var(--muted);line-height:1;padding:.2rem;z-index:3}
+.dash-fs-btn:hover{color:var(--canopy)}
+/* Personal Impact Statement */
+.impact-card{background:linear-gradient(135deg,var(--canopy) 0%,var(--canopy-mid) 100%);border:2px solid var(--gold);border-radius:var(--r);padding:1.8rem;text-align:center;color:#fff}
+.is-logos{display:flex;justify-content:center;align-items:center;gap:.8rem;margin-bottom:.55rem}
+.is-logos img{width:44px;height:44px;object-fit:contain;border-radius:50%;background:#fff}
+.is-div{width:1px;height:30px;background:rgba(200,168,75,.4)}
+.is-kicker{font-size:.66rem;color:rgba(255,255,255,.5);letter-spacing:.05em;text-transform:uppercase}
+.is-title{font-family:var(--ff-d);font-size:1.15rem;color:var(--gold-lt);margin:.15rem 0 .55rem}
+.is-name{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:#fff}
+.is-tier{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:.12rem}
+.is-contrib{font-size:.9rem;color:#fff;margin-top:.55rem}
+.is-contrib b{color:var(--gold-lt)}
+.is-metrics{display:flex;justify-content:center;gap:1.6rem;margin:.85rem 0}
+.is-metrics .is-n{font-size:1.4rem;font-weight:800;color:var(--gold-lt)}
+.is-metrics .is-l{font-size:.66rem;color:rgba(255,255,255,.6);text-transform:uppercase;letter-spacing:.04em}
+.is-thanks{font-size:.8rem;color:rgba(255,255,255,.72);line-height:1.6;max-width:400px;margin:.35rem auto .2rem}
+.is-foot{display:flex;justify-content:space-between;align-items:center;margin-top:1rem;gap:1rem;text-align:left}
+.is-sign{flex:1;min-width:0}
+.is-sign-svg{display:block;margin-bottom:-.1rem}
+.is-sign-line{width:150px;max-width:100%;height:1px;background:rgba(255,255,255,.4);margin:.15rem 0 .32rem}
+.is-sign-name{font-family:var(--ff-d);font-size:.82rem;font-weight:700;color:#fff}
+.is-sign-title{font-size:.6rem;color:var(--gold-lt);letter-spacing:.06em;text-transform:uppercase;margin-top:.1rem}
+.is-badge{flex-shrink:0;transform:rotate(-4deg);filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.is-date{font-size:.6rem;color:rgba(255,255,255,.45);letter-spacing:.06em;text-transform:uppercase;margin-top:.9rem}
+.impact-actions{display:flex;gap:.5rem;justify-content:center;margin-top:1rem;flex-wrap:wrap}
+@media print{body *{visibility:hidden}#m-impact,#m-impact *{visibility:visible}#m-impact{position:absolute;inset:0;background:#fff;display:block}#m-impact .modal-close,#m-impact .impact-actions,#m-impact p{display:none!important}#m-impact .modal{box-shadow:none;max-width:100%;padding:0}}
 @media(max-width:720px){.adb-kpis{grid-template-columns:repeat(2,1fr)}.adb-row2,.adb-row3{grid-template-columns:1fr}}
 /* ── Dashboard admin editor ── */
 .dadm-sec{margin-bottom:1.4rem;padding-bottom:1.1rem;border-bottom:1px solid var(--border)}

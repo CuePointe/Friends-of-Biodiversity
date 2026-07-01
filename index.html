@@ -575,9 +575,23 @@
 
 <!-- ACCOUNTABILITY DASHBOARD (member view) -->
 <div class="overlay" id="m-dashboard">
-  <div class="modal" style="max-width:860px">
+  <div class="modal dash-modal" id="dash-modal">
+    <button class="dash-fs-btn" id="dash-fs-btn" onclick="dashToggleFull()" title="Expand / restore">⛶</button>
     <button class="modal-close" onclick="closeModal('m-dashboard')">✕</button>
     <div id="accountability-dash"></div>
+  </div>
+</div>
+
+<!-- PERSONAL IMPACT STATEMENT -->
+<div class="overlay" id="m-impact">
+  <div class="modal" style="max-width:560px">
+    <button class="modal-close" onclick="closeModal('m-impact')">✕</button>
+    <div id="impact-card" class="impact-card"></div>
+    <div class="impact-actions">
+      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Save as PDF / Print</button>
+      <button class="btn btn-ghost btn-sm" onclick="downloadImpactStatement()">⬇ Download as text</button>
+    </div>
+    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Tip: in the print dialog choose "Save as PDF" to keep a copy with the signature &amp; badge.</p>
   </div>
 </div>
 
