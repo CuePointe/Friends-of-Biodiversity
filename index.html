@@ -16,12 +16,13 @@
 <meta name="apple-mobile-web-app-title" content="FoB Green Card"/>
 <meta name="msapplication-TileColor" content="#0B2618"/>
 <meta name="theme-color" content="#0B2618"/>
-<link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
-<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
-<link rel="shortcut icon" href="favicon.png"/>
-<link rel="apple-touch-icon" href="icon-192.png"/>
-<link rel="apple-touch-icon" sizes="152x152" href="icon-152.png"/>
-<link rel="apple-touch-icon" sizes="192x192" href="icon-192.png"/>
+<link rel="icon" type="image/png" sizes="32x32" href="fobfav-32.png?v=4"/>
+<link rel="icon" type="image/png" sizes="64x64" href="fobfav-64.png?v=4"/>
+<link rel="icon" type="image/png" sizes="192x192" href="fobfav-192.png?v=4"/>
+<link rel="shortcut icon" href="fobfav-64.png?v=4"/>
+<link rel="apple-touch-icon" href="fobfav-180.png?v=4"/>
+<link rel="apple-touch-icon" sizes="152x152" href="fobfav-180.png?v=4"/>
+<link rel="apple-touch-icon" sizes="192x192" href="fobfav-192.png?v=4"/>
 <!-- Preload critical images so hero and logos render instantly -->
 <!-- DOMPurify — sanitizes any HTML built from user-supplied strings -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
@@ -421,6 +422,7 @@
     <button class="atab" data-ap="ap-slides">Slide Images</button>
     <button class="atab" data-ap="ap-footprint">Our Footprint</button>
     <button class="atab" data-ap="ap-posts">Community Posts</button>
+    <button class="atab" data-ap="ap-dashboard">Accountability</button>
   </div>
 
   <div id="ap-members" class="adm-panel active">
@@ -565,9 +567,39 @@
     <div id="admin-posts-list"></div>
   </div>
 
+  <!-- ACCOUNTABILITY DASHBOARD ADMIN PANEL -->
+  <div id="ap-dashboard" class="adm-panel">
+    <div class="adm-sec"><span>Accountability Dashboard</span></div>
+    <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.5rem;line-height:1.6">Update every figure members see on their Accountability Dashboard. Changes save to the live database and appear instantly for all members. Use real, audited numbers before launch.</p>
+    <div id="dash-admin"></div>
+  </div>
+
 </div><!-- /view-admin -->
 
 <!-- ═══ MODALS ═══ -->
+
+<!-- ACCOUNTABILITY DASHBOARD (member view) -->
+<div class="overlay" id="m-dashboard">
+  <div class="modal" style="max-width:860px">
+    <button class="modal-close" onclick="closeModal('m-dashboard')">✕</button>
+    <div id="accountability-dash"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD ITEM EDIT -->
+<div class="overlay" id="m-dash-item">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('m-dash-item')">✕</button>
+    <h2 id="dash-item-title">Edit Item</h2>
+    <input type="hidden" id="dash-item-id"/>
+    <input type="hidden" id="dash-item-section"/>
+    <div class="fg"><label>Label / Name</label><input id="dash-item-label" placeholder="e.g. Hectares Restored"/></div>
+    <div class="fg"><label id="dash-item-val1-lbl">Value</label><input id="dash-item-val1"/></div>
+    <div class="fg" id="dash-item-val2-fg"><label id="dash-item-val2-lbl">Secondary</label><input id="dash-item-val2"/></div>
+    <div class="fg"><label>Display order</label><input id="dash-item-sort" type="number" value="0"/></div>
+    <button class="btn btn-canopy btn-full" onclick="saveDashItem()">Save</button>
+  </div>
+</div>
 
 <!-- LOGIN -->
 <div class="overlay" id="m-login">
