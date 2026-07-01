@@ -319,9 +319,9 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 /* ── Accountability Dashboard (member-facing) ── */
 .adb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin:0 0 1.1rem}
 .adb-head-l{display:flex;align-items:center;gap:.85rem}
-.adb-logos{display:flex;align-items:center;gap:.7rem;flex-shrink:0}
-.adb-logos img{height:52px;width:auto;object-fit:contain;display:block}
-.adb-logo-div{width:1px;height:38px;background:rgba(200,168,75,.45)}
+.adb-logos{display:flex;align-items:center;gap:.6rem;flex-shrink:0}
+.adb-logos img{width:48px;height:48px;object-fit:contain;border-radius:50%;background:#fff}
+.adb-logo-div{width:1px;height:36px;background:rgba(200,168,75,.4)}
 .adb-title{font-family:var(--ff-d);font-size:1.3rem;font-weight:800;color:var(--canopy);line-height:1.1}
 .adb-sub{font-size:.8rem;color:var(--muted);margin-top:.18rem;max-width:520px;line-height:1.45}
 .adb-badges{display:flex;gap:.5rem;flex-wrap:wrap}
@@ -382,7 +382,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .cert-modal{max-width:540px}
 .cert-preview{background:linear-gradient(135deg,var(--canopy) 0%,var(--canopy-mid) 100%);border:2px solid var(--gold);border-radius:var(--r);padding:2.5rem;text-align:center;margin-bottom:1.25rem}
 .cert-preview .cert-logo{display:flex;gap:1rem;justify-content:center;margin-bottom:1.25rem;align-items:center}
-.cert-preview .cert-logo img{width:54px;height:54px;object-fit:contain;border-radius:50%;background:#fff;padding:6px;box-shadow:0 3px 10px rgba(0,0,0,.22)}
+.cert-preview .cert-logo img{width:52px;height:52px;object-fit:contain;border-radius:50%;background:#fff}
 .cert-preview h2{font-family:var(--ff-d);font-size:1.2rem;color:var(--gold-lt);margin-bottom:.25rem}
 .cert-preview .cert-name{font-family:var(--ff-d);font-size:1.75rem;font-weight:700;color:var(--white);margin:.75rem 0}
 .cert-preview p{font-size:.82rem;color:rgba(255,255,255,.65);line-height:1.65}
@@ -482,7 +482,7 @@ footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);paddin
 .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(255,255,255,.07)}
 .footer-brand p{font-size:.83rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:.88rem;max-width:280px}
 .footer-logo-strip{display:flex;align-items:center;gap:.75rem}
-.footer-logo-strip img{height:46px;width:46px;object-fit:contain;border-radius:50%;background:rgba(255,255,255,.95);padding:5px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+.footer-logo-strip img{height:48px;width:48px;object-fit:contain;border-radius:50%;background:#fff}
 .footer-logo-divider{width:1px;height:32px;background:rgba(200,168,75,.3)}
 .footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:.88rem}
 .footer-col a{display:block;font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:.42rem;transition:color var(--tr)}

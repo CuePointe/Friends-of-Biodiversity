@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Uganda Biodiversity Fund">
-  <g transform="rotate(45 32 32)">
-    <rect x="9" y="9" width="46" height="46" rx="10" fill="#6E8FCB"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Friends of Biodiversity">
+  <circle cx="32" cy="32" r="32" fill="#ffffff"/>
+  <g fill="#15492e">
+    <circle cx="23" cy="23" r="5.6"/><rect x="22.1" y="25" width="1.8" height="10" rx="0.9"/>
+    <circle cx="32" cy="19.5" r="6.4"/><rect x="31.1" y="22" width="1.8" height="13" rx="0.9"/>
+    <circle cx="41" cy="23" r="5.6"/><rect x="40.1" y="25" width="1.8" height="10" rx="0.9"/>
   </g>
-  <circle cx="32" cy="32" r="14.5" fill="#2E7D32"/>
+  <path d="M15 34c0 7 8 10.5 17 10.5S49 41 49 34" fill="none" stroke="#15492e" stroke-width="3.1" stroke-linecap="round"/>
+  <path d="M15 34v-5.5" fill="none" stroke="#15492e" stroke-width="3.1" stroke-linecap="round"/>
 </svg>
