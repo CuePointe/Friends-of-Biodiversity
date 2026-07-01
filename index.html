@@ -16,9 +16,10 @@
 <meta name="apple-mobile-web-app-title" content="FoB Green Card"/>
 <meta name="msapplication-TileColor" content="#0B2618"/>
 <meta name="theme-color" content="#0B2618"/>
+<link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png"/>
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png"/>
-<link rel="shortcut icon" href="favicon.png"/>
+<link rel="shortcut icon" href="favicon.svg"/>
 <link rel="apple-touch-icon" href="icon-192.png"/>
 <link rel="apple-touch-icon" sizes="152x152" href="icon-152.png"/>
 <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png"/>
@@ -576,6 +577,14 @@
 </div><!-- /view-admin -->
 
 <!-- ═══ MODALS ═══ -->
+
+<!-- ACCOUNTABILITY DASHBOARD (member view) -->
+<div class="overlay" id="m-dashboard">
+  <div class="modal" style="max-width:860px">
+    <button class="modal-close" onclick="closeModal('m-dashboard')">✕</button>
+    <div id="accountability-dash"></div>
+  </div>
+</div>
 
 <!-- DASHBOARD ITEM EDIT -->
 <div class="overlay" id="m-dash-item">

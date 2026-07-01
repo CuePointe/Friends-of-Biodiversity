@@ -802,8 +802,6 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
-    // Accountability dashboard (rendered separately so it can refresh in realtime)
-    '<div id="accountability-dash"></div>'+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
@@ -818,6 +816,7 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
     '</div>'+
     // Discover / follow other members
     '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
@@ -857,10 +856,10 @@ function renderMemberView(){
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>';
   populateMembersDirectory();
-  renderAccountabilityDashboard();
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
+function openDashboardModal(){renderAccountabilityDashboard();openModal('m-dashboard');}
 function _dashItems(section){return DASH_ITEMS.filter(i=>i.section===section)}
 function renderAccountabilityDashboard(){
   const el=document.getElementById('accountability-dash');

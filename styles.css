@@ -319,9 +319,9 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 /* ── Accountability Dashboard (member-facing) ── */
 .adb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin:0 0 1.1rem}
 .adb-head-l{display:flex;align-items:center;gap:.85rem}
-.adb-logos{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
-.adb-logos img{width:42px;height:42px;object-fit:contain;border-radius:50%;background:#fff;padding:3px;box-shadow:0 1px 4px rgba(0,0,0,.12)}
-.adb-logo-div{width:1px;height:28px;background:rgba(200,168,75,.4)}
+.adb-logos{display:flex;align-items:center;gap:.7rem;flex-shrink:0}
+.adb-logos img{height:52px;width:auto;object-fit:contain;display:block}
+.adb-logo-div{width:1px;height:38px;background:rgba(200,168,75,.45)}
 .adb-title{font-family:var(--ff-d);font-size:1.3rem;font-weight:800;color:var(--canopy);line-height:1.1}
 .adb-sub{font-size:.8rem;color:var(--muted);margin-top:.18rem;max-width:520px;line-height:1.45}
 .adb-badges{display:flex;gap:.5rem;flex-wrap:wrap}
