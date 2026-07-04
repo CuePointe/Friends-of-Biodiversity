@@ -984,7 +984,7 @@ function renderImpactStatement(){
     '<div class="is-contrib">Contribution: <b>UGX '+amt.toLocaleString()+'</b></div>'+
     '<div class="is-metrics"><div><div class="is-n">'+trees.toLocaleString()+'</div><div class="is-l">Trees</div></div><div><div class="is-n">'+ha+'</div><div class="is-l">Hectares</div></div><div><div class="is-n">'+proj+'</div><div class="is-l">Projects</div></div></div>'+
     '<p class="is-thanks">In recognition of your commitment to protecting Uganda\'s biodiversity — for now &amp; the future.</p>'+
-    '<div class="is-foot"><div class="is-sign">'+CERT_SIGN_SVG+'<div class="is-sign-line"></div><div class="is-sign-name">Ivan Amanigaruhanga</div><div class="is-sign-title">Executive Director</div></div>'+
+    '<div class="is-foot"><div class="is-sign">'+CERT_SIGN_SVG+'<div class="is-sign-line"></div><div class="is-sign-name">Dr. Ivan Amanigaruhanga</div><div class="is-sign-title">Executive Director</div></div>'+
       '<div class="is-badge">'+CONSERV_BADGE_SVG+'</div></div>'+
     '<div class="is-date">Issued: '+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'})+'</div>';
 }
@@ -1342,7 +1342,7 @@ function downloadCert(){
     'Authorised & signed:',
     '',
     '_______________________________',
-    'Ivan Amanigaruhanga',
+    'Dr. Ivan Amanigaruhanga',
     'Executive Director',
     'Uganda Biodiversity Fund',
     '════════════════════════════════════════════════',
