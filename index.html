@@ -822,10 +822,7 @@
       <div class="cert-date" id="cert-date">2026</div>
       <div class="cert-foot">
         <div class="cert-sign-block">
-          <svg class="cert-sign" viewBox="0 0 220 64" width="160" height="46" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-label="signature">
-            <path d="M10 44 C16 12 24 14 22 42 C30 18 33 44 40 30 C45 20 49 40 57 30 C66 20 63 44 72 36 C84 26 92 16 102 32 C107 40 102 48 95 43 C88 38 97 28 110 31 C126 35 138 30 162 24"/>
-            <path d="M44 53 C90 45 140 45 192 51" stroke-width="1.5" opacity=".8"/>
-          </svg>
+          <img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onerror="this.style.display='none'"/>
           <div class="cert-sign-line"></div>
           <div class="cert-sign-name">Dr. Ivan Amanigaruhanga</div>
           <div class="cert-sign-title">Executive Director</div>
@@ -845,8 +842,8 @@
       </div>
       <div class="cert-issue" id="cert-issue">Issued: —</div>
     </div>
-    <button class="btn btn-gold btn-full" onclick="downloadCert()">⬇ Download Certificate</button>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.6rem">Downloads as a text certificate. For a designed PDF certificate, contact info@ugandabiodiversityfund.org</p>
+    <button class="btn btn-gold btn-full" onclick="window.print()">🖨 Save as PDF / Print Certificate</button>
+    <p class="no-print" style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.6rem">In the print dialog, choose <strong>"Save as PDF"</strong> as the destination to keep a copy.</p>
   </div>
 </div>
 

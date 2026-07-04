@@ -413,7 +413,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .is-logos img{width:50px;height:50px;object-fit:contain;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 2px rgba(200,168,75,.6),0 2px 7px rgba(0,0,0,.3)}
 .is-div{width:1px;height:32px;background:rgba(200,168,75,.4)}
 .is-kicker{font-size:.66rem;color:rgba(255,255,255,.5);letter-spacing:.14em;text-transform:uppercase}
-.impact-card .is-title{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:#F0DEA6;margin:.2rem 0 .6rem;letter-spacing:.01em}
+.is-title{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:var(--gold-lt);margin:.2rem 0 .6rem;letter-spacing:.01em}
 .is-name{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:#fff}
 .is-tier{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:.12rem}
 .is-contrib{font-size:.9rem;color:#fff;margin-top:.55rem}
