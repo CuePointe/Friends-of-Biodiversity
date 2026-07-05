@@ -646,10 +646,20 @@
     <button class="modal-close" onclick="closeModal('m-impact')">✕</button>
     <div id="impact-card" class="impact-card"></div>
     <div class="impact-actions">
-      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Save as PDF / Print</button>
-      <button class="btn btn-ghost btn-sm" onclick="downloadImpactStatement()">⬇ Download as text</button>
+      <button class="btn btn-canopy btn-sm" onclick="window.print()">⬇ Download as PDF</button>
+      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Tip: in the print dialog choose "Save as PDF" to keep a copy with the signature &amp; badge.</p>
+    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Both open the print dialog — for <strong>Download as PDF</strong> choose "Save as PDF" as the destination; for <strong>Print</strong> choose your printer.</p>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS / UPDATES -->
+<div class="overlay" id="m-notifications">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('m-notifications')">✕</button>
+    <h2>🔔 Updates &amp; Activity</h2>
+    <p class="msub">The latest news, announcements, resources and posts shared across the Friends of Biodiversity community.</p>
+    <div id="notif-list"></div>
   </div>
 </div>
 
@@ -827,17 +837,24 @@
           <div class="cert-sign-name">Dr. Ivan Amanigaruhanga</div>
           <div class="cert-sign-title">Executive Director</div>
         </div>
-        <div class="cert-seal" aria-label="Official seal">
-          <svg viewBox="0 0 120 120" width="88" height="88">
-            <defs><path id="sealArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
-            <circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/>
-            <circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/>
-            <text fill="#E9D9A8" font-size="8.4" font-weight="700" letter-spacing="1.7"><textPath href="#sealArc" startOffset="0">UGANDA BIODIVERSITY FUND ★ FRIENDS OF BIODIVERSITY ★ </textPath></text>
-            <path d="M60 43 C50 51 50 65 60 74 C70 65 70 51 60 43 Z" fill="none" stroke="#C8A84B" stroke-width="1.8"/>
-            <path d="M60 51 V70" stroke="#C8A84B" stroke-width="1.1"/>
-            <text x="60" y="92" text-anchor="middle" fill="#E9D9A8" font-size="8" font-weight="800" letter-spacing="2">OFFICIAL</text>
-          </svg>
+        <div class="cert-stamp">
+          <img class="cert-stamp-img" src="stamp.png" alt="Official stamp" onerror="this.style.display='none';var s=document.getElementById('cert-seal-fallback');if(s)s.style.display=''"/>
+          <div class="cert-seal" id="cert-seal-fallback" aria-label="Official seal" style="display:none">
+            <svg viewBox="0 0 120 120" width="88" height="88">
+              <defs><path id="sealArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
+              <circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/>
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/>
+              <circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/>
+              <text fill="#E9D9A8" font-size="8.4" font-weight="700" letter-spacing="1.7"><textPath href="#sealArc" startOffset="0">UGANDA BIODIVERSITY FUND ★ FRIENDS OF BIODIVERSITY ★ </textPath></text>
+              <path d="M60 43 C50 51 50 65 60 74 C70 65 70 51 60 43 Z" fill="none" stroke="#C8A84B" stroke-width="1.8"/>
+              <path d="M60 51 V70" stroke="#C8A84B" stroke-width="1.1"/>
+              <text x="60" y="92" text-anchor="middle" fill="#E9D9A8" font-size="8" font-weight="800" letter-spacing="2">OFFICIAL</text>
+            </svg>
+          </div>
+        </div>
+        <div class="cert-qr" id="cert-qr">
+          <span class="cert-qr-label">To verify</span>
+          <img class="cert-qr-img" src="qr-code.png" alt="Verification QR code" onerror="var q=document.getElementById('cert-qr');if(q)q.style.display='none'"/>
         </div>
       </div>
       <div class="cert-issue" id="cert-issue">Issued: —</div>
@@ -929,7 +946,15 @@
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2c6cbf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
           <span>Document</span>
         </button>
+        <button type="button" class="composer-icon" onclick="toggleConsultMenu(event)" title="Request or offer a consultation — Find an Expert">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#7a5cbf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg>
+          <span>Consultation</span>
+        </button>
       </div>
+    </div>
+    <div id="consult-menu" class="consult-menu" style="display:none">
+      <div class="consult-head">🧭 Find an Expert — request or offer a consultation</div>
+      <div id="consult-list" class="consult-list"></div>
     </div>
     <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
     <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>
