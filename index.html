@@ -646,10 +646,20 @@
     <button class="modal-close" onclick="closeModal('m-impact')">✕</button>
     <div id="impact-card" class="impact-card"></div>
     <div class="impact-actions">
-      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Save as PDF / Print</button>
-      <button class="btn btn-ghost btn-sm" onclick="downloadImpactStatement()">⬇ Download as text</button>
+      <button class="btn btn-canopy btn-sm" onclick="window.print()">⬇ Download as PDF</button>
+      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Tip: in the print dialog choose "Save as PDF" to keep a copy with the signature &amp; badge.</p>
+    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Both open the print dialog — for <strong>Download as PDF</strong> choose "Save as PDF" as the destination; for <strong>Print</strong> choose your printer.</p>
+  </div>
+</div>
+
+<!-- NOTIFICATIONS / UPDATES -->
+<div class="overlay" id="m-notifications">
+  <div class="modal" style="max-width:520px">
+    <button class="modal-close" onclick="closeModal('m-notifications')">✕</button>
+    <h2>🔔 Updates &amp; Activity</h2>
+    <p class="msub">The latest news, announcements, resources and posts shared across the Friends of Biodiversity community.</p>
+    <div id="notif-list"></div>
   </div>
 </div>
 
@@ -936,7 +946,15 @@
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#2c6cbf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg>
           <span>Document</span>
         </button>
+        <button type="button" class="composer-icon" onclick="toggleConsultMenu(event)" title="Request or offer a consultation — Find an Expert">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#7a5cbf" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M15.6 8.4l-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg>
+          <span>Consultation</span>
+        </button>
       </div>
+    </div>
+    <div id="consult-menu" class="consult-menu" style="display:none">
+      <div class="consult-head">🧭 Find an Expert — request or offer a consultation</div>
+      <div id="consult-list" class="consult-list"></div>
     </div>
     <input type="file" id="post-img-input" accept="image/*" style="display:none" onchange="handlePostImage(event)"/>
     <input type="file" id="post-vid-input" accept="video/mp4,video/quicktime,.mp4,.mov" style="display:none" onchange="handlePostVideo(event)"/>

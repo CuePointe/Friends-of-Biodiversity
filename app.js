@@ -229,16 +229,16 @@ function hideLoadingToast(){/* toast auto-clears */}
 
 /* ═══ REALTIME — auto-refresh when any user changes shared data ═══ */
 function subscribeRealtime(){
-  sb.channel('public:content').on('postgres_changes',{event:'*',schema:'public',table:'content'},async()=>{await loadContent();renderContent();renderAdminContent()}).subscribe();
+  sb.channel('public:content').on('postgres_changes',{event:'*',schema:'public',table:'content'},async()=>{await loadContent();renderContent();renderAdminContent();updateNotifBadge()}).subscribe();
   sb.channel('public:comments').on('postgres_changes',{event:'*',schema:'public',table:'comments'},async()=>{await loadContent();renderContent()}).subscribe();
   sb.channel('public:wall_of_fame').on('postgres_changes',{event:'*',schema:'public',table:'wall_of_fame'},async()=>{await loadFame();renderFame();renderAdminFame()}).subscribe();
-  sb.channel('public:announcements').on('postgres_changes',{event:'*',schema:'public',table:'announcements'},async()=>{await loadAnnouncements();renderPublicAnnounces();renderAdminAnnounces()}).subscribe();
+  sb.channel('public:announcements').on('postgres_changes',{event:'*',schema:'public',table:'announcements'},async()=>{await loadAnnouncements();renderPublicAnnounces();renderAdminAnnounces();updateNotifBadge()}).subscribe();
   sb.channel('public:fin_reports').on('postgres_changes',{event:'*',schema:'public',table:'fin_reports'},async()=>{await loadFinReports();renderFinancials()}).subscribe();
   sb.channel('public:members').on('postgres_changes',{event:'*',schema:'public',table:'members'},async()=>{await loadMembers();renderAdminMembers()}).subscribe();
   sb.channel('public:payment_details').on('postgres_changes',{event:'*',schema:'public',table:'payment_details'},async()=>{await loadPayment();renderPaymentUI()}).subscribe();
   sb.channel('public:dashboard_items').on('postgres_changes',{event:'*',schema:'public',table:'dashboard_items'},async()=>{await loadDashboard();renderAccountabilityDashboard();renderDashboardAdmin()}).subscribe();
   sb.channel('public:dashboard_meta').on('postgres_changes',{event:'*',schema:'public',table:'dashboard_meta'},async()=>{await loadDashboard();renderAccountabilityDashboard();renderDashboardAdmin()}).subscribe();
-  sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();}).subscribe();
+  sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();updateNotifBadge();}).subscribe();
   sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
 }
 
@@ -833,6 +833,7 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
+      '<button class="btn btn-ghost btn-sm" style="position:relative" onclick="openNotifications()">🔔 Updates<span id="notif-badge" class="notif-badge"></span></button>'+
       '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
     '</div>'+
     // Discover / follow other members
@@ -873,6 +874,7 @@ function renderMemberView(){
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>';
   populateMembersDirectory();
+  updateNotifBadge();
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
@@ -887,6 +889,64 @@ function dashToggleFull(){
   const b=document.getElementById('dash-fs-btn');
   if(b)b.textContent=m.classList.contains('fs')?'🗕':'⛶';
 }
+/* ═══ NOTIFICATIONS / UPDATES ═══ */
+function buildNotifications(){
+  const items=[];
+  (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date}));
+  (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date}));
+  (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date}));
+  (POSTS||[]).slice(0,30).forEach(p=>items.push({icon:'📝',cat:'Community post',text:(p.author_name||'A member')+((p.body||'').trim()?': '+p.body.trim().slice(0,60):' shared a post'),date:(p.created_at||'').slice(0,10)}));
+  (MEMBERS||[]).filter(m=>m.role==='member'&&m.status==='active'&&m.created_at).forEach(m=>items.push({icon:'🌿',cat:'New member',text:(m.name||'A new member')+' joined the community',date:(m.created_at||'').slice(0,10)}));
+  items.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  return items.slice(0,20);
+}
+function _notifId(i){return (i.date||'')+'|'+(i.text||'')}
+function updateNotifBadge(){
+  const badge=document.getElementById('notif-badge');if(!badge)return;
+  const items=buildNotifications();const last=LS.get('notif_last','');
+  let n=0;for(const i of items){if(_notifId(i)===last)break;n++;}
+  if(n>0){badge.textContent=n>9?'9+':String(n);badge.style.display='flex';}else{badge.style.display='none';}
+}
+function renderNotifications(){
+  const el=document.getElementById('notif-list');if(!el)return;
+  const items=buildNotifications();
+  if(!items.length){el.innerHTML='<p style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No updates yet — check back soon.</p>';return}
+  el.innerHTML=items.map(i=>'<div class="notif-item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'</div>').join('');
+}
+function openNotifications(){
+  renderNotifications();
+  const items=buildNotifications();
+  if(items.length)LS.set('notif_last',_notifId(items[0]));
+  updateNotifBadge();
+  openModal('m-notifications');
+}
+
+/* ═══ CONSULTATION (Find an Expert) — composer dropdown ═══ */
+function toggleConsultMenu(e){
+  if(e){e.stopPropagation();}
+  const m=document.getElementById('consult-menu');if(!m)return;
+  if(m.style.display!=='none'){m.style.display='none';return}
+  const list=document.getElementById('consult-list');
+  const item=(icon,label)=>{const safe=String(label).replace(/'/g,'’');return '<button type="button" class="consult-item" onclick="addConsultation(\''+safe+'\')"><span>'+icon+'</span>'+esc(label)+'</button>';};
+  list.innerHTML=
+    '<div class="consult-group">Programme Windows</div>'+
+    (WINDOWS_DATA||[]).map(w=>item(w.icon,w.name)).join('')+
+    '<div class="consult-group">Thematic Areas</div>'+
+    (THEMES_DATA||[]).map(t=>item(t.icon,t.label)).join('');
+  m.style.display='block';
+}
+function addConsultation(topic){
+  const ta=document.getElementById('post-body');if(!ta)return;
+  const tag='🧭 Consultation — '+topic;
+  if(!ta.value.includes(tag)){
+    ta.value=(ta.value.trim()?ta.value.trim()+'\n\n':'')+tag+'\nOpen to connect with interested parties, experts and partners in this area.';
+  }
+  const m=document.getElementById('consult-menu');if(m)m.style.display='none';
+  ta.focus();
+  toast('🧭 Consultation topic added to your post.');
+}
+document.addEventListener('click',e=>{const m=document.getElementById('consult-menu');if(m&&m.style.display!=='none'&&!e.target.closest('#consult-menu')){m.style.display='none';}});
+
 function _dashItems(section){return DASH_ITEMS.filter(i=>i.section===section)}
 function renderAccountabilityDashboard(){
   const el=document.getElementById('accountability-dash');
