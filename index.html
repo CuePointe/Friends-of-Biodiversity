@@ -827,17 +827,24 @@
           <div class="cert-sign-name">Dr. Ivan Amanigaruhanga</div>
           <div class="cert-sign-title">Executive Director</div>
         </div>
-        <div class="cert-seal" aria-label="Official seal">
-          <svg viewBox="0 0 120 120" width="88" height="88">
-            <defs><path id="sealArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
-            <circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/>
-            <circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/>
-            <circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/>
-            <text fill="#E9D9A8" font-size="8.4" font-weight="700" letter-spacing="1.7"><textPath href="#sealArc" startOffset="0">UGANDA BIODIVERSITY FUND ★ FRIENDS OF BIODIVERSITY ★ </textPath></text>
-            <path d="M60 43 C50 51 50 65 60 74 C70 65 70 51 60 43 Z" fill="none" stroke="#C8A84B" stroke-width="1.8"/>
-            <path d="M60 51 V70" stroke="#C8A84B" stroke-width="1.1"/>
-            <text x="60" y="92" text-anchor="middle" fill="#E9D9A8" font-size="8" font-weight="800" letter-spacing="2">OFFICIAL</text>
-          </svg>
+        <div class="cert-stamp">
+          <img class="cert-stamp-img" src="stamp.png" alt="Official stamp" onerror="this.style.display='none';var s=document.getElementById('cert-seal-fallback');if(s)s.style.display=''"/>
+          <div class="cert-seal" id="cert-seal-fallback" aria-label="Official seal" style="display:none">
+            <svg viewBox="0 0 120 120" width="88" height="88">
+              <defs><path id="sealArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs>
+              <circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/>
+              <circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/>
+              <circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/>
+              <text fill="#E9D9A8" font-size="8.4" font-weight="700" letter-spacing="1.7"><textPath href="#sealArc" startOffset="0">UGANDA BIODIVERSITY FUND ★ FRIENDS OF BIODIVERSITY ★ </textPath></text>
+              <path d="M60 43 C50 51 50 65 60 74 C70 65 70 51 60 43 Z" fill="none" stroke="#C8A84B" stroke-width="1.8"/>
+              <path d="M60 51 V70" stroke="#C8A84B" stroke-width="1.1"/>
+              <text x="60" y="92" text-anchor="middle" fill="#E9D9A8" font-size="8" font-weight="800" letter-spacing="2">OFFICIAL</text>
+            </svg>
+          </div>
+        </div>
+        <div class="cert-qr" id="cert-qr">
+          <span class="cert-qr-label">To verify</span>
+          <img class="cert-qr-img" src="qr-code.png" alt="Verification QR code" onerror="var q=document.getElementById('cert-qr');if(q)q.style.display='none'"/>
         </div>
       </div>
       <div class="cert-issue" id="cert-issue">Issued: —</div>

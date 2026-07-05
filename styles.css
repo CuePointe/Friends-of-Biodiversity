@@ -413,7 +413,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .is-logos img{width:50px;height:50px;object-fit:contain;border-radius:50%;background:#fff;padding:4px;box-shadow:0 0 0 2px rgba(200,168,75,.6),0 2px 7px rgba(0,0,0,.3)}
 .is-div{width:1px;height:32px;background:rgba(200,168,75,.4)}
 .is-kicker{font-size:.66rem;color:rgba(255,255,255,.5);letter-spacing:.14em;text-transform:uppercase}
-.is-title{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:var(--gold-lt);margin:.2rem 0 .6rem;letter-spacing:.01em}
+.impact-card .is-title{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:#F0DEA6;margin:.2rem 0 .6rem;letter-spacing:.01em}
 .is-name{font-family:var(--ff-d);font-size:1.5rem;font-weight:700;color:#fff}
 .is-tier{font-size:.78rem;color:rgba(255,255,255,.65);margin-top:.12rem}
 .is-contrib{font-size:.9rem;color:#fff;margin-top:.55rem}
@@ -476,6 +476,11 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .cert-sign-name{font-family:var(--ff-d);font-size:.85rem;font-weight:700;color:#fff}
 .cert-sign-title{font-size:.64rem;color:var(--gold-lt);letter-spacing:.07em;text-transform:uppercase;margin-top:.12rem}
 .cert-seal{flex-shrink:0;display:flex;align-items:center;justify-content:center;transform:rotate(-4deg);opacity:.95;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.cert-stamp{flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.cert-stamp-img{max-width:94px;max-height:94px;object-fit:contain;filter:drop-shadow(0 1px 3px rgba(0,0,0,.3))}
+.cert-qr{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:.28rem}
+.cert-qr-label{font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-lt)}
+.cert-qr-img{width:68px;height:68px;object-fit:contain;background:#fff;padding:5px;border-radius:8px;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 .cert-seal svg{display:block}
 .cert-issue{font-size:.64rem;color:rgba(255,255,255,.45);letter-spacing:.08em;text-transform:uppercase;text-align:center;margin-top:1.25rem}
 .cert-preview .cert-date{font-size:.72rem;color:rgba(255,255,255,.4);margin-top:.75rem}
