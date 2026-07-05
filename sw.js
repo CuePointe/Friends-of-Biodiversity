@@ -7,7 +7,7 @@
    and see the last loaded content.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v3';
+const CACHE_NAME = 'fob-app-v4';
 
 // Core files to cache immediately on install.
 // RELATIVE paths so the app works under a GitHub project subpath
@@ -20,20 +20,21 @@ const CORE_FILES = [
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
-  './favicon.png',
   './footprint-globe.jpg',
   './icon-192.png',
   './icon-512.png',
+  './icon-512-maskable.png',
   './slide-1.jpg',
   './slide-2.jpg',
   './slide-3.jpg',
 ];
 
-// ── INSTALL: cache core files ──
+// ── INSTALL: cache core files (each independently, so one missing
+// file can never break the whole install) ──
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(CORE_FILES))
+      .then(cache => Promise.allSettled(CORE_FILES.map(f => cache.add(f))))
       .then(() => self.skipWaiting())
   );
 });

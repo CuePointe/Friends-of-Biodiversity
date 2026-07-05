@@ -316,6 +316,8 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .notif-cat{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--canopy-lt)}
 .notif-text{font-size:.85rem;color:var(--text);line-height:1.45}
 .notif-date{font-size:.7rem;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-top:.1rem}
+/* Email verification */
+.verify-code-input{font-size:1.35rem!important;letter-spacing:.45em;text-align:center;font-family:var(--ff-m)}
 /* Discover Members directory */
 .member-search-wrap{position:relative;margin-bottom:.9rem}
 .member-search-ico{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-size:.9rem;opacity:.6;pointer-events:none}
