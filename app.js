@@ -336,8 +336,73 @@ async function doLogin(){
   if(u.status==='pending'){toast('⚠ Your enrollment is pending payment verification. An admin will activate your account shortly.');return}
   if(u.status==='removed'||u.status==='inactive'){toast('⚠ This account has been deactivated. Contact info@ugandabiodiversityfund.org.');return}
   clearRateLimit(em);
+  // Security: new members must confirm their registered email before first sign-in
+  if(!u.email_verified){closeModal('m-login');startEmailVerification(u,'login');return}
+  finishLogin(u);
+}
+function finishLogin(u){
   currentUser=u;persistSession(u);closeModal('m-login');updateNav();
   toast('🌿 Welcome back, '+esc(u.name.split(' ')[0])+'!');showView('member');
+}
+
+/* ═══ EMAIL VERIFICATION (Supabase Auth OTP) ═══
+   New members confirm their registered email with a 6-digit code before
+   first sign-in. Existing members were grandfathered as verified. */
+let _verifyCtx=null;// {member, next:'login'|'enroll'}
+let _verifyCooldown=0;
+async function sendVerifyCode(email){
+  const{error}=await sb.auth.signInWithOtp({email,options:{shouldCreateUser:true}});
+  if(error){console.error('OTP send',error);return error.message||'Could not send the code.'}
+  return null;
+}
+async function startEmailVerification(member,next){
+  _verifyCtx={member,next};
+  const lbl=document.getElementById('verify-email-label');
+  if(lbl)lbl.textContent=member.email;
+  const codeEl=document.getElementById('verify-code');if(codeEl)codeEl.value='';
+  toast('✉ Sending a verification code to your email…');
+  const err=await sendVerifyCode(member.email);
+  if(err)toast('⚠ '+err+' You can press "Resend code" to try again.');
+  else toast('✉ Code sent — check your inbox (and spam folder).');
+  _startResendCooldown();
+  openModal('m-verify');
+}
+function _startResendCooldown(){
+  _verifyCooldown=60;
+  const btn=document.getElementById('verify-resend');
+  const tick=()=>{
+    if(!btn)return;
+    if(_verifyCooldown>0){btn.disabled=true;btn.textContent='Resend code ('+_verifyCooldown+'s)';_verifyCooldown--;setTimeout(tick,1000);}
+    else{btn.disabled=false;btn.textContent='Resend code';}
+  };
+  tick();
+}
+async function resendVerifyCode(){
+  if(!_verifyCtx||_verifyCooldown>0)return;
+  toast('✉ Resending code…');
+  const err=await sendVerifyCode(_verifyCtx.member.email);
+  toast(err?('⚠ '+err):'✉ New code sent.');
+  _startResendCooldown();
+}
+async function confirmVerifyCode(){
+  if(!_verifyCtx){closeModal('m-verify');return}
+  const code=(document.getElementById('verify-code').value||'').trim();
+  if(!/^\d{6}$/.test(code)){toast('⚠ Enter the 6-digit code from your email.');return}
+  toast('Checking code…');
+  const{error}=await sb.auth.verifyOtp({email:_verifyCtx.member.email,token:code,type:'email'});
+  if(error){toast('⚠ '+(error.message||'Invalid or expired code — try Resend.'));return}
+  sb.auth.signOut().catch(()=>{});// we only needed the one-time check
+  const{error:upErr}=await sb.from('members').update({email_verified:true}).eq('id',_verifyCtx.member.id);
+  if(upErr)console.error('verify flag',upErr);
+  _verifyCtx.member.email_verified=true;
+  await loadMembers();
+  closeModal('m-verify');
+  toast('✅ Email verified — thank you!');
+  if(_verifyCtx.next==='login'){
+    const fresh=MEMBERS.find(m=>m.id===_verifyCtx.member.id)||_verifyCtx.member;
+    finishLogin(fresh);
+  }
+  _verifyCtx=null;
 }
 async function doAdminLogin(){
   const em=document.getElementById('al-email').value.trim().toLowerCase();
@@ -411,13 +476,15 @@ document.getElementById('enroll-form').addEventListener('submit',async function(
     org:document.getElementById('ef-org').value.trim(),
     engage:document.getElementById('ef-engage').value,
     role:'member',status:'pending'};
-  const {error}=await sb.from('members').insert(nm);
+  const {data:created,error}=await sb.from('members').insert(nm).select().single();
   if(error){toast('⚠ Could not register — please try again.');console.error(error);return}
   await loadMembers();
   this.style.display='none';document.getElementById('enroll-success').style.display='block';
   await logEmail('Welcome to Friends of Biodiversity','New member: '+email+' ('+tier+') · '+new Date().toLocaleDateString());
   toast('🌿 Welcome, '+name.split(' ')[0]+'! Enrollment registered.');
   showEP(false);
+  // Security: confirm the registered email right away (can also be done at first sign-in)
+  if(created)startEmailVerification(created,'enroll');
 });
 
 /* ═══ THEMES & PROGRAMMES ═══ */
@@ -1027,7 +1094,7 @@ function dashDetail(section,i){
   el.classList.add('show');
   el.innerHTML='<div class="adb-detail-head"><span class="adb-detail-dot" style="background:'+color+'"></span><b>'+esc(it.label)+'</b><span class="adb-detail-val">'+unit+'</span></div>'+(it.detail?'<p>'+esc(it.detail)+'</p>':'<p class="adb-detail-hint">No further detail provided yet.</p>');
 }
-const CERT_SIGN_SVG='<img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onerror="this.style.display=\'none\'"/>';
+const CERT_SIGN_SVG='<img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src=\'edsignature.png\'}else{this.style.display=\'none\'}"/>';
 const CONSERV_BADGE_SVG='<svg viewBox="0 0 120 120" width="86" height="86"><defs><path id="isArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/><circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/><text fill="#E9D9A8" font-size="7.6" font-weight="700" letter-spacing="1.2"><textPath href="#isArc" startOffset="0">FRIENDS OF BIODIVERSITY ★ CONSERVATION SUPPORTER ★ </textPath></text><path d="M60 79V65" stroke="#C8A84B" stroke-width="1.5"/><path d="M60 44 66.5 55.5h-13z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><path d="M60 51 67 63.5H53z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><text x="60" y="95" text-anchor="middle" fill="#E9D9A8" font-size="7.5" font-weight="800" letter-spacing="1.4">CERTIFIED</text></svg>';
 function openImpactStatement(){renderImpactStatement();openModal('m-impact');}
 function renderImpactStatement(){
@@ -1554,6 +1621,7 @@ function renderAdminMembers(){
       '<td><span class="pill '+(m.role==='admin'?'pill-admin':m.role==='removed'?'pill-danger':'pill-ok')+'">'+m.role+'</span></td>'+
       '<td style="display:flex;gap:.3rem;flex-wrap:wrap">'+
         (isPending?'<button class="btn btn-canopy btn-sm" onclick="adminApproveMember(\''+m.id+'\',\''+m.name.replace(/'/g,'')+'\')">✓ Approve</button>':'')+
+        (m.role!=='admin'&&!m.email_verified?'<button class="btn btn-ghost btn-sm" title="Member could not receive the code? Verify their email manually after confirming their identity." onclick="adminMarkVerified(\''+m.id+'\',\''+m.name.replace(/'/g,'')+'\')">✉ Verify</button>':'')+
         (m.role!=='admin'?'<button class="btn btn-danger btn-sm" onclick="adminRemoveMember(\''+m.id+'\',\''+m.name.replace(/'/g,'')+'\')">Remove</button>':'<span style="font-size:.72rem;color:var(--muted)">—</span>')+
       '</td>'+
     '</tr>';
@@ -1567,6 +1635,13 @@ function renderAdminMembers(){
       '<button class="btn btn-ghost btn-sm" onclick="_admMemberPage=Math.min('+(pages-1)+',_admMemberPage+1);renderAdminMembers()" '+(_admMemberPage>=pages-1?'disabled':'')+'>Next →</button>'
       :'<span style="font-size:.8rem;color:var(--muted)">'+total+' member'+(total!==1?'s':'')+(list.filter(m=>m.status==='pending').length>0?' · ⚠ '+list.filter(m=>m.status==='pending').length+' pending approval':'')+' </span>';
   }
+}
+async function adminMarkVerified(id,name){
+  if(!confirm('Manually mark '+name+'\'s email as verified? Only do this after confirming their identity (e.g. they contacted you from the registered email).'))return;
+  const{error}=await sb.from('members').update({email_verified:true}).eq('id',id);
+  if(error){toast('⚠ Could not update.');console.error(error);return}
+  await loadMembers();renderAdminMembers();
+  toast('✉ '+name+' marked as verified.');
 }
 async function adminApproveMember(id,name){
   if(!confirm('Approve '+name+' and activate their membership? Confirm their payment reference matches.'))return;
