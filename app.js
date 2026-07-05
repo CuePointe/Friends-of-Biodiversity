@@ -912,7 +912,7 @@ function renderMemberView(){
     '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
     (ANNOUNCES.length
       ?ANNOUNCES.slice(0,5).map(a=>
-        '<div class="ann-editorial">'+
+        '<div class="ann-editorial" id="ann-'+a.id+'">'+
           '<div class="ann-ed-type">'+esc(a.type)+'</div>'+
           '<div class="ann-ed-title">'+esc(a.title)+'</div>'+
           (a.body?'<p class="ann-ed-body">'+esc(a.body)+'</p>':'')+
@@ -924,7 +924,7 @@ function renderMemberView(){
     '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div>'+
     (FIN_REPORTS.length
       ?FIN_REPORTS.map(r=>
-        '<div class="report-row">'+
+        '<div class="report-row" id="rep-'+r.id+'">'+
           '<div class="report-icon">📄</div>'+
           '<div class="report-body">'+
             '<div class="report-title">'+r.title+'</div>'+
@@ -959,13 +959,32 @@ function dashToggleFull(){
 /* ═══ NOTIFICATIONS / UPDATES ═══ */
 function buildNotifications(){
   const items=[];
-  (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date}));
-  (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date}));
-  (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date}));
-  (POSTS||[]).slice(0,30).forEach(p=>items.push({icon:'📝',cat:'Community post',text:(p.author_name||'A member')+((p.body||'').trim()?': '+p.body.trim().slice(0,60):' shared a post'),date:(p.created_at||'').slice(0,10)}));
-  (MEMBERS||[]).filter(m=>m.role==='member'&&m.status==='active'&&m.created_at).forEach(m=>items.push({icon:'🌿',cat:'New member',text:(m.name||'A new member')+' joined the community',date:(m.created_at||'').slice(0,10)}));
+  (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date,kind:'announce',tid:a.id}));
+  (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date,kind:'content',tid:c.id}));
+  (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date,kind:'report',tid:r.id}));
+  (POSTS||[]).slice(0,30).forEach(p=>items.push({icon:'📝',cat:'Community post',text:(p.author_name||'A member')+((p.body||'').trim()?': '+p.body.trim().slice(0,60):' shared a post'),date:(p.created_at||'').slice(0,10),kind:'post',tid:p.id}));
+  (MEMBERS||[]).filter(m=>m.role==='member'&&m.status==='active'&&m.created_at).forEach(m=>items.push({icon:'🌿',cat:'New member',text:(m.name||'A new member')+' joined the community',date:(m.created_at||'').slice(0,10),kind:'member',tid:m.id}));
   items.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   return items.slice(0,20);
+}
+// LinkedIn-style: clicking a notification takes the member to the exact item, briefly highlighted
+function openNotifItem(kind,id){
+  closeModal('m-notifications');
+  if(kind==='member'){viewMemberProfile(id);return}
+  const dest={
+    content:{view:'main',target:'card-'+id,fallback:'learn'},
+    post:{view:'main',target:'post-'+id,fallback:'community-feed-wrap'},
+    announce:{view:'member',target:'ann-'+id,fallback:'mem-body'},
+    report:{view:'member',target:'rep-'+id,fallback:'mem-body'}
+  }[kind];
+  if(!dest)return;
+  showView(dest.view);
+  setTimeout(()=>{
+    const el=document.getElementById(dest.target);
+    const scrollTo=el||document.getElementById(dest.fallback);
+    if(scrollTo)scrollTo.scrollIntoView({behavior:'smooth',block:'center'});
+    if(el){el.classList.add('notif-flash');setTimeout(()=>el.classList.remove('notif-flash'),2600);}
+  },300);
 }
 function _notifId(i){return (i.date||'')+'|'+(i.text||'')}
 function updateNotifBadge(){
@@ -978,7 +997,7 @@ function renderNotifications(){
   const el=document.getElementById('notif-list');if(!el)return;
   const items=buildNotifications();
   if(!items.length){el.innerHTML='<p style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No updates yet — check back soon.</p>';return}
-  el.innerHTML=items.map(i=>'<div class="notif-item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'</div>').join('');
+  el.innerHTML=items.map(i=>'<div class="notif-item notif-click" onclick="openNotifItem(\''+i.kind+'\',\''+i.tid+'\')" title="Open this item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'<span class="notif-go">›</span></div>').join('');
 }
 function openNotifications(){
   renderNotifications();
