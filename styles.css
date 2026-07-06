@@ -460,6 +460,10 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 /* Executive Director signature image — inverts any dark-ink transparent PNG to show cleanly on the dark certificate */
 .sig-img{display:block;max-width:180px;height:46px;object-fit:contain;object-position:left center;margin:0 0 .05rem;filter:brightness(0) invert(1);opacity:.95}
 .is-sign .sig-img{max-width:160px;height:42px}
+/* Auto-straighten a portrait (vertically-shot) signature so it lies along the line */
+.sig-img.sig-rot{width:46px;height:150px;max-width:none;object-position:center;transform:rotate(90deg);margin:-52px 52px}
+.is-sign .sig-img.sig-rot{width:42px;height:140px;margin:-49px 49px}
+.is-stamp{flex-shrink:0;display:flex;align-items:center;justify-content:center}
 /* Print only the open certificate/statement modal, as a clean full page (Save as PDF) */
 @media print{
   body *{visibility:hidden}

@@ -21,8 +21,8 @@ const CORE_FILES = [
   './fob-logo.png',
   './ubf-logo.png',
   './footprint-globe.jpg',
-  './icon-192.png',
-  './icon-512.png',
+  './icon192.png',
+  './icon512.png',
   './icon-512-maskable.png',
   './slide-1.jpg',
   './slide-2.jpg',
@@ -115,8 +115,8 @@ self.addEventListener('push', event => {
   const data = event.data.json();
   self.registration.showNotification(data.title || 'Friends of Biodiversity', {
     body: data.body || 'New update from Uganda Biodiversity Fund',
-    icon: './icon-192.png',
-    badge: './icon-96.png',
+    icon: './icon192.png',
+    badge: './icon192.png',
     data: { url: data.url || './' }
   });
 });
