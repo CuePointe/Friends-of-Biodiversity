@@ -847,7 +847,7 @@
       <div class="cert-date" id="cert-date">2026</div>
       <div class="cert-foot">
         <div class="cert-sign-block">
-          <img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='edsignature.png'}else{this.style.display='none'}"/>
+          <img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onload="if(this.naturalHeight>this.naturalWidth*1.2)this.classList.add('sig-rot')" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='edsignature.png'}else{this.style.display='none'}"/>
           <div class="cert-sign-line"></div>
           <div class="cert-sign-name">Dr. Ivan Amanigaruhanga</div>
           <div class="cert-sign-title">Executive Director</div>

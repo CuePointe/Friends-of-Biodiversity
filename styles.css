@@ -316,6 +316,14 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .notif-cat{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--canopy-lt)}
 .notif-text{font-size:.85rem;color:var(--text);line-height:1.45}
 .notif-date{font-size:.7rem;color:var(--muted);flex-shrink:0;white-space:nowrap;margin-top:.1rem}
+.notif-click{cursor:pointer;border-radius:10px;margin:0 -.5rem;padding-left:.7rem;padding-right:.5rem;transition:background .13s}
+.notif-click:hover{background:var(--mist)}
+.notif-click:hover .notif-text{color:var(--canopy)}
+.notif-go{color:var(--canopy-lt);font-weight:800;font-size:1.05rem;flex-shrink:0;align-self:center;opacity:0;transition:opacity .13s}
+.notif-click:hover .notif-go{opacity:1}
+/* Landing highlight when arriving from a notification */
+@keyframes notifFlash{0%,60%{box-shadow:0 0 0 3px rgba(200,168,75,.75);background-color:rgba(200,168,75,.12)}100%{box-shadow:0 0 0 3px rgba(200,168,75,0);background-color:transparent}}
+.notif-flash{animation:notifFlash 2.6s ease-out}
 /* Email verification */
 .verify-code-input{font-size:1.35rem!important;letter-spacing:.45em;text-align:center;font-family:var(--ff-m)}
 /* Discover Members directory */
@@ -452,6 +460,10 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 /* Executive Director signature image — inverts any dark-ink transparent PNG to show cleanly on the dark certificate */
 .sig-img{display:block;max-width:180px;height:46px;object-fit:contain;object-position:left center;margin:0 0 .05rem;filter:brightness(0) invert(1);opacity:.95}
 .is-sign .sig-img{max-width:160px;height:42px}
+/* Auto-straighten a portrait (vertically-shot) signature so it lies along the line */
+.sig-img.sig-rot{width:46px;height:150px;max-width:none;object-position:center;transform:rotate(90deg);margin:-52px 52px}
+.is-sign .sig-img.sig-rot{width:42px;height:140px;margin:-49px 49px}
+.is-stamp{flex-shrink:0;display:flex;align-items:center;justify-content:center}
 /* Print only the open certificate/statement modal, as a clean full page (Save as PDF) */
 @media print{
   body *{visibility:hidden}

@@ -912,7 +912,7 @@ function renderMemberView(){
     '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
     (ANNOUNCES.length
       ?ANNOUNCES.slice(0,5).map(a=>
-        '<div class="ann-editorial">'+
+        '<div class="ann-editorial" id="ann-'+a.id+'">'+
           '<div class="ann-ed-type">'+esc(a.type)+'</div>'+
           '<div class="ann-ed-title">'+esc(a.title)+'</div>'+
           (a.body?'<p class="ann-ed-body">'+esc(a.body)+'</p>':'')+
@@ -924,7 +924,7 @@ function renderMemberView(){
     '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div>'+
     (FIN_REPORTS.length
       ?FIN_REPORTS.map(r=>
-        '<div class="report-row">'+
+        '<div class="report-row" id="rep-'+r.id+'">'+
           '<div class="report-icon">📄</div>'+
           '<div class="report-body">'+
             '<div class="report-title">'+r.title+'</div>'+
@@ -959,13 +959,32 @@ function dashToggleFull(){
 /* ═══ NOTIFICATIONS / UPDATES ═══ */
 function buildNotifications(){
   const items=[];
-  (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date}));
-  (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date}));
-  (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date}));
-  (POSTS||[]).slice(0,30).forEach(p=>items.push({icon:'📝',cat:'Community post',text:(p.author_name||'A member')+((p.body||'').trim()?': '+p.body.trim().slice(0,60):' shared a post'),date:(p.created_at||'').slice(0,10)}));
-  (MEMBERS||[]).filter(m=>m.role==='member'&&m.status==='active'&&m.created_at).forEach(m=>items.push({icon:'🌿',cat:'New member',text:(m.name||'A new member')+' joined the community',date:(m.created_at||'').slice(0,10)}));
+  (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date,kind:'announce',tid:a.id}));
+  (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date,kind:'content',tid:c.id}));
+  (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date,kind:'report',tid:r.id}));
+  (POSTS||[]).slice(0,30).forEach(p=>items.push({icon:'📝',cat:'Community post',text:(p.author_name||'A member')+((p.body||'').trim()?': '+p.body.trim().slice(0,60):' shared a post'),date:(p.created_at||'').slice(0,10),kind:'post',tid:p.id}));
+  (MEMBERS||[]).filter(m=>m.role==='member'&&m.status==='active'&&m.created_at).forEach(m=>items.push({icon:'🌿',cat:'New member',text:(m.name||'A new member')+' joined the community',date:(m.created_at||'').slice(0,10),kind:'member',tid:m.id}));
   items.sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
   return items.slice(0,20);
+}
+// LinkedIn-style: clicking a notification takes the member to the exact item, briefly highlighted
+function openNotifItem(kind,id){
+  closeModal('m-notifications');
+  if(kind==='member'){viewMemberProfile(id);return}
+  const dest={
+    content:{view:'main',target:'card-'+id,fallback:'learn'},
+    post:{view:'main',target:'post-'+id,fallback:'community-feed-wrap'},
+    announce:{view:'member',target:'ann-'+id,fallback:'mem-body'},
+    report:{view:'member',target:'rep-'+id,fallback:'mem-body'}
+  }[kind];
+  if(!dest)return;
+  showView(dest.view);
+  setTimeout(()=>{
+    const el=document.getElementById(dest.target);
+    const scrollTo=el||document.getElementById(dest.fallback);
+    if(scrollTo)scrollTo.scrollIntoView({behavior:'smooth',block:'center'});
+    if(el){el.classList.add('notif-flash');setTimeout(()=>el.classList.remove('notif-flash'),2600);}
+  },300);
 }
 function _notifId(i){return (i.date||'')+'|'+(i.text||'')}
 function updateNotifBadge(){
@@ -978,7 +997,7 @@ function renderNotifications(){
   const el=document.getElementById('notif-list');if(!el)return;
   const items=buildNotifications();
   if(!items.length){el.innerHTML='<p style="color:var(--muted);font-size:.85rem;padding:.5rem 0">No updates yet — check back soon.</p>';return}
-  el.innerHTML=items.map(i=>'<div class="notif-item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'</div>').join('');
+  el.innerHTML=items.map(i=>'<div class="notif-item notif-click" onclick="openNotifItem(\''+i.kind+'\',\''+i.tid+'\')" title="Open this item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'<span class="notif-go">›</span></div>').join('');
 }
 function openNotifications(){
   renderNotifications();
@@ -1094,7 +1113,7 @@ function dashDetail(section,i){
   el.classList.add('show');
   el.innerHTML='<div class="adb-detail-head"><span class="adb-detail-dot" style="background:'+color+'"></span><b>'+esc(it.label)+'</b><span class="adb-detail-val">'+unit+'</span></div>'+(it.detail?'<p>'+esc(it.detail)+'</p>':'<p class="adb-detail-hint">No further detail provided yet.</p>');
 }
-const CERT_SIGN_SVG='<img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src=\'edsignature.png\'}else{this.style.display=\'none\'}"/>';
+const CERT_SIGN_SVG='<img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onload="if(this.naturalHeight>this.naturalWidth*1.2)this.classList.add(\'sig-rot\')" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src=\'edsignature.png\'}else{this.style.display=\'none\'}"/>';
 const CONSERV_BADGE_SVG='<svg viewBox="0 0 120 120" width="86" height="86"><defs><path id="isArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/><circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/><text fill="#E9D9A8" font-size="7.6" font-weight="700" letter-spacing="1.2"><textPath href="#isArc" startOffset="0">FRIENDS OF BIODIVERSITY ★ CONSERVATION SUPPORTER ★ </textPath></text><path d="M60 79V65" stroke="#C8A84B" stroke-width="1.5"/><path d="M60 44 66.5 55.5h-13z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><path d="M60 51 67 63.5H53z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><text x="60" y="95" text-anchor="middle" fill="#E9D9A8" font-size="7.5" font-weight="800" letter-spacing="1.4">CERTIFIED</text></svg>';
 function openImpactStatement(){renderImpactStatement();openModal('m-impact');}
 function renderImpactStatement(){
@@ -1112,7 +1131,11 @@ function renderImpactStatement(){
     '<div class="is-metrics"><div><div class="is-n">'+trees.toLocaleString()+'</div><div class="is-l">Trees</div></div><div><div class="is-n">'+ha+'</div><div class="is-l">Hectares</div></div><div><div class="is-n">'+proj+'</div><div class="is-l">Projects</div></div></div>'+
     '<p class="is-thanks">In recognition of your commitment to protecting Uganda\'s biodiversity — for now &amp; the future.</p>'+
     '<div class="is-foot"><div class="is-sign">'+CERT_SIGN_SVG+'<div class="is-sign-line"></div><div class="is-sign-name">Dr. Ivan Amanigaruhanga</div><div class="is-sign-title">Executive Director</div></div>'+
-      '<div class="is-badge">'+CONSERV_BADGE_SVG+'</div></div>'+
+      '<div class="is-stamp"><img class="cert-stamp-img" src="stamp.png" alt="Official stamp" onerror="this.style.display=\'none\';var b=document.getElementById(\'is-badge-fb\');if(b)b.style.display=\'\'"/>'+
+        '<div class="is-badge" id="is-badge-fb" style="display:none">'+CONSERV_BADGE_SVG+'</div></div>'+
+      '<div class="cert-qr" id="is-qr"><span class="cert-qr-label">To verify</span>'+
+        '<img class="cert-qr-img" src="qr-code.png" alt="Verification QR code" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src=\'qrcode.png\'}else{var q=document.getElementById(\'is-qr\');if(q)q.style.display=\'none\'}"/></div>'+
+    '</div>'+
     '<div class="is-date">Issued: '+new Date().toLocaleDateString('en-GB',{year:'numeric',month:'long',day:'numeric'})+'</div>';
 }
 function downloadImpactStatement(){
