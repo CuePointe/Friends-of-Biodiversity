@@ -40,6 +40,9 @@
 <!-- Preload critical images so hero and logos render instantly -->
 <!-- DOMPurify — sanitizes any HTML built from user-supplied strings -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js" crossorigin="anonymous"></script>
+<!-- True PDF download for certificates (html2canvas renders the card, jsPDF saves the file) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
 <link rel="preload" as="image" href="slide-1.jpg"/>
 <link rel="preload" as="image" href="slide-2.jpg"/>
 <link rel="preload" as="image" href="slide-3.jpg"/>
@@ -202,6 +205,10 @@
       <div class="filter-row" id="content-filters"></div>
       <div class="content-search-row">
         <input id="content-search" type="search" placeholder="Search resources…" oninput="setContentSearch(this.value)" autocomplete="off" spellcheck="false"/>
+        <div class="view-toggle" role="group" aria-label="Card layout">
+          <button type="button" id="vt-list" class="vt-btn active" onclick="setContentView('list')" title="List view">☰</button>
+          <button type="button" id="vt-grid" class="vt-btn" onclick="setContentView('grid')" title="Grid view">▦</button>
+        </div>
         <div id="upload-btn-slot" style="display:none">
           <button class="btn btn-canopy btn-sm" onclick="openModal('m-upload')">⬆ Upload Content</button>
         </div>
@@ -646,10 +653,10 @@
     <button class="modal-close" onclick="closeModal('m-impact')">✕</button>
     <div id="impact-card" class="impact-card"></div>
     <div class="impact-actions">
-      <button class="btn btn-canopy btn-sm" onclick="window.print()">⬇ Download as PDF</button>
+      <button class="btn btn-canopy btn-sm" onclick="downloadPdf('impact-card','UBF-Impact-Statement')">⬇ Download as PDF</button>
       <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Print</button>
     </div>
-    <p style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem">Both open the print dialog — for <strong>Download as PDF</strong> choose "Save as PDF" as the destination; for <strong>Print</strong> choose your printer.</p>
+    <p class="no-print" style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.5rem"><strong>Download</strong> saves a PDF file straight to your device. <strong>Print</strong> opens your printer dialog.</p>
   </div>
 </div>
 
@@ -874,8 +881,11 @@
       </div>
       <div class="cert-issue" id="cert-issue">Issued: —</div>
     </div>
-    <button class="btn btn-gold btn-full" onclick="window.print()">🖨 Save as PDF / Print Certificate</button>
-    <p class="no-print" style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.6rem">In the print dialog, choose <strong>"Save as PDF"</strong> as the destination to keep a copy.</p>
+    <div class="impact-actions">
+      <button class="btn btn-canopy btn-sm" onclick="downloadPdf('cert-preview','UBF-Membership-Certificate')">⬇ Download as PDF</button>
+      <button class="btn btn-gold btn-sm" onclick="window.print()">🖨 Print Certificate</button>
+    </div>
+    <p class="no-print" style="font-size:.72rem;color:var(--muted);text-align:center;margin-top:.6rem"><strong>Download</strong> saves a PDF file straight to your device. <strong>Print</strong> opens your printer dialog.</p>
   </div>
 </div>
 
