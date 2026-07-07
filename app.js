@@ -1938,15 +1938,24 @@ function handleSlideUpload(e){
   });
 }
 
-/* ═══ ADMIN TABS ═══ */
-document.querySelectorAll('.atab').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
-    const p=btn.dataset.ap;
-    document.querySelectorAll('.adm-panel').forEach(ap=>ap.classList.remove('active'));
-    document.getElementById(p).classList.add('active');
-  });
-});
+/* ═══ ADMIN SIDEBAR NAVIGATION ═══ */
+function showAdminPanel(btn){
+  document.querySelectorAll('.adm-nav-item').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById(btn.dataset.ap);
+  if(panel)panel.classList.add('active');
+  toggleAdmSidebar(false);// close the drawer on mobile
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function toggleAdmGroup(btn){btn.parentElement.classList.toggle('open')}
+function toggleAdmSidebar(force){
+  const sb=document.getElementById('adm-sidebar');if(!sb)return;
+  const open=typeof force==='boolean'?force:!sb.classList.contains('open');
+  sb.classList.toggle('open',open);
+  const bd=document.getElementById('adm-backdrop');
+  if(bd)bd.classList.toggle('show',open);
+}
 
 /* ═══ OUR FOOTPRINT — CLICKABLE STAT BOXES WITH PROOF LINKS ═══
    STAT_LINKS stored in localStorage keyed by stat data-key.
