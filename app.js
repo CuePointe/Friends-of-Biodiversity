@@ -214,6 +214,7 @@ async function bootstrapApp(){
   renderThemes();
   renderFilters();
   renderContent();
+  applyContentView();
   renderFame();
   renderPublicAnnounces();
   renderStatHints();
@@ -535,6 +536,16 @@ function renderFilters(){
 let contentSearchQuery='';
 function setFilter(btn){document.querySelectorAll('[data-cf]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');activeFilter=btn.dataset.cf;renderContent()}
 function setContentSearch(val){contentSearchQuery=(val||'').trim().toLowerCase();renderContent()}
+/* Grid / list layout toggle — remembered per device */
+function setContentView(mode){LS.set('content_view',mode);applyContentView();}
+function applyContentView(){
+  const g=document.getElementById('content-grid');if(!g)return;
+  const mode=LS.get('content_view','list');
+  g.classList.toggle('grid-view',mode==='grid');
+  const l=document.getElementById('vt-list'),gr=document.getElementById('vt-grid');
+  if(l)l.classList.toggle('active',mode!=='grid');
+  if(gr)gr.classList.toggle('active',mode==='grid');
+}
 
 function uRank(){
   if(!currentUser)return 0;
@@ -1116,6 +1127,64 @@ function dashDetail(section,i){
 const CERT_SIGN_SVG='<img class="sig-img" src="ed-signature.png" alt="Executive Director signature" onload="if(this.naturalHeight>this.naturalWidth*1.2)this.classList.add(\'sig-rot\')" onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src=\'edsignature.png\'}else{this.style.display=\'none\'}"/>';
 const CONSERV_BADGE_SVG='<svg viewBox="0 0 120 120" width="86" height="86"><defs><path id="isArc" d="M60,60 m-46,0 a46,46 0 1,1 92,0 a46,46 0 1,1 -92,0"/></defs><circle cx="60" cy="60" r="57" fill="none" stroke="#C8A84B" stroke-width="1.5"/><circle cx="60" cy="60" r="46" fill="none" stroke="#C8A84B" stroke-width="2.5" opacity=".45"/><circle cx="60" cy="60" r="31" fill="rgba(200,168,75,.10)" stroke="#C8A84B" stroke-width="1"/><text fill="#E9D9A8" font-size="7.6" font-weight="700" letter-spacing="1.2"><textPath href="#isArc" startOffset="0">FRIENDS OF BIODIVERSITY ★ CONSERVATION SUPPORTER ★ </textPath></text><path d="M60 79V65" stroke="#C8A84B" stroke-width="1.5"/><path d="M60 44 66.5 55.5h-13z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><path d="M60 51 67 63.5H53z" fill="none" stroke="#C8A84B" stroke-width="1.5" stroke-linejoin="round"/><text x="60" y="95" text-anchor="middle" fill="#E9D9A8" font-size="7.5" font-weight="800" letter-spacing="1.4">CERTIFIED</text></svg>';
 function openImpactStatement(){renderImpactStatement();openModal('m-impact');}
+
+/* ═══ TRUE PDF DOWNLOAD — renders the card and saves a real .pdf file ═══ */
+function _loadSigForPdf(node){
+  const sig=node.querySelector('.sig-img');
+  if(!sig||sig.style.display==='none'||!sig.src)return Promise.resolve(null);
+  return new Promise(res=>{
+    const im=new Image();
+    im.onload=()=>res({im,rot:sig.classList.contains('sig-rot')});
+    im.onerror=()=>res(null);
+    im.src=sig.currentSrc||sig.src;
+  });
+}
+async function downloadPdf(elId,baseName){
+  const node=document.getElementById(elId);
+  if(!node)return;
+  if(typeof html2canvas==='undefined'||!window.jspdf){
+    toast('⚠ PDF engine not loaded — opening the print dialog instead (choose "Save as PDF").');
+    setTimeout(()=>window.print(),400);
+    return;
+  }
+  toast('⬇ Preparing your PDF…');
+  try{
+    const sig=await _loadSigForPdf(node);
+    const canvas=await html2canvas(node,{scale:2,useCORS:true,backgroundColor:null,onclone:doc=>{
+      // The PDF renderer ignores CSS filters/rotation on the signature — redraw it as white ink
+      doc.querySelectorAll('.sig-img').forEach(img=>{
+        if(!sig){img.style.display='none';return}
+        const W=170,H=46;
+        const c=doc.createElement('canvas');
+        c.width=W*2;c.height=H*2;c.style.width=W+'px';c.style.height=H+'px';c.style.display='block';
+        const x=c.getContext('2d');x.scale(2,2);
+        const iw=sig.im.naturalWidth,ih=sig.im.naturalHeight;
+        if(sig.rot){
+          x.save();x.translate(W/2,H/2);x.rotate(Math.PI/2);
+          const s=Math.min(H/iw,W/ih);
+          x.drawImage(sig.im,-iw*s/2,-ih*s/2,iw*s,ih*s);x.restore();
+        }else{
+          const s=Math.min(W/iw,H/ih);
+          x.drawImage(sig.im,0,(H-ih*s)/2,iw*s,ih*s);
+        }
+        x.globalCompositeOperation='source-in';x.fillStyle='#fff';x.fillRect(0,0,W,H);
+        img.parentNode.replaceChild(c,img);
+      });
+    }});
+    const{jsPDF}=window.jspdf;
+    const pdf=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const pw=210,ph=297,margin=14;
+    let w=pw-margin*2,h=w*canvas.height/canvas.width;
+    if(h>ph-margin*2){h=ph-margin*2;w=h*canvas.width/canvas.height;}
+    pdf.addImage(canvas.toDataURL('image/png'),'PNG',(pw-w)/2,Math.max(margin,(ph-h)/2),w,h);
+    pdf.save(baseName+'.pdf');
+    toast('✅ PDF downloaded — check your Downloads folder.');
+  }catch(e){
+    console.error('pdf',e);
+    toast('⚠ Could not generate the PDF — opening the print dialog instead.');
+    setTimeout(()=>window.print(),400);
+  }
+}
 function renderImpactStatement(){
   const el=document.getElementById('impact-card');if(!el||!currentUser)return;
   const u=currentUser;const amt=u.amount||0;const tpm=parseInt((DASH_META||{}).trees_per_million)||320;
