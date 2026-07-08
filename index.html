@@ -466,24 +466,52 @@
 
 <!-- ═══ ADMIN VIEW ═══ -->
 <div id="view-admin" class="view">
-  <div class="adm-hdr">
-    <h1>⚙ Admin Control Panel</h1>
-    <p id="adm-user-info">Authenticated</p>
-    <button class="btn btn-outline btn-sm" style="margin-top:.75rem" onclick="openModal('m-change-pass')">🔑 Change My Password</button>
-  </div>
-  <div class="adm-tabs">
-    <button class="atab active" data-ap="ap-members">Members</button>
-    <button class="atab" data-ap="ap-content">Content Library</button>
-    <button class="atab" data-ap="ap-fame">Wall of Fame</button>
-    <button class="atab" data-ap="ap-announce">Announcements</button>
-    <button class="atab" data-ap="ap-finance">Financial Reports</button>
-    <button class="atab" data-ap="ap-payment">Payment Details</button>
-    <button class="atab" data-ap="ap-email">Email Campaigns</button>
-    <button class="atab" data-ap="ap-slides">Slide Images</button>
-    <button class="atab" data-ap="ap-footprint">Our Footprint</button>
-    <button class="atab" data-ap="ap-posts">Community Posts</button>
-    <button class="atab" data-ap="ap-dashboard">Accountability</button>
-  </div>
+<div class="adm-shell">
+  <button class="adm-menu-btn" onclick="toggleAdmSidebar()">☰ Admin Menu</button>
+  <div class="adm-backdrop" id="adm-backdrop" onclick="toggleAdmSidebar(false)"></div>
+
+  <aside class="adm-sidebar" id="adm-sidebar">
+    <div class="adm-side-head">
+      <div class="adm-side-title">⚙ Admin Console</div>
+      <div class="adm-side-sub" id="adm-user-info">Authenticated</div>
+      <button class="adm-side-pass" onclick="openModal('m-change-pass')">🔑 Change my password</button>
+    </div>
+    <nav>
+      <div class="adm-group open">
+        <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Community</span><span class="chev">▾</span></button>
+        <div class="adm-group-items">
+          <button class="adm-nav-item active" data-ap="ap-members" onclick="showAdminPanel(this)">👥 Members</button>
+          <button class="adm-nav-item" data-ap="ap-posts" onclick="showAdminPanel(this)">📝 Community Posts</button>
+          <button class="adm-nav-item" data-ap="ap-fame" onclick="showAdminPanel(this)">🏆 Wall of Fame</button>
+        </div>
+      </div>
+      <div class="adm-group open">
+        <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Content</span><span class="chev">▾</span></button>
+        <div class="adm-group-items">
+          <button class="adm-nav-item" data-ap="ap-content" onclick="showAdminPanel(this)">📚 Content Library</button>
+          <button class="adm-nav-item" data-ap="ap-announce" onclick="showAdminPanel(this)">📢 Announcements</button>
+          <button class="adm-nav-item" data-ap="ap-slides" onclick="showAdminPanel(this)">🖼 Slide Images</button>
+        </div>
+      </div>
+      <div class="adm-group open">
+        <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Finance &amp; Impact</span><span class="chev">▾</span></button>
+        <div class="adm-group-items">
+          <button class="adm-nav-item" data-ap="ap-finance" onclick="showAdminPanel(this)">📄 Financial Reports</button>
+          <button class="adm-nav-item" data-ap="ap-payment" onclick="showAdminPanel(this)">💳 Payment Details</button>
+          <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
+          <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
+        </div>
+      </div>
+      <div class="adm-group open">
+        <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Engagement</span><span class="chev">▾</span></button>
+        <div class="adm-group-items">
+          <button class="adm-nav-item" data-ap="ap-email" onclick="showAdminPanel(this)">✉ Email Campaigns</button>
+        </div>
+      </div>
+    </nav>
+  </aside>
+
+  <main class="adm-main">
 
   <div id="ap-members" class="adm-panel active">
     <div class="adm-sec"><span>Registered Members</span><button class="btn btn-canopy btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
@@ -634,6 +662,8 @@
     <div id="dash-admin"></div>
   </div>
 
+  </main>
+</div><!-- /adm-shell -->
 </div><!-- /view-admin -->
 
 <!-- ═══ MODALS ═══ -->

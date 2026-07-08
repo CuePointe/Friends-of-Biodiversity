@@ -552,13 +552,35 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 
 /* ADMIN */
 #view-admin{background:var(--mist)}
-.adm-hdr{background:var(--canopy);padding:5.5rem 1.5rem 2rem}
-.adm-hdr h1{font-family:var(--ff-d);font-size:1.75rem;color:var(--gold-lt);margin-bottom:.22rem}
-.adm-hdr p{font-size:.84rem;color:rgba(255,255,255,.5)}
-.adm-tabs{display:flex;gap:.35rem;flex-wrap:wrap;padding:1rem 1.5rem;background:var(--white);border-bottom:2px solid var(--border);position:sticky;top:70px;z-index:50}
-.atab{padding:.52rem 1.05rem;border-radius:var(--r-sm);font-size:.8rem;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;transition:background var(--tr),color var(--tr)}
-.atab.active,.atab:hover{background:var(--canopy);color:var(--white)}
-.adm-panel{display:none;padding:2rem 1.5rem;max-width:1100px;margin:0 auto}.adm-panel.active{display:block}
+/* ── Modern admin console: dark sidebar + grouped dropdown nav ── */
+.adm-shell{display:flex;align-items:flex-start;gap:1.4rem;max-width:1400px;margin:0 auto;padding:5.6rem 1.25rem 3rem}
+.adm-sidebar{width:250px;flex-shrink:0;background:linear-gradient(180deg,var(--canopy) 0%,#123526 100%);border-radius:16px;padding:1.15rem .85rem;position:sticky;top:88px;max-height:calc(100vh - 108px);overflow-y:auto;box-shadow:var(--sh-lg)}
+.adm-side-head{padding:.15rem .45rem .9rem;border-bottom:1px solid rgba(255,255,255,.1);margin-bottom:.7rem}
+.adm-side-title{font-family:var(--ff-d);font-size:1.08rem;font-weight:800;color:var(--gold-lt)}
+.adm-side-sub{font-size:.68rem;color:rgba(255,255,255,.55);margin:.3rem 0 .65rem;line-height:1.45;word-break:break-word}
+.adm-side-pass{width:100%;text-align:left;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);color:rgba(255,255,255,.85);font-size:.72rem;font-weight:600;padding:.48rem .6rem;border-radius:8px;cursor:pointer;transition:background .13s}
+.adm-side-pass:hover{background:rgba(255,255,255,.14)}
+.adm-group{margin-bottom:.3rem}
+.adm-group-btn{display:flex;justify-content:space-between;align-items:center;width:100%;background:none;border:none;color:rgba(200,168,75,.9);font-size:.63rem;font-weight:800;letter-spacing:.13em;text-transform:uppercase;padding:.6rem .5rem .35rem;cursor:pointer}
+.adm-group .chev{transition:transform .18s;font-size:.72rem}
+.adm-group:not(.open) .chev{transform:rotate(-90deg)}
+.adm-group-items{display:none;flex-direction:column;gap:2px}
+.adm-group.open .adm-group-items{display:flex}
+.adm-nav-item{display:flex;align-items:center;gap:.55rem;width:100%;text-align:left;background:none;border:none;border-radius:9px;color:rgba(255,255,255,.78);font-size:.85rem;padding:.52rem .6rem;cursor:pointer;transition:background .13s,color .13s}
+.adm-nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+.adm-nav-item.active{background:rgba(200,168,75,.18);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--gold)}
+.adm-main{flex:1;min-width:0}
+.adm-panel{display:none}.adm-panel.active{display:block;animation:fadeUp .25s ease}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.adm-menu-btn{display:none;align-items:center;gap:.45rem;background:var(--canopy);color:#fff;border:none;border-radius:99px;padding:.55rem 1rem;font-size:.85rem;font-weight:600;cursor:pointer;box-shadow:var(--sh);margin-bottom:1rem}
+.adm-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:590}
+.adm-backdrop.show{display:block}
+@media(max-width:920px){
+  .adm-shell{display:block;padding:5.4rem .85rem 3rem}
+  .adm-menu-btn{display:inline-flex}
+  .adm-sidebar{position:fixed;left:-290px;top:0;bottom:0;width:268px;border-radius:0 16px 16px 0;z-index:600;transition:left .22s ease;max-height:none}
+  .adm-sidebar.open{left:0}
+}
 .adm-sec{font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:1.2rem;padding-bottom:.55rem;border-bottom:2px solid var(--border);display:flex;align-items:center;justify-content:space-between}
 .agrid2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
 .adm-card{background:var(--white);border-radius:var(--r);padding:1.4rem;box-shadow:var(--sh);margin-bottom:1.25rem}
