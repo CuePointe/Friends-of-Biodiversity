@@ -1574,7 +1574,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
@@ -1936,6 +1936,43 @@ function handleSlideUpload(e){
     };
     reader.readAsDataURL(f);
   });
+}
+
+/* ═══ ADMIN OVERVIEW — KPI snapshot landing page ═══ */
+function admGoto(ap){const btn=document.querySelector('.adm-nav-item[data-ap="'+ap+'"]');if(btn)showAdminPanel(btn);}
+function renderAdminOverview(){
+  const el=document.getElementById('adm-overview-body');if(!el)return;
+  const members=MEMBERS.filter(m=>m.role==='member');
+  const active=members.filter(m=>m.status==='active');
+  const pending=members.filter(m=>m.status==='pending');
+  const unverified=members.filter(m=>!m.email_verified&&m.status!=='removed');
+  const funds=active.reduce((s,m)=>s+(m.amount||0),0);
+  const fmt=v=>v>=1e6?'UGX '+(Math.round(v/1e5)/10)+'M':'UGX '+v.toLocaleString();
+  const kpi=(ico,val,lbl,ap,warn)=>'<div class="adm-ov-kpi'+(warn?' warn':'')+'" onclick="admGoto(\''+ap+'\')" title="Open '+lbl+'"><div class="ov-ico">'+ico+'</div><div class="ov-val">'+val+'</div><div class="ov-lbl">'+lbl+'</div></div>';
+  el.innerHTML=
+    '<div class="adm-ov-kpis">'+
+      kpi('👥',active.length,'Active members','ap-members')+
+      kpi('⏳',pending.length,'Pending approvals','ap-members',pending.length>0)+
+      kpi('💰',fmt(funds),'Committed (active)','ap-finance')+
+      kpi('📚',(CONTENT||[]).length,'Resources published','ap-content')+
+      kpi('📝',(POSTS||[]).length,'Community posts','ap-posts')+
+      kpi('✉',unverified.length,'Unverified emails','ap-members',unverified.length>0)+
+    '</div>'+
+    '<div class="mem-sec-title" style="margin-top:1.7rem">Quick Actions</div>'+
+    '<div class="adm-ov-actions">'+
+      (pending.length?'<button class="btn btn-canopy btn-sm" onclick="admGoto(\'ap-members\')">✓ Review '+pending.length+' pending member'+(pending.length===1?'':'s')+'</button>':'')+
+      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-upload\')">⬆ Upload content</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="admGoto(\'ap-announce\')">📢 Post announcement</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="admGoto(\'ap-dashboard\')">📊 Update accountability</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export members CSV</button>'+
+    '</div>'+
+    '<div class="mem-sec-title" style="margin-top:1.7rem">Recent Activity</div>'+
+    (function(){
+      const items=buildNotifications().slice(0,6);
+      return items.length
+        ?items.map(i=>'<div class="notif-item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'</div>').join('')
+        :'<p style="font-size:.85rem;color:var(--muted)">No activity yet.</p>';
+    })();
 }
 
 /* ═══ ADMIN SIDEBAR NAVIGATION ═══ */

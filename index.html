@@ -477,10 +477,11 @@
       <button class="adm-side-pass" onclick="openModal('m-change-pass')">🔑 Change my password</button>
     </div>
     <nav>
+      <button class="adm-nav-item active" data-ap="ap-overview" onclick="showAdminPanel(this)" style="margin-bottom:.45rem">🏠 Overview</button>
       <div class="adm-group open">
         <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Community</span><span class="chev">▾</span></button>
         <div class="adm-group-items">
-          <button class="adm-nav-item active" data-ap="ap-members" onclick="showAdminPanel(this)">👥 Members</button>
+          <button class="adm-nav-item" data-ap="ap-members" onclick="showAdminPanel(this)">👥 Members</button>
           <button class="adm-nav-item" data-ap="ap-posts" onclick="showAdminPanel(this)">📝 Community Posts</button>
           <button class="adm-nav-item" data-ap="ap-fame" onclick="showAdminPanel(this)">🏆 Wall of Fame</button>
         </div>
@@ -513,7 +514,12 @@
 
   <main class="adm-main">
 
-  <div id="ap-members" class="adm-panel active">
+  <div id="ap-overview" class="adm-panel active">
+    <div class="adm-sec"><span>Overview</span></div>
+    <div id="adm-overview-body"></div>
+  </div>
+
+  <div id="ap-members" class="adm-panel">
     <div class="adm-sec"><span>Registered Members</span><button class="btn btn-canopy btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
     <div style="display:flex;gap:.6rem;margin-bottom:.75rem;flex-wrap:wrap;align-items:center">
       <input id="adm-member-search" type="search" placeholder="Search by name, email or tier…" oninput="renderAdminMembers()" style="flex:1;min-width:200px;padding:.45rem .8rem;border:1px solid var(--border);border-radius:var(--r-sm);font-size:.84rem"/>
