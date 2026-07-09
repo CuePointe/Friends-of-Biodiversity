@@ -433,37 +433,75 @@
       <div class="form-shell reveal">
         <div class="tier-chosen" id="tier-chosen"></div>
         <form id="enroll-form" novalidate>
-          <div class="frow2">
-            <div><label>Full Name *</label><input id="ef-name" placeholder="Jane Akello" required/></div>
-            <div><label>Organisation</label><input id="ef-org" placeholder="Company / NGO"/></div>
+          <div class="wz-head">
+            <div class="wz-steps" id="wz-steps"></div>
+            <div class="wz-bar"><span id="wz-bar-fill"></span></div>
+            <div class="wz-prog" id="wz-prog"></div>
           </div>
-          <div class="frow2">
-            <div><label>Phone *</label><input id="ef-tel" type="tel" placeholder="+256 700 000 000" required/></div>
-            <div><label>Email *</label><input id="ef-email" type="email" placeholder="jane@example.com" required/></div>
-          </div>
-          <div class="frow2">
+
+          <!-- STEP 1 · You -->
+          <div class="wz-step" data-step="1">
+            <div class="wz-prompt"><span class="em">👋</span><div><b>Let’s start with you</b><span>Just the basics, so we can create your membership.</span></div></div>
+            <div class="frow2">
+              <div><label>Full Name *</label><input id="ef-name" placeholder="Jane Akello"/></div>
+              <div><label>Organisation</label><input id="ef-org" placeholder="Company / NGO"/></div>
+            </div>
+            <div class="frow2">
+              <div><label>Phone *</label><input id="ef-tel" type="tel" placeholder="+256 700 000 000"/></div>
+              <div><label>Email *</label><input id="ef-email" type="email" placeholder="jane@example.com"/></div>
+            </div>
             <div><label>Member Type *</label>
-              <select id="ef-type" required><option value="">Select...</option><option value="individual">Individual</option><option value="institution">Institution / Corporate</option></select>
-            </div>
-            <div><label>Green Card Tier *</label>
-              <select id="ef-tier" required><option value="">Select...</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+              <select id="ef-type"><option value="">Select...</option><option value="individual">Individual</option><option value="institution">Institution / Corporate</option></select>
             </div>
           </div>
-          <div class="frow2">
-            <div><label>Annual Commitment (UGX) *</label><input id="ef-amount" type="number" placeholder="e.g. 1500000" required/></div>
-            <div><label>Membership Year *</label><input id="ef-year" type="number" placeholder="2026" min="2024" max="2035" required/></div>
+
+          <!-- STEP 2 · Interests -->
+          <div class="wz-step" data-step="2" hidden>
+            <div class="wz-prompt"><span class="em">🌍</span><div><b>What moves you most?</b><span>Pick the causes you care about — we’ll tailor your updates, events and volunteer invites around them. No wrong answers.</span></div></div>
+            <label>Your conservation interests</label>
+            <div class="wz-chips" id="wz-chips"></div>
+            <div style="margin-top:.9rem"><label>Anything else? (optional)</label><textarea id="ef-engage" rows="2" placeholder="e.g. co-branding, a specific project or species..."></textarea></div>
           </div>
-          <div><label>Payment Reference (from bank/MoMo)</label><input id="ef-payref" placeholder="e.g. MTN Ref #12345 or Bank TXN ID"/></div>
-          <div><label>Engagement Preferences</label><textarea id="ef-engage" rows="2" placeholder="e.g. Nature Finance, One Health, co-branding..."></textarea></div>
-          <div><label>Create Password *</label><input id="ef-pass" type="password" placeholder="Minimum 8 characters" required/></div>
-          <small style="color:rgba(255,255,255,.3);font-size:.7rem;display:block;margin-top:-.6rem;margin-bottom:.9rem">Creates your member login account</small>
-          <button type="submit" class="btn btn-gold btn-full">Submit Enrollment →</button>
-          <p style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.7rem">Your data is handled in confidence and used solely for membership administration.</p>
+
+          <!-- STEP 3 · Green Card -->
+          <div class="wz-step" data-step="3" hidden>
+            <div class="wz-prompt"><span class="em">💚</span><div><b>Choose your Green Card</b><span>Not sure how much? Student UGX 20,000 · Gold UGX 100,000 · Diamond UGX 500,000+. You can adjust with our team.</span></div></div>
+            <div class="frow2">
+              <div><label>Green Card Tier *</label>
+                <select id="ef-tier"><option value="">Select...</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+              </div>
+              <div><label>Annual Commitment (UGX) *</label><input id="ef-amount" type="number" placeholder="e.g. 1500000"/></div>
+            </div>
+            <div><label>Membership Year *</label><input id="ef-year" type="number" placeholder="2026" min="2024" max="2035"/></div>
+          </div>
+
+          <!-- STEP 4 · Payment -->
+          <div class="wz-step" data-step="4" hidden>
+            <div class="wz-prompt"><span class="em">🧾</span><div><b>Your payment</b><span>Send your contribution via Stanbic, MTN or Airtel, then paste your reference here so we can match it.</span></div></div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="goToPayment()" style="margin-bottom:.9rem">↑ See “How to Pay”</button>
+            <div><label>Payment Reference (from bank/MoMo)</label><input id="ef-payref" placeholder="e.g. MTN Ref #12345 or Bank TXN ID"/></div>
+            <p style="font-size:.75rem;color:rgba(255,255,255,.4);margin-top:.5rem">No payment yet? You can still submit — your benefits unlock once we confirm it.</p>
+          </div>
+
+          <!-- STEP 5 · Account -->
+          <div class="wz-step" data-step="5" hidden>
+            <div class="wz-prompt"><span class="em">🔐</span><div><b>Create your login</b><span>Last step — set a password for your member dashboard (active once your payment is confirmed).</span></div></div>
+            <div><label>Create Password *</label><input id="ef-pass" type="password" placeholder="Minimum 8 characters"/></div>
+            <small style="color:rgba(255,255,255,.3);font-size:.7rem;display:block;margin-top:.3rem">This creates your member login account.</small>
+            <p style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.7rem">Your data is handled in confidence and used solely for membership administration.</p>
+          </div>
+
+          <div class="wz-nav">
+            <button type="button" class="btn btn-outline" id="wz-back" onclick="wizStep(-1)">← Back</button>
+            <button type="button" class="btn btn-gold" id="wz-next" onclick="wizStep(1)">Continue →</button>
+            <button type="submit" class="btn btn-gold" id="wz-submit" style="display:none">Submit Enrollment →</button>
+          </div>
         </form>
         <div class="success-box" id="enroll-success">
           <div class="si">🌿</div>
-          <h3>Enrollment Submitted!</h3>
-          <p>Thank you for joining Friends of Biodiversity. Your enrollment is <strong>pending payment verification</strong>. Our team will review your payment reference and activate your account within 48 hours. You will receive a confirmation email once approved.</p>
+          <h3>You’re almost a member!</h3>
+          <p>Thank you for joining Friends of Biodiversity. Your account is created and <strong>pending payment</strong> — your benefits unlock the moment we confirm your contribution (within 48 hours).</p>
+          <button class="btn btn-gold btn-full" style="margin:1rem 0 .3rem" onclick="goToPayment()">Complete my payment →</button>
           <p style="margin-top:.7rem;font-size:.82rem;opacity:.75">Already paid and need help? Email <a href="mailto:info@ugandabiodiversityfund.org" style="color:var(--gold-lt)">info@ugandabiodiversityfund.org</a></p>
         </div>
       </div>
@@ -844,6 +882,14 @@
       <button class="btn btn-ghost btn-sm" id="verify-resend" onclick="resendVerifyCode()">Resend code</button>
       <span style="font-size:.72rem;color:var(--muted)">Trouble? info@ugandabiodiversityfund.org</span>
     </div>
+  </div>
+</div>
+
+<!-- BENEFITS LOCKED UNTIL PAYMENT -->
+<div class="overlay" id="m-locked">
+  <div class="modal locked-modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-locked')">✕</button>
+    <div id="locked-body"></div>
   </div>
 </div>
 

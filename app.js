@@ -177,6 +177,34 @@ async function loadProtect(){
   if(error){console.error('loadProtect',error);return}
   PROTECT=data||[];
 }
+/* ═══ ARCHIVING — items older than 21 days (or flagged) leave the main feed
+   but are never deleted; an archive toggle reveals them again. ═══ */
+const ARCHIVE_DAYS=21;
+function _daysOld(ts){if(!ts)return 0;const t=new Date(ts).getTime();return isNaN(t)?0:(Date.now()-t)/86400000;}
+function _isArchived(item){return item&&(item.archived===true||_daysOld(item.created_at)>ARCHIVE_DAYS);}
+const _showAll={announce:false,fin:false,posts:false};
+async function setArchived(table,id,val){
+  const {error}=await sb.from(table).update({archived:val}).eq('id',id);
+  if(error){toast('⚠ Could not update.');console.error(error);return false}
+  return true;
+}
+/* ═══ BENEFIT-GATING — benefits stay locked until payment is confirmed ═══ */
+function lockedBenefitsHTML(){
+  return '<div class="locked-perks">'+
+    ['📊 Accountability dashboard','🎓 Learning Exchange library','🏆 Wall of Fame listing','📜 Digital membership certificate']
+    .map(p=>'<div class="locked-perk"><span>'+p+'</span><span class="lk">🔒</span></div>').join('')+
+  '</div>';
+}
+function goToPayment(){showView('main');setTimeout(()=>{const e=document.getElementById('payment');if(e)e.scrollIntoView({behavior:'smooth'})},200);}
+function showLockedModal(name){
+  const b=document.getElementById('locked-body');
+  if(b)b.innerHTML='<div class="locked-status">MEMBERSHIP STATUS: <span class="locked-pill">● Pending payment</span></div>'+
+    '<h3 class="locked-h">You’re one payment away from everything below 🌿</h3>'+
+    '<p class="locked-p">'+(name?esc(name.split(' ')[0])+', your':'Your')+' account is created — but your benefits stay locked until we confirm your contribution. This keeps membership genuine and every benefit funded.</p>'+
+    lockedBenefitsHTML()+
+    '<button class="btn btn-gold btn-full" style="margin-top:1.2rem" onclick="closeModal(\'m-locked\');goToPayment()">Complete my payment →</button>';
+  openModal('m-locked');
+}
 
 /* ═══ INIT ADMIN ACCOUNTS IF MISSING (runs once against Supabase) ═══ */
 async function initAdmins(){
@@ -364,6 +392,7 @@ async function bootstrapApp(){
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
   renderProtectGallery();
+  initWizard();
   initSlideshow();
   renderThemes();
   renderFilters();
@@ -488,7 +517,7 @@ async function doLogin(){
   const u=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.pass===pw);
   if(!u){recordLoginFailure(em);toast('⚠ Email or password incorrect.');return}
   if(u.role==='admin'){toast('⚠ Admin accounts must use the admin sign-in.');return}
-  if(u.status==='pending'){toast('⚠ Your enrollment is pending payment verification. An admin will activate your account shortly.');return}
+  if(u.status==='pending'){closeModal('m-login');showLockedModal(u.name);return}
   if(u.status==='removed'||u.status==='inactive'){toast('⚠ This account has been deactivated. Contact info@ugandabiodiversityfund.org.');return}
   clearRateLimit(em);
   // Security: new members must confirm their registered email before first sign-in
@@ -612,6 +641,41 @@ document.getElementById('ef-type').addEventListener('change',()=>{
   const td=TIERS_DATA[selectedTier_];
   document.getElementById('tier-chosen').innerHTML='Selected: <strong>'+td.emoji+' '+td.label+'</strong> &nbsp;|&nbsp; '+(TIER_RANGES[selectedTier_][mt]||TIER_RANGES[selectedTier_].individual);
 });
+/* ═══ ENROLLMENT WIZARD — friendly 5-step slide-through ═══ */
+let _wizStep=1;
+const WIZ_TOTAL=5;
+const WIZ_LABELS=['You','Interests','Green Card','Payment','Account'];
+const WIZ_INTERESTS=[['🌳','Forest restoration'],['💧','Wetlands & water'],['🦍','Wildlife protection'],['🐝','One Health'],['💰','Nature finance'],['🎓','Youth & education'],['🤝','Corporate co-branding'],['🙌','Volunteering']];
+let _wizInterests=new Set();
+function renderWizChrome(){
+  const steps=document.getElementById('wz-steps');
+  if(steps)steps.innerHTML=WIZ_LABELS.map((l,i)=>{const n=i+1;const cls=n<_wizStep?'done':(n===_wizStep?'now':'');return '<span class="wz-st '+cls+'"><span class="dot">'+(n<_wizStep?'✓':n)+'</span>'+l+'</span>';}).join('<span class="wz-sep"></span>');
+  const fill=document.getElementById('wz-bar-fill');if(fill)fill.style.width=Math.round((_wizStep/WIZ_TOTAL)*100)+'%';
+  const prog=document.getElementById('wz-prog');if(prog)prog.textContent='Step '+_wizStep+' of '+WIZ_TOTAL;
+  document.querySelectorAll('#enroll-form .wz-step').forEach(s=>{s.hidden=(parseInt(s.dataset.step,10)!==_wizStep);});
+  const back=document.getElementById('wz-back'),next=document.getElementById('wz-next'),sub=document.getElementById('wz-submit');
+  if(back)back.style.visibility=_wizStep===1?'hidden':'visible';
+  if(next)next.style.display=_wizStep===WIZ_TOTAL?'none':'';
+  if(sub)sub.style.display=_wizStep===WIZ_TOTAL?'':'none';
+}
+function wizValidateStep(){
+  const req={1:['ef-name','ef-tel','ef-email','ef-type'],3:['ef-tier','ef-amount','ef-year']};
+  for(const id of (req[_wizStep]||[])){const el=document.getElementById(id);if(el&&!String(el.value).trim()){toast('⚠ Please complete this step to continue.');el.focus();return false;}}
+  return true;
+}
+function wizStep(dir){
+  if(dir>0&&!wizValidateStep())return;
+  _wizStep=Math.min(WIZ_TOTAL,Math.max(1,_wizStep+dir));
+  renderWizChrome();
+  const f=document.getElementById('enroll-form');if(f)f.scrollIntoView({behavior:'smooth',block:'start'});
+}
+function toggleWizInterest(btn){const v=btn.dataset.int;if(_wizInterests.has(v)){_wizInterests.delete(v);btn.classList.remove('on');}else{_wizInterests.add(v);btn.classList.add('on');}}
+function initWizard(){
+  const chips=document.getElementById('wz-chips');
+  if(chips)chips.innerHTML=WIZ_INTERESTS.map(function(x){return '<button type="button" class="wz-chip" data-int="'+x[1]+'" onclick="toggleWizInterest(this)">'+x[0]+' '+x[1]+'</button>';}).join('');
+  _wizStep=1;_wizInterests=new Set();renderWizChrome();
+}
+
 document.getElementById('enroll-form').addEventListener('submit',async function(e){
   e.preventDefault();
   const name=document.getElementById('ef-name').value.trim();
@@ -627,9 +691,11 @@ document.getElementById('enroll-form').addEventListener('submit',async function(
   if(pass.length<8){toast('⚠ Password must be at least 8 characters.');return}
   await loadMembers();
   if(MEMBERS.find(m=>m.email.toLowerCase()===email)){toast('⚠ This email is already registered. Please sign in.');return}
+  const interests=Array.from(_wizInterests||[]);
+  const engageText=[interests.join(', '),document.getElementById('ef-engage').value.trim()].filter(Boolean).join(' — ');
   const nm={name:name.trim(),email,pass,tel,type,tier,amount,year,payref,
     org:document.getElementById('ef-org').value.trim(),
-    engage:document.getElementById('ef-engage').value,
+    engage:engageText,engage_prefs:interests.length?interests:null,
     role:'member',status:'pending'};
   const {data:created,error}=await sb.from('members').insert(nm).select().single();
   if(error){toast('⚠ Could not register — please try again.');console.error(error);return}
@@ -993,9 +1059,13 @@ async function addFameChampion(){
 function renderPublicAnnounces(){
   const el=document.getElementById('announce-pub-list');if(!el)return;
   if(!ANNOUNCES.length){el.innerHTML='<p style="color:rgba(255,255,255,.4);font-size:.88rem">No announcements yet. Check back soon for project updates and news.</p>';return}
-  el.innerHTML=ANNOUNCES.slice(0,5).map(a=>
-    '<div class="announce-pub-card"><div class="apc-type">'+esc(a.type)+'</div><div class="apc-title">'+esc(a.title)+'</div><p class="apc-body">'+esc(a.body)+'</p><div class="apc-date">'+esc(a.date)+'</div></div>'
-  ).join('');
+  const recent=ANNOUNCES.filter(a=>!_isArchived(a));
+  const older=ANNOUNCES.filter(a=>_isArchived(a));
+  const show=_showAll.announce?ANNOUNCES:recent;
+  const card=a=>'<div class="announce-pub-card"><div class="apc-type">'+esc(a.type)+'</div><div class="apc-title">'+esc(a.title)+'</div><p class="apc-body">'+esc(a.body)+'</p><div class="apc-date">'+esc(a.date)+'</div></div>';
+  let html=show.length?show.slice(0,_showAll.announce?100:5).map(card).join(''):'<p style="color:rgba(255,255,255,.4);font-size:.88rem">No current announcements.</p>';
+  if(older.length)html+='<button class="archive-toggle" onclick="_showAll.announce=!_showAll.announce;renderPublicAnnounces()">'+(_showAll.announce?'↑ Hide older':'View earlier announcements ('+older.length+') →')+'</button>';
+  el.innerHTML=html;
 }
 
 /* ═══ MEMBER DASHBOARD ═══ */
@@ -1938,7 +2008,7 @@ function renderAdminAnnounces(){
       '<div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--canopy-lt);margin-bottom:.3rem">'+esc(a.type)+'</div>'+
       '<div style="font-family:var(--ff-d);font-size:.98rem;color:var(--canopy);margin-bottom:.28rem">'+esc(a.title)+'</div>'+
       '<p style="font-size:.82rem;color:var(--muted);line-height:1.6">'+esc(a.body)+'</p>'+
-      '<div style="font-size:.7rem;color:rgba(0,0,0,.32);margin-top:.45rem;display:flex;justify-content:space-between">'+esc(a.date)+'<button class="btn btn-danger btn-sm" onclick="delAnnounce(\''+a.id+'\')">Delete</button></div>'+
+      '<div style="font-size:.7rem;color:rgba(0,0,0,.32);margin-top:.45rem;display:flex;justify-content:space-between;align-items:center;gap:.4rem">'+esc(a.date)+(_isArchived(a)?' · archived':'')+'<span style="display:flex;gap:.4rem"><button class="btn btn-ghost btn-sm" onclick="toggleArchive(\'announcements\',\''+a.id+'\','+(a.archived?'false':'true')+')">'+(a.archived?'Unarchive':'Archive')+'</button><button class="btn btn-danger btn-sm" onclick="delAnnounce(\''+a.id+'\')">Delete</button></span></div>'+
     '</div>'
   ).join('');
 }
@@ -1971,14 +2041,28 @@ function renderFinancials(){
   [['Albertine Rift Landscape',52],['Karamoja Landscape',32],['Capacity Building',10],['Admin & Operations',6]].forEach(([label,pct])=>{
     bEl.innerHTML+='<div style="padding:.5rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;font-size:.82rem"><span style="color:var(--muted)">'+label+'</span><strong style="color:var(--canopy)">'+pct+'%</strong></div><div class="bar-wrap"><div class="bar-fill" style="width:'+pct+'%"></div></div></div>';
   });
-  lEl.innerHTML=FIN_REPORTS.length?FIN_REPORTS.map(r=>
-    '<div style="padding:.72rem 0;border-bottom:1px solid var(--border)">'+
-      '<div style="font-weight:700;font-size:.87rem;color:var(--canopy)">'+r.title+'</div>'+
+  const recent=FIN_REPORTS.filter(r=>!_isArchived(r));
+  const older=FIN_REPORTS.filter(r=>_isArchived(r));
+  const show=_showAll.fin?FIN_REPORTS:recent;
+  let html=show.length?show.map(r=>
+    '<div style="padding:.72rem 0;border-bottom:1px solid var(--border)'+(_isArchived(r)?';opacity:.6':'')+'">'+
+      '<div style="font-weight:700;font-size:.87rem;color:var(--canopy)">'+r.title+(_isArchived(r)?' <span style="font-size:.68rem;color:var(--muted)">· archived</span>':'')+'</div>'+
       '<div style="font-size:.73rem;color:var(--muted);margin:.18rem 0">'+r.period+'</div>'+
       '<div style="font-size:.77rem;color:var(--text);line-height:1.55;margin-bottom:.38rem">'+r.summary+'</div>'+
-      '<div style="display:flex;gap:.45rem"><a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm">View</a><button class="btn btn-danger btn-sm" onclick="delReport(\''+r.id+'\')">Delete</button></div>'+
+      '<div style="display:flex;gap:.45rem"><a href="'+r.url+'" target="_blank" class="btn btn-ghost btn-sm">View</a>'+
+        '<button class="btn btn-ghost btn-sm" onclick="toggleArchive(\'fin_reports\',\''+r.id+'\','+(r.archived?'false':'true')+')">'+(r.archived?'Unarchive':'Archive')+'</button>'+
+        '<button class="btn btn-danger btn-sm" onclick="delReport(\''+r.id+'\')">Delete</button></div>'+
     '</div>'
-  ).join(''):'<p style="font-size:.82rem;color:var(--muted)">No reports yet.</p>';
+  ).join(''):'<p style="font-size:.82rem;color:var(--muted)">No current reports.</p>';
+  if(older.length)html+='<button class="archive-toggle" onclick="_showAll.fin=!_showAll.fin;renderFinancials()">'+(_showAll.fin?'↑ Hide archived':'View archived reports ('+older.length+') →')+'</button>';
+  lEl.innerHTML=html||'<p style="font-size:.82rem;color:var(--muted)">No reports yet.</p>';
+}
+async function toggleArchive(table,id,val){
+  const ok=await setArchived(table,id,val);if(!ok)return;
+  if(table==='announcements'){await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();}
+  else if(table==='fin_reports'){await loadFinReports();renderFinancials();}
+  else if(table==='member_posts'){await loadPosts();renderPosts();renderAdminPosts();}
+  toast(val?'📦 Archived — still available under “View archived”.':'Restored to the feed.');
 }
 async function delReport(id){
   const rep=FIN_REPORTS.find(r=>r.id===id);
@@ -2177,10 +2261,11 @@ function renderAdminOverview(){
     '</div>'+
     '<div class="mem-sec-title" style="margin-top:1.7rem">Recent Activity</div>'+
     (function(){
-      const items=buildNotifications().slice(0,6);
+      const panelOf={announce:'ap-announce',content:'ap-content',report:'ap-finance',post:'ap-posts',member:'ap-members'};
+      const items=buildNotifications().filter(i=>!i.date||_daysOld(i.date)<=ARCHIVE_DAYS).slice(0,6);
       return items.length
-        ?items.map(i=>'<div class="notif-item"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'</div>').join('')
-        :'<p style="font-size:.85rem;color:var(--muted)">No activity yet.</p>';
+        ?items.map(i=>'<div class="notif-item notif-click" onclick="admGoto(\''+(panelOf[i.kind]||'ap-overview')+'\')" title="Open in admin"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'<span class="notif-go">›</span></div>').join('')
+        :'<p style="font-size:.85rem;color:var(--muted)">No activity in the last '+ARCHIVE_DAYS+' days.</p>';
     })();
 }
 
@@ -2456,10 +2541,15 @@ async function loadPosts(){
   }));
 }
 
+function _postsArchiveToggle(){
+  const older=POSTS.filter(p=>_isArchived(p));
+  if(!older.length)return '';
+  return '<button class="archive-toggle" onclick="_showAll.posts=!_showAll.posts;renderPosts()">'+(_showAll.posts?'↑ Hide older posts':'View earlier posts ('+older.length+') →')+'</button>';
+}
 function renderPosts(filter){
   currentPostFilter=filter||currentPostFilter;
   const el=document.getElementById('posts-feed');if(!el)return;
-  const items=POSTS;
+  const items=POSTS.filter(p=>_showAll.posts||!_isArchived(p));
 
   // LinkedIn-style "Start a post" bar at top
   const promptHtml=currentUser?
@@ -2558,7 +2648,7 @@ function renderPosts(filter){
         :'<p style="font-size:.78rem;color:var(--muted);padding:.6rem 1.25rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment</p>')+
       '</div>'+
     '</div>';
-  }).join('');
+  }).join('')+_postsArchiveToggle();
 }
 
 function escHtml(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
