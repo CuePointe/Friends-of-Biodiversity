@@ -327,6 +327,18 @@ function renderProtectGallery(){
       '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
       (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
   }).join('');
+  renderTierProtect();
+}
+/* Show tier-linked species/places on the membership tier cards */
+function renderTierProtect(){
+  document.querySelectorAll('#greencard .tier-card').forEach(card=>{
+    const tier=card.getAttribute('data-tier');
+    const items=(PROTECT||[]).filter(p=>p.active!==false&&p.tier===tier);
+    let slot=card.querySelector('.tier-protect');
+    if(!items.length){if(slot)slot.remove();return;}
+    if(!slot){slot=document.createElement('div');slot.className='tier-protect';card.appendChild(slot);}
+    slot.innerHTML='<span class="tp-lbl">🌿 You help protect</span>'+items.map(p=>'<span class="tp-item">'+esc(p.name)+'</span>').join('');
+  });
 }
 /* Admin CRUD for the gallery */
 let _protectEditId=null;
@@ -338,6 +350,7 @@ function fillProtectForm(p){
   if(g('pf-status'))g('pf-status').value=p.status||'';
   if(g('pf-blurb'))g('pf-blurb').value=p.blurb||'';
   if(g('pf-region'))g('pf-region').value=p.region||'';
+  if(g('pf-tier'))g('pf-tier').value=p.tier||'';
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
   if(g('pf-save'))g('pf-save').textContent=p.id?'Update':'Add to gallery';
@@ -357,6 +370,7 @@ async function saveProtectItem(){
     status:(document.getElementById('pf-status').value||'').trim(),
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
+    tier:document.getElementById('pf-tier').value||null,
     active:document.getElementById('pf-active').checked,image_url};
   if(_protectEditId)row.id=_protectEditId;
   const {error}=await sb.from('protect_gallery').upsert(row);
@@ -371,6 +385,24 @@ async function delProtectItem(id){
   const {error}=await sb.from('protect_gallery').delete().eq('id',id);
   if(error){toast('⚠ Could not delete.');console.error(error);return}
   await loadProtect();renderProtectGallery();renderProtectAdmin();toast('Removed from the gallery.');
+}
+/* Admin self-service password change */
+async function changeAdminPassword(){
+  if(!currentUser||currentUser.role!=='admin'){toast('⚠ Admins only.');return}
+  const cur=document.getElementById('pw-current').value;
+  const nw=document.getElementById('pw-new').value;
+  const cf=document.getElementById('pw-confirm').value;
+  if(currentUser.pass!==cur){toast('⚠ Current password is incorrect.');return}
+  if(nw.length<8){toast('⚠ New password must be at least 8 characters.');return}
+  if(nw!==cf){toast('⚠ New passwords do not match.');return}
+  if(nw===cur){toast('⚠ Choose a password different from your current one.');return}
+  const btn=document.getElementById('pw-save');if(btn){btn.disabled=true;btn.textContent='Updating…'}
+  const {error}=await sb.from('members').update({pass:nw}).eq('id',currentUser.id);
+  if(btn){btn.disabled=false;btn.textContent='Update password'}
+  if(error){toast('⚠ Could not update password.');console.error(error);return}
+  currentUser.pass=nw;persistSession(currentUser);
+  ['pw-current','pw-new','pw-confirm'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  toast('✅ Password updated — use it next time you sign in.');
 }
 function renderProtectAdmin(){
   const el=document.getElementById('protect-admin-list');if(!el)return;
@@ -1103,6 +1135,7 @@ function renderMemberView(){
         '</div>'+
         (u.bio?'<div class="profile-bio">'+esc(u.bio)+'</div>':
           '<div class="profile-bio" style="color:var(--muted);font-style:italic;font-size:.82rem">No bio yet — <a href="#" onclick="openEditProfile();return false" style="color:var(--canopy-lt)">add one</a></div>')+
+        (Array.isArray(u.engage_prefs)&&u.engage_prefs.length?'<div class="mem-interests">'+u.engage_prefs.map(function(p){return '<span class="mi">'+esc(p)+'</span>';}).join('')+'</div>':'')+
         '<div class="profile-stats">'+
           '<span><strong>'+(u.followers_count||0)+'</strong> followers</span>'+
           '<span>·</span>'+
@@ -1515,7 +1548,8 @@ async function dirToggleFollow(id,name){
 /* ═══ CHANGE PASSWORD — works for both admins and members ═══ */
 /* ═══ PROFILE — EDIT, WALLPAPER, BIO, FOLLOW ═══ */
 
-let epPhotoFile=null;let epWallpaperFile=null;
+let epPhotoFile=null;let epWallpaperFile=null;let _epInterests=new Set();
+function toggleEpInterest(btn){const v=btn.dataset.int;if(_epInterests.has(v)){_epInterests.delete(v);btn.classList.remove('on');}else{_epInterests.add(v);btn.classList.add('on');}}
 
 function openEditProfile(){
   if(!currentUser)return;
@@ -1541,6 +1575,10 @@ function openEditProfile(){
   if(bioCount)bioCount.textContent=(u.bio||'').length+' / 160';
   // Bio live count
   if(bioEl)bioEl.oninput=()=>{if(bioCount)bioCount.textContent=bioEl.value.length+' / 160';};
+  // Conservation interests
+  _epInterests=new Set(Array.isArray(u.engage_prefs)?u.engage_prefs:[]);
+  const ic=document.getElementById('ep-interests');
+  if(ic)ic.innerHTML=WIZ_INTERESTS.map(function(x){return '<button type="button" class="int-chip'+(_epInterests.has(x[1])?' on':'')+'" data-int="'+x[1]+'" onclick="toggleEpInterest(this)">'+x[0]+' '+x[1]+'</button>';}).join('');
   epPhotoFile=null;epWallpaperFile=null;
   openModal('m-edit-profile');
 }
@@ -1597,6 +1635,11 @@ async function saveProfile(){
   // Bio
   const bioEl=document.getElementById('ep-bio');
   if(bioEl)updates.bio=bioEl.value.trim().slice(0,160);
+
+  // Conservation interests (only if changed)
+  const newPrefs=Array.from(_epInterests);
+  const oldPrefs=Array.isArray(currentUser.engage_prefs)?currentUser.engage_prefs:[];
+  if(newPrefs.slice().sort().join('|')!==oldPrefs.slice().sort().join('|'))updates.engage_prefs=newPrefs;
 
   if(Object.keys(updates).length===0){closeModal('m-edit-profile');toast('No changes to save.');return}
 

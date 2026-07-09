@@ -286,6 +286,16 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .wz-chip{border:1.5px solid rgba(255,255,255,.22);border-radius:99px;padding:.5rem .9rem;font-size:.83rem;cursor:pointer;background:transparent;color:rgba(255,255,255,.85);transition:background .15s,border-color .15s}
 .wz-chip.on{border-color:var(--gold);background:var(--gold);color:var(--canopy);font-weight:700}
 .wz-nav{display:flex;gap:.6rem;justify-content:space-between;margin-top:1.4rem}
+/* tier-linked protected items on membership cards */
+.tier-protect{margin-top:.9rem;padding-top:.8rem;border-top:1px dashed var(--border);display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+.tp-lbl{font-size:.66rem;font-weight:700;letter-spacing:.05em;color:var(--canopy-lt);text-transform:uppercase;width:100%;margin-bottom:.1rem}
+.tp-item{font-size:.75rem;background:rgba(45,106,79,.1);color:var(--canopy);border-radius:99px;padding:.2rem .6rem;font-weight:600}
+/* member interest chips (profile editor) */
+.int-chips{display:flex;flex-wrap:wrap;gap:8px}
+.int-chip{border:1.5px solid var(--border);border-radius:99px;padding:.45rem .85rem;font-size:.82rem;cursor:pointer;background:#fff;color:#2a352d;transition:background .15s,border-color .15s}
+.int-chip.on{border-color:var(--canopy);background:var(--canopy);color:#fff;font-weight:600}
+.mem-interests{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
+.mem-interests .mi{font-size:.74rem;background:rgba(200,168,75,.16);border:1px solid rgba(200,168,75,.35);color:var(--canopy);border-radius:99px;padding:.2rem .6rem;font-weight:600}
 
 /* LEARNING EXCHANGE */
 #learn{background:var(--mist)}
