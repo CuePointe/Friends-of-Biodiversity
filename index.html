@@ -619,6 +619,7 @@
           <button class="adm-nav-item" data-ap="ap-finance" onclick="showAdminPanel(this)">📄 Financial Reports</button>
           <button class="adm-nav-item" data-ap="ap-payment" onclick="showAdminPanel(this)">💳 Payment Details</button>
           <button class="adm-nav-item" data-ap="ap-protect" onclick="showAdminPanel(this)">🦍 Conservation Gallery</button>
+          <button class="adm-nav-item" data-ap="ap-account" onclick="showAdminPanel(this)">🔑 My Password</button>
           <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
           <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
         </div>
@@ -740,6 +741,9 @@
         <div class="fg"><label>Status (e.g. Critically Endangered)</label><input id="pf-status" placeholder="Critically Endangered / Endangered / Vulnerable"/></div>
         <div class="fg"><label>Region (optional)</label><input id="pf-region" placeholder="e.g. Bwindi"/></div>
       </div>
+      <div class="fg"><label>Link to a Green Card tier (optional)</label>
+        <select id="pf-tier"><option value="">Not linked — show in gallery only</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+      </div>
       <div class="fg"><label>Short story</label><textarea id="pf-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One line on why it matters."></textarea></div>
       <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*" onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>Upload photo</b><span class="pd-hint">PNG or JPG · tap to choose</span></label>
       <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text);margin-bottom:1rem"><input type="checkbox" id="pf-active" checked/> Show on the public page</label>
@@ -749,6 +753,18 @@
     <div class="adm-card" style="max-width:760px">
       <h4>Current gallery</h4>
       <div id="protect-admin-list"></div>
+    </div>
+  </div>
+
+  <div id="ap-account" class="adm-panel">
+    <div class="adm-sec"><span>My Password</span></div>
+    <div class="adm-card" style="max-width:480px">
+      <h4>Change your password</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">Set a personal password for your admin account. Use at least 8 characters.</p>
+      <div class="fg"><label>Current password</label><input id="pw-current" type="password" placeholder="Your current password"/></div>
+      <div class="fg"><label>New password</label><input id="pw-new" type="password" placeholder="At least 8 characters"/></div>
+      <div class="fg"><label>Confirm new password</label><input id="pw-confirm" type="password" placeholder="Re-type new password"/></div>
+      <button class="btn btn-gold" id="pw-save" onclick="changeAdminPassword()">Update password</button>
     </div>
   </div>
 
@@ -1253,6 +1269,10 @@
       <label>Bio <span style="font-size:.75rem;color:var(--muted)">(max 160 characters)</span></label>
       <textarea id="ep-bio" rows="3" maxlength="160" placeholder="Tell the community about your passion for biodiversity conservation..."></textarea>
       <div id="ep-bio-count" style="font-size:.72rem;color:var(--muted);text-align:right;margin-top:.2rem">0 / 160</div>
+    </div>
+    <div class="fg">
+      <label>Your conservation interests</label>
+      <div class="int-chips" id="ep-interests"></div>
     </div>
     <button class="btn btn-canopy btn-full" onclick="saveProfile()">Save Profile</button>
   </div>
