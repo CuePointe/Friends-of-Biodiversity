@@ -285,52 +285,64 @@
   <div class="inner">
     <p class="eyebrow reveal" style="color:var(--gold-lt)">Make Your Commitment</p>
     <h2 class="sec-title reveal" style="color:var(--white)">How to <em style="color:var(--gold-lt)">Pay</em></h2>
-    <p class="sec-body reveal" style="color:rgba(255,255,255,.72)">You’re one transfer away from standing with Uganda’s forests, wetlands and wildlife. Here’s exactly how — step by step, no guesswork.</p>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.72)">You’re one transfer away from standing with Uganda’s forests, wetlands and wildlife. Here’s exactly how — and exactly what your gift protects.</p>
 
-    <!-- Human welcome media + reassurance -->
-    <div class="pay-top reveal">
-      <div class="pay-media" id="pay-promo">
-        <!-- default until an admin uploads a video/image -->
-        <span class="pay-media-badge">Watch · How to Pay</span>
-        <div class="pay-media-fallback">
-          <div class="pay-play" aria-hidden="true"><svg width="20" height="22" viewBox="0 0 22 24" fill="#fff"><path d="M0 0l22 12L0 24z"/></svg></div>
-          <div class="pay-media-cap"><b>“Paying is easier than you think.”</b><span>Your UBF walkthrough appears here once uploaded.</span></div>
-        </div>
+    <!-- Living poster + editable impact -->
+    <div class="pay-hero reveal">
+      <div class="pay-poster" id="pay-promo">
+        <img id="pay-poster-img" src="slide-3.jpg" alt="Uganda’s mountain gorillas" onerror="this.onerror=null;this.src='slide-2.jpg'"/>
+        <span class="pay-media-badge">Watch · Your impact</span>
+        <div class="pay-play" aria-hidden="true"><svg width="20" height="22" viewBox="0 0 22 24" fill="#fff"><path d="M0 0l22 12L0 24z"/></svg></div>
+        <div class="pay-pcap"><b>This is who you’re protecting.</b><span id="pay-promo-cap">Upload a 60-second welcome — until then, Uganda’s wild greets your members here.</span></div>
       </div>
-      <div class="pay-trust">
-        <div class="pay-trow"><span class="pay-ti">🧾</span><span><b>Every shilling is receipted</b>Your membership certificate follows once we confirm.</span></div>
-        <div class="pay-trow"><span class="pay-ti">✅</span><span><b>Verified within 48 hours</b>We match your reference and activate your Green Card.</span></div>
-        <div class="pay-trow"><span class="pay-ti">💬</span><span><b>Stuck at any step?</b>WhatsApp <a id="pay-whatsapp-link" href="https://wa.me/256772000000" target="_blank" rel="noopener"><span id="pay-whatsapp">+256 772 000 000</span></a> — a real person replies.</span></div>
+      <div class="pay-impact">
+        <h3>Where your money goes</h3>
+        <p class="pay-impact-sub">Every shilling becomes measurable protection on the ground.</p>
+        <div id="pay-impact-list"><!-- rendered from the database (admin-editable) --></div>
       </div>
     </div>
 
+    <div class="pay-pills reveal">
+      <span class="pay-pill">🧾 <b>Receipted</b></span>
+      <span class="pay-pill">✅ <b>Verified in 48h</b></span>
+      <span class="pay-pill">💬 <b>WhatsApp</b> <a id="pay-whatsapp-link" href="https://wa.me/256772000000" target="_blank" rel="noopener"><span id="pay-whatsapp">+256 772 000 000</span></a></span>
+      <span class="pay-pill">✉️ <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a></span>
+    </div>
+
     <div class="pay-official reveal"><b>Our three official channels only.</b><span>UBF will never ask you to send money to any other number or account. If in doubt, message us first.</span></div>
+
+    <div class="pay-amtbar reveal">
+      <span class="lead">How much? Your tier decides:</span>
+      <span class="pay-tier">🎓 Student <b>UGX 20,000</b></span>
+      <span class="pay-tier">🌿 Gold <b>UGX 100,000</b></span>
+      <span class="pay-tier">💎 Diamond <b>UGX 500,000+</b></span>
+    </div>
 
     <div class="pay-grid">
       <!-- STANBIC -->
       <article class="pay-card reveal">
         <div class="pay-chead">
-          <div class="pay-logo stanbic" id="pay-logo-stanbic"><svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label="Stanbic Bank"><circle cx="26" cy="19" r="9" fill="#fff"/><circle cx="26" cy="19" r="4.4" fill="#0033A0"/><text x="26" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="8.5" font-weight="700" fill="#fff">Stanbic</text></svg></div>
+          <div class="pay-logo stanbic" id="pay-logo-stanbic"><img src="stanbic.png" alt="Stanbic Bank" onerror="payLogoFallback(this,'stanbic')"/></div>
           <div><div class="pay-ctitle">Stanbic Bank</div><div class="pay-csub">Bank transfer</div></div>
         </div>
         <ol class="pay-steps">
           <li><span class="n">1</span>Open your bank app, or visit any Stanbic branch.</li>
           <li><span class="n">2</span>Transfer to the account below.</li>
           <li><span class="n">3</span>Put <strong>your full name</strong> as the reference.</li>
-          <li><span class="n">4</span>Email the receipt to <code>info@ugandabiodiversityfund.org</code>.</li>
+          <li><span class="n">4</span>Email the receipt to <a class="pay-mail" href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>.</li>
         </ol>
         <div class="pay-numrow">
           <div><div class="lbl">Account no.</div><div class="val" id="pay-acc-no">To be updated by UBF Admin</div></div>
           <button class="pay-copy" data-copy-from="pay-acc-no" onclick="copyPayNum(this)" type="button">Copy</button>
         </div>
         <span class="pay-amtchip">💳 Account name: <strong id="pay-acc-name">Uganda Biodiversity Fund</strong></span>
-        <p class="pay-foot"><strong>Branch</strong> <span id="pay-branch">Main</span> · <strong>SWIFT</strong> <span id="pay-swift">—</span></p>
+        <p class="pay-foot"><strong>Branch</strong> <span id="pay-branch">Main</span></p>
       </article>
 
       <!-- MTN -->
       <article class="pay-card reveal">
         <div class="pay-chead">
-          <div class="pay-logo mtn" id="pay-logo-mtn"><svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="MTN Mobile Money"><ellipse cx="27" cy="23" rx="20" ry="12" fill="none" stroke="#001A70" stroke-width="2.4"/><text x="27" y="28" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="#001A70" letter-spacing="-.5">MTN</text></svg></div>
+          <div class="pay-logo mtn" id="pay-logo-mtn"><img src="mtn.png" alt="MTN Mobile Money" onerror="payLogoFallback(this,'mtn')"/></div>
           <div><div class="pay-ctitle">MTN MoMo</div><div class="pay-csub">Mobile Money · *165#</div></div>
         </div>
         <ol class="pay-steps">
@@ -344,13 +356,13 @@
           <button class="pay-copy" data-copy-from="pay-mtn" onclick="copyPayNum(this)" type="button">Copy</button>
         </div>
         <span class="pay-amtchip">👤 Registered: <strong>Uganda Biodiversity Fund</strong></span>
-        <p class="pay-foot">Send your confirmation SMS to <strong>info@ugandabiodiversityfund.org</strong> with your tier.</p>
+        <p class="pay-foot">Send your confirmation SMS to <a class="pay-mail" href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a> with your tier.</p>
       </article>
 
       <!-- AIRTEL -->
       <article class="pay-card reveal">
         <div class="pay-chead">
-          <div class="pay-logo airtel" id="pay-logo-airtel"><svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="Airtel Money"><path d="M14 30c-1-11 8-18 18-15.5 7 1.8 9 8.6 4.6 12.2-3.1 2.6-7.8 1.8-9.4-1.4" fill="none" stroke="#E40000" stroke-width="5" stroke-linecap="round"/><text x="30" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" font-weight="700" fill="#E40000">airtel</text></svg></div>
+          <div class="pay-logo airtel" id="pay-logo-airtel"><img src="airtel.png" alt="Airtel Money" onerror="payLogoFallback(this,'airtel')"/></div>
           <div><div class="pay-ctitle">Airtel Money</div><div class="pay-csub">Mobile Money · *185#</div></div>
         </div>
         <ol class="pay-steps">
@@ -364,7 +376,7 @@
           <button class="pay-copy" data-copy-from="pay-airtel" onclick="copyPayNum(this)" type="button">Copy</button>
         </div>
         <span class="pay-amtchip">👤 Registered: <strong>Uganda Biodiversity Fund</strong></span>
-        <p class="pay-foot">Send your confirmation to <strong>info@ugandabiodiversityfund.org</strong> with your tier.</p>
+        <p class="pay-foot">Send your confirmation to <a class="pay-mail" href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a> with your tier.</p>
       </article>
     </div>
   </div>
@@ -641,16 +653,19 @@
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">These appear on the public “How to Pay” cards. Changes go live instantly.</p>
       <div class="fg"><label>Stanbic Bank name</label><input id="pd-bank" placeholder="e.g. Stanbic Bank Uganda"/></div>
       <div class="fg"><label>Account number</label><input id="pd-accno" placeholder="e.g. 9030012345678"/></div>
-      <div class="pd-row2">
-        <div class="fg"><label>Branch</label><input id="pd-branch" placeholder="e.g. Garden City"/></div>
-        <div class="fg"><label>SWIFT code</label><input id="pd-swift" placeholder="e.g. SBICUGKX"/></div>
-      </div>
+      <div class="fg"><label>Branch</label><input id="pd-branch" placeholder="e.g. Garden City"/></div>
       <div class="pd-row2">
         <div class="fg"><label>MTN MoMo number</label><input id="pd-mtn" placeholder="e.g. 0771234567"/></div>
         <div class="fg"><label>Airtel Money number</label><input id="pd-airtel" placeholder="e.g. 0701234567"/></div>
       </div>
       <div class="fg"><label>WhatsApp help line</label><input id="pd-whatsapp" placeholder="e.g. +256772000000"/></div>
-      <button class="btn btn-gold" id="pd-save-btn" onclick="savePaymentDetails()">Save Payment Details</button>
+    </div>
+
+    <div class="adm-card" style="max-width:760px">
+      <h4>“Where your money goes” — impact list</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">One impact per line, in the format <code>emoji | amount | what it achieves</code>. Update these anytime — they refresh on the public page instantly.<br>Example: <code>🌱 | UGX 25,000 | plants &amp; nurtures 15 indigenous tree seedlings.</code></p>
+      <textarea id="pd-impact" rows="6" style="width:100%;font-family:var(--ff-m);font-size:.85rem;padding:.7rem;border:1px solid var(--border);border-radius:8px;resize:vertical;box-sizing:border-box" placeholder="🌱 | UGX 25,000 | plants &amp; nurtures 15 indigenous tree seedlings.&#10;🦍 | UGX 100,000 | funds a full day of ranger patrol guarding mountain gorillas."></textarea>
+      <button class="btn btn-gold" id="pd-save-btn" onclick="savePaymentDetails()" style="margin-top:1rem">Save Payment Details</button>
     </div>
   </div>
 
