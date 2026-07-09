@@ -192,16 +192,35 @@ async function initAdmins(){
 }
 
 /* ═══ PAYMENT DETAILS — render saved values into public page ═══ */
+// Placeholder brand marks shown only if no logo file / upload is found
+const PAY_LOGO_SVG={
+  stanbic:'<svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label="Stanbic Bank"><circle cx="26" cy="19" r="9" fill="#fff"/><circle cx="26" cy="19" r="4.4" fill="#0033A0"/><text x="26" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="8.5" font-weight="700" fill="#fff">Stanbic</text></svg>',
+  mtn:'<svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="MTN"><ellipse cx="27" cy="23" rx="20" ry="12" fill="none" stroke="#001A70" stroke-width="2.4"/><text x="27" y="28" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="#001A70" letter-spacing="-.5">MTN</text></svg>',
+  airtel:'<svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="Airtel"><path d="M14 30c-1-11 8-18 18-15.5 7 1.8 9 8.6 4.6 12.2-3.1 2.6-7.8 1.8-9.4-1.4" fill="none" stroke="#E40000" stroke-width="5" stroke-linecap="round"/><text x="30" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" font-weight="700" fill="#E40000">airtel</text></svg>'
+};
+// Try repo image files (hyphen-proof) then fall back to the SVG mark
+const PAY_LOGO_TRIES={stanbic:['stanbic.png','stanbic-logo.png','stanbiclogo.png'],mtn:['mtn.png','mtn-logo.png','mtnlogo.png'],airtel:['airtel.png','airtel-logo.png','airtellogo.png']};
+function payLogoFallback(img,key){
+  const tries=PAY_LOGO_TRIES[key]||[];
+  let i=parseInt(img.dataset.try||'0',10)+1;
+  if(i<tries.length){img.dataset.try=i;img.src=tries[i];return;}
+  const box=img.parentElement;if(box)box.innerHTML=PAY_LOGO_SVG[key]||'';
+}
+const PAY_IMPACT_DEFAULT=[
+  {icon:'🌱',amount:'UGX 25,000',text:'plants & nurtures 15 indigenous tree seedlings.'},
+  {icon:'🦍',amount:'UGX 100,000',text:'funds a full day of ranger patrol guarding mountain gorillas.'},
+  {icon:'💧',amount:'UGX 250,000',text:'restores a wetland spring that waters wildlife year-round.'},
+  {icon:'🌳',amount:'UGX 500,000',text:'brings a full hectare of degraded forest back to life.'}
+];
 function renderPaymentUI(){
   const map={
     'pay-bank-name':PAYMENT.bank,'pay-acc-no':PAYMENT.accno,'pay-branch':PAYMENT.branch,
-    'pay-swift':PAYMENT.swift,'pay-mtn':PAYMENT.mtn,'pay-airtel':PAYMENT.airtel,
-    'pay-acc-name':PAYMENT.acc_name,
+    'pay-mtn':PAYMENT.mtn,'pay-airtel':PAYMENT.airtel,'pay-acc-name':PAYMENT.acc_name,
   };
   Object.entries(map).forEach(([id,val])=>{
     if(val){const el=document.getElementById(id);if(el)el.textContent=val}
   });
-  // Uploaded official logos replace the placeholder SVGs (fallback stays if none)
+  // Admin-uploaded logo (Supabase) takes priority over the repo file
   const logos={'pay-logo-stanbic':PAYMENT.stanbic_logo,'pay-logo-mtn':PAYMENT.mtn_logo,'pay-logo-airtel':PAYMENT.airtel_logo};
   Object.entries(logos).forEach(([id,url])=>{
     if(url){const el=document.getElementById(id);if(el)el.innerHTML='<img src="'+esc(url)+'" alt="" onerror="this.remove()"/>';}
@@ -212,15 +231,28 @@ function renderPaymentUI(){
     const wt=document.getElementById('pay-whatsapp');if(wt)wt.textContent=w;
     const wl=document.getElementById('pay-whatsapp-link');if(wl)wl.href='https://wa.me/'+w.replace(/[^0-9]/g,'');
   }
-  // "How to Pay" welcome media (video or image) uploaded by admin
+  // "Where your money goes" — editable impact list
+  const list=document.getElementById('pay-impact-list');
+  if(list){
+    let items=PAYMENT.impact_items;
+    if(typeof items==='string'){try{items=JSON.parse(items)}catch(e){items=null}}
+    if(!Array.isArray(items)||!items.length)items=PAY_IMPACT_DEFAULT;
+    list.innerHTML=items.map(it=>'<div class="pay-irow"><span class="ic">'+esc(it.icon||'🌿')+'</span><div><span class="amt">'+esc(it.amount||'')+'</span><p>'+esc(it.text||'')+'</p></div></div>').join('');
+  }
+  // Welcome media (admin video/image) replaces the default poster
   const promo=document.getElementById('pay-promo');
   if(promo&&PAYMENT.promo_url){
-    const cap=PAYMENT.promo_caption?('<div class="pay-media-cap" style="position:relative;z-index:1;padding:16px 18px"><span>'+esc(PAYMENT.promo_caption)+'</span></div>'):'';
+    const cap='<div class="pay-pcap"><b>This is who you’re protecting.</b>'+(PAYMENT.promo_caption?'<span>'+esc(PAYMENT.promo_caption)+'</span>':'')+'</div>';
+    const badge='<span class="pay-media-badge">Watch · Your impact</span>';
     if(PAYMENT.promo_type==='video'){
-      promo.innerHTML='<span class="pay-media-badge">Watch · How to Pay</span><video src="'+esc(PAYMENT.promo_url)+'" controls playsinline preload="metadata"></video>'+cap;
+      promo.innerHTML=badge+'<video src="'+esc(PAYMENT.promo_url)+'" controls playsinline preload="metadata"></video>'+cap;
     }else{
-      promo.innerHTML='<span class="pay-media-badge">How to Pay</span><img src="'+esc(PAYMENT.promo_url)+'" alt="How to pay"/>'+cap;
+      promo.innerHTML=badge+'<img src="'+esc(PAYMENT.promo_url)+'" alt="How to pay"/>'+cap;
     }
+  }else if(promo){
+    // refresh caption text if admin set one without uploading media
+    const capEl=document.getElementById('pay-promo-cap');
+    if(capEl&&PAYMENT.promo_caption)capEl.textContent=PAYMENT.promo_caption;
   }
 }
 /* Tap-to-copy a payment number/account */
@@ -1893,12 +1925,21 @@ async function savePaymentDetails(){
   const btn=document.getElementById('pd-save-btn');
   if(btn){btn.disabled=true;btn.textContent='Saving…'}
   toast('Saving payment details…');
+  // Parse the impact editor — one line per item: "emoji | amount | what it achieves"
+  const impactRaw=_pdVal('pd-impact');
+  let impact=Array.isArray(PAYMENT.impact_items)?PAYMENT.impact_items:null;
+  if(impactRaw){
+    impact=impactRaw.split('\n').map(l=>l.trim()).filter(Boolean).map(l=>{
+      const p=l.split('|').map(s=>s.trim());
+      return {icon:p[0]||'🌿',amount:p[1]||'',text:p.slice(2).join(' | ')||''};
+    });
+  }
   const pd={
     id:1,
     bank:_pdVal('pd-bank'),accno:_pdVal('pd-accno'),branch:_pdVal('pd-branch'),
-    swift:_pdVal('pd-swift'),mtn:_pdVal('pd-mtn'),airtel:_pdVal('pd-airtel'),
+    mtn:_pdVal('pd-mtn'),airtel:_pdVal('pd-airtel'),
     whatsapp:_pdVal('pd-whatsapp'),acc_name:PAYMENT.acc_name||'Uganda Biodiversity Fund',
-    promo_caption:_pdVal('pd-promo-cap'),
+    promo_caption:_pdVal('pd-promo-cap'),impact_items:impact,
     // keep existing uploaded assets unless replaced below
     stanbic_logo:PAYMENT.stanbic_logo||null,mtn_logo:PAYMENT.mtn_logo||null,
     airtel_logo:PAYMENT.airtel_logo||null,promo_url:PAYMENT.promo_url||null,promo_type:PAYMENT.promo_type||null,
@@ -1920,8 +1961,16 @@ async function savePaymentDetails(){
   toast('✅ Payment details saved and updated on the public site.');
 }
 function loadPaymentAdmin(){
-  const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-swift':PAYMENT.swift,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel,'pd-whatsapp':PAYMENT.whatsapp,'pd-promo-cap':PAYMENT.promo_caption};
+  const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel,'pd-whatsapp':PAYMENT.whatsapp,'pd-promo-cap':PAYMENT.promo_caption};
   Object.entries(map).forEach(([id,val])=>{if(val){const el=document.getElementById(id);if(el)el.value=val}});
+  // impact editor: turn items back into "emoji | amount | text" lines
+  const imp=document.getElementById('pd-impact');
+  if(imp){
+    let items=PAYMENT.impact_items;
+    if(typeof items==='string'){try{items=JSON.parse(items)}catch(e){items=null}}
+    if(!Array.isArray(items)||!items.length)items=PAY_IMPACT_DEFAULT;
+    imp.value=items.map(it=>[it.icon||'🌿',it.amount||'',it.text||''].join(' | ')).join('\n');
+  }
   // show current uploaded assets as thumbnails
   const thumbs={'pdp-stanbic':PAYMENT.stanbic_logo,'pdp-mtn':PAYMENT.mtn_logo,'pdp-airtel':PAYMENT.airtel_logo};
   Object.entries(thumbs).forEach(([id,url])=>{if(url){const el=document.getElementById(id);if(el)el.innerHTML='<img src="'+esc(url)+'" alt=""/>'}});
