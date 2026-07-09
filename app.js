@@ -51,21 +51,22 @@ const ADMIN_EMAILS=[
   'i.amani@ugandabiodiversityfund.org',
   'o.atuhaire@ugandabiodiversityfund.org',
   't.otieno@ugandabiodiversityfund.org',
-  'p.musiime@ugandabiodiversityfund.org',
   'd.okullu@ugandabiodiversityfund.org',
   'w.nabantanzi@ugandabiodiversityfund.org',
   's.abonyo@ugandabiodiversityfund.org',
+  'm.ndimu@ugandabiodiversityfund.org',
 ];
 const ADMIN_NAMES={
   'i.amani@ugandabiodiversityfund.org':'Executive Director',
   'o.atuhaire@ugandabiodiversityfund.org':'Projects Officer',
   't.otieno@ugandabiodiversityfund.org':'Office Assistant',
-  'p.musiime@ugandabiodiversityfund.org':'Programs Officer',
   'd.okullu@ugandabiodiversityfund.org':'M&E Officer',
   'w.nabantanzi@ugandabiodiversityfund.org':'Finance Manager',
   's.abonyo@ugandabiodiversityfund.org':'Administration Officer',
+  'm.ndimu@ugandabiodiversityfund.org':'Finance Officer',
 };
-const ADMIN_DEFAULT_PASS='UBF@2026!';
+// Internal seed password for brand-new admin accounts only (never shown on screen).
+const ADMIN_SEED_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
 const SLIDE_IMAGES=Array.from({length:17},(_,i)=>`slide-${i+1}.jpg`);
@@ -170,6 +171,12 @@ async function loadDashboard(){
   if(error){console.error('loadDashboard',error);return}
   DASH_ITEMS=items||[];
 }
+let PROTECT=[];
+async function loadProtect(){
+  const {data,error}=await sb.from('protect_gallery').select('*').order('sort',{ascending:true});
+  if(error){console.error('loadProtect',error);return}
+  PROTECT=data||[];
+}
 
 /* ═══ INIT ADMIN ACCOUNTS IF MISSING (runs once against Supabase) ═══ */
 async function initAdmins(){
@@ -179,7 +186,7 @@ async function initAdmins(){
     if(!exists){
       const {error}=await sb.from('members').insert({
         name:ADMIN_NAMES[email]||'Admin',
-        email,pass:ADMIN_DEFAULT_PASS,type:'staff',tier:'diamond',
+        email,pass:ADMIN_SEED_PASS,type:'staff',tier:'diamond',
         amount:0,year:new Date().getFullYear(),org:'Uganda Biodiversity Fund',
         role:'admin',status:'active',payref:''
       });
@@ -264,14 +271,99 @@ function copyPayNum(btn){
   if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(done)}else{done()}
 }
 
+/* ═══ CONSERVATION GALLERY — "What you're protecting" (data-driven) ═══ */
+let _protectTab='species';
+function setProtectTab(kind){_protectTab=kind;renderProtectGallery();}
+function protectStatusClass(s){
+  s=(s||'').toLowerCase();
+  if(s.includes('critical'))return 'b-cr';
+  if(s.includes('endanger'))return 'b-en';
+  if(s.includes('vulner'))return 'b-vu';
+  return 'b-pl';
+}
+function renderProtectGallery(){
+  const wrap=document.getElementById('protect-grid');if(!wrap)return;
+  const items=PROTECT.filter(p=>p.active!==false && p.kind===_protectTab);
+  const spN=PROTECT.filter(p=>p.active!==false&&p.kind==='species').length;
+  const plN=PROTECT.filter(p=>p.active!==false&&p.kind==='place').length;
+  const tS=document.getElementById('protect-tab-species'),tP=document.getElementById('protect-tab-place');
+  if(tS){tS.classList.toggle('on',_protectTab==='species');tS.textContent='Endangered species'+(spN?' ('+spN+')':'');}
+  if(tP){tP.classList.toggle('on',_protectTab==='place');tP.textContent='Threatened places'+(plN?' ('+plN+')':'');}
+  const cs=document.getElementById('protect-count-species'),cp=document.getElementById('protect-count-place');
+  if(cs)cs.textContent=spN;if(cp)cp.textContent=plN;
+  if(!items.length){wrap.innerHTML='<p class="protect-empty">Nothing added here yet — the admin can add species and places from the Conservation Gallery panel.</p>';return;}
+  wrap.innerHTML=items.map(p=>{
+    const img=p.image_url?'<img src="'+esc(p.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
+    const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
+    return '<article class="pg-card"'+(p.image_url?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+img+
+      '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
+      (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
+  }).join('');
+}
+/* Admin CRUD for the gallery */
+let _protectEditId=null;
+function fillProtectForm(p){
+  _protectEditId=p.id||null;
+  const g=id=>document.getElementById(id);
+  if(g('pf-kind'))g('pf-kind').value=p.kind||'species';
+  if(g('pf-name'))g('pf-name').value=p.name||'';
+  if(g('pf-status'))g('pf-status').value=p.status||'';
+  if(g('pf-blurb'))g('pf-blurb').value=p.blurb||'';
+  if(g('pf-region'))g('pf-region').value=p.region||'';
+  if(g('pf-active'))g('pf-active').checked=p.active!==false;
+  if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
+  if(g('pf-save'))g('pf-save').textContent=p.id?'Update':'Add to gallery';
+  const t=g('pf-thumb');if(t)t.innerHTML=p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':'🖼';
+}
+function resetProtectForm(){fillProtectForm({kind:'species',active:true});const f=document.getElementById('pf-img');if(f)f.value='';}
+function openProtectEdit(id){const p=PROTECT.find(x=>x.id===id);if(!p)return;fillProtectForm(p);const a=document.getElementById('protect-form-card');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});}
+async function saveProtectItem(){
+  const name=(document.getElementById('pf-name').value||'').trim();
+  if(!name){toast('⚠ A name is required.');return}
+  const btn=document.getElementById('pf-save');if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  const cur=_protectEditId?PROTECT.find(p=>p.id===_protectEditId):null;
+  let image_url=cur?(cur.image_url||null):null;
+  const up=await _uploadPayAsset('pf-img','protect');
+  if(up)image_url=up.url;
+  const row={kind:document.getElementById('pf-kind').value,name,
+    status:(document.getElementById('pf-status').value||'').trim(),
+    blurb:(document.getElementById('pf-blurb').value||'').trim(),
+    region:(document.getElementById('pf-region').value||'').trim(),
+    active:document.getElementById('pf-active').checked,image_url};
+  if(_protectEditId)row.id=_protectEditId;
+  const {error}=await sb.from('protect_gallery').upsert(row);
+  if(btn){btn.disabled=false;btn.textContent=_protectEditId?'Update':'Add to gallery'}
+  if(error){toast('⚠ Could not save.');console.error(error);return}
+  await loadProtect();renderProtectGallery();renderProtectAdmin();resetProtectForm();
+  toast('✅ Saved to the gallery.');
+}
+async function delProtectItem(id){
+  const p=PROTECT.find(x=>x.id===id);
+  if(!confirm('Remove "'+((p&&p.name)||'this item')+'" from the gallery? This cannot be undone.'))return;
+  const {error}=await sb.from('protect_gallery').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadProtect();renderProtectGallery();renderProtectAdmin();toast('Removed from the gallery.');
+}
+function renderProtectAdmin(){
+  const el=document.getElementById('protect-admin-list');if(!el)return;
+  el.innerHTML=PROTECT.map(p=>
+    '<div class="pa-row">'+
+      '<span class="pa-thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':(p.kind==='place'?'🌍':'🦍'))+'</span>'+
+      '<div class="pa-info"><strong>'+esc(p.name)+'</strong><span>'+esc(p.kind)+(p.status?' · '+esc(p.status):'')+(p.active===false?' · hidden':'')+'</span></div>'+
+      '<button class="btn btn-ghost btn-sm" onclick="openProtectEdit(\''+p.id+'\')">Edit</button>'+
+      '<button class="btn btn-danger btn-sm" onclick="delProtectItem(\''+p.id+'\')">Delete</button>'+
+    '</div>').join('')||'<p style="color:var(--muted);font-size:.85rem">No items yet — add your first below.</p>';
+}
+
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showLoadingToast();
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
+  renderProtectGallery();
   initSlideshow();
   renderThemes();
   renderFilters();
@@ -477,7 +569,7 @@ async function doAdminLogin(){
   await loadMembers();
   const acct=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.role==='admin');
   if(!acct){toast('⚠ No admin account found for this email in the database — ask your developer to check the members table.');return}
-  if(acct.pass!==pw){recordLoginFailure(em);toast('⚠ Incorrect password. Default for first login: '+ADMIN_DEFAULT_PASS);return}
+  if(acct.pass!==pw){recordLoginFailure(em);toast('⚠ Incorrect password. Contact the administrator if you have forgotten it.');return}
   clearRateLimit(em);
   currentUser=acct;persistSession(acct);closeModal('m-admin-login');updateNav();
   document.getElementById('adm-user-info').textContent=esc(acct.name)+' ('+esc(ADMIN_NAMES[em]||'Admin')+') — '+esc(em);
@@ -1636,7 +1728,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}

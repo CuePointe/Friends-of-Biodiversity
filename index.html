@@ -234,6 +234,24 @@
   </div>
 </section>
 
+<!-- WHAT YOU'RE PROTECTING (data-driven gallery) -->
+<section id="protect">
+  <div class="inner">
+    <p class="eyebrow reveal" style="color:var(--gold-lt)">Before you join</p>
+    <h2 class="sec-title reveal" style="color:var(--white)">You’re not buying a card.<br>You’re protecting <em style="color:var(--gold-lt)">this.</em></h2>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.72)">Every Green Card directly funds the survival of Uganda’s species and wild places. See who — and where — your membership defends.</p>
+    <div class="protect-stat reveal">
+      <span>🦍 <b id="protect-count-species">0</b> species under our watch</span>
+      <span>🌍 <b id="protect-count-place">0</b> landscapes being restored</span>
+    </div>
+    <div class="protect-tabs reveal">
+      <button class="protect-tab on" id="protect-tab-species" onclick="setProtectTab('species')">Endangered species</button>
+      <button class="protect-tab" id="protect-tab-place" onclick="setProtectTab('place')">Threatened places</button>
+    </div>
+    <div class="protect-grid" id="protect-grid"></div>
+  </div>
+</section>
+
 <!-- GREEN CARD TIERS -->
 <section id="greencard">
   <div class="inner">
@@ -562,6 +580,7 @@
         <div class="adm-group-items">
           <button class="adm-nav-item" data-ap="ap-finance" onclick="showAdminPanel(this)">📄 Financial Reports</button>
           <button class="adm-nav-item" data-ap="ap-payment" onclick="showAdminPanel(this)">💳 Payment Details</button>
+          <button class="adm-nav-item" data-ap="ap-protect" onclick="showAdminPanel(this)">🦍 Conservation Gallery</button>
           <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
           <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
         </div>
@@ -666,6 +685,32 @@
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:.8rem">One impact per line, in the format <code>emoji | amount | what it achieves</code>. Update these anytime — they refresh on the public page instantly.<br>Example: <code>🌱 | UGX 25,000 | plants &amp; nurtures 15 indigenous tree seedlings.</code></p>
       <textarea id="pd-impact" rows="6" style="width:100%;font-family:var(--ff-m);font-size:.85rem;padding:.7rem;border:1px solid var(--border);border-radius:8px;resize:vertical;box-sizing:border-box" placeholder="🌱 | UGX 25,000 | plants &amp; nurtures 15 indigenous tree seedlings.&#10;🦍 | UGX 100,000 | funds a full day of ranger patrol guarding mountain gorillas."></textarea>
       <button class="btn btn-gold" id="pd-save-btn" onclick="savePaymentDetails()" style="margin-top:1rem">Save Payment Details</button>
+    </div>
+  </div>
+
+  <div id="ap-protect" class="adm-panel">
+    <div class="adm-sec"><span>Conservation Gallery — “What you’re protecting”</span></div>
+
+    <div class="adm-card" id="protect-form-card" style="max-width:760px">
+      <h4 id="pf-title">Add a species or place</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">These cards appear on the registration page to show members exactly what their Green Card protects. Changes go live instantly.</p>
+      <div class="pd-row2">
+        <div class="fg"><label>Type</label><select id="pf-kind"><option value="species">Endangered species</option><option value="place">Threatened place</option></select></div>
+        <div class="fg"><label>Name</label><input id="pf-name" placeholder="e.g. Mountain Gorilla"/></div>
+      </div>
+      <div class="pd-row2">
+        <div class="fg"><label>Status (e.g. Critically Endangered)</label><input id="pf-status" placeholder="Critically Endangered / Endangered / Vulnerable"/></div>
+        <div class="fg"><label>Region (optional)</label><input id="pf-region" placeholder="e.g. Bwindi"/></div>
+      </div>
+      <div class="fg"><label>Short story</label><textarea id="pf-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One line on why it matters."></textarea></div>
+      <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*" onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>Upload photo</b><span class="pd-hint">PNG or JPG · tap to choose</span></label>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text);margin-bottom:1rem"><input type="checkbox" id="pf-active" checked/> Show on the public page</label>
+      <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="pf-save" onclick="saveProtectItem()">Add to gallery</button><button class="btn btn-ghost" onclick="resetProtectForm()">Clear</button></div>
+    </div>
+
+    <div class="adm-card" style="max-width:760px">
+      <h4>Current gallery</h4>
+      <div id="protect-admin-list"></div>
     </div>
   </div>
 
