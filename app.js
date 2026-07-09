@@ -196,10 +196,40 @@ function renderPaymentUI(){
   const map={
     'pay-bank-name':PAYMENT.bank,'pay-acc-no':PAYMENT.accno,'pay-branch':PAYMENT.branch,
     'pay-swift':PAYMENT.swift,'pay-mtn':PAYMENT.mtn,'pay-airtel':PAYMENT.airtel,
+    'pay-acc-name':PAYMENT.acc_name,
   };
   Object.entries(map).forEach(([id,val])=>{
     if(val){const el=document.getElementById(id);if(el)el.textContent=val}
   });
+  // Uploaded official logos replace the placeholder SVGs (fallback stays if none)
+  const logos={'pay-logo-stanbic':PAYMENT.stanbic_logo,'pay-logo-mtn':PAYMENT.mtn_logo,'pay-logo-airtel':PAYMENT.airtel_logo};
+  Object.entries(logos).forEach(([id,url])=>{
+    if(url){const el=document.getElementById(id);if(el)el.innerHTML='<img src="'+esc(url)+'" alt="" onerror="this.remove()"/>';}
+  });
+  // WhatsApp help line
+  if(PAYMENT.whatsapp){
+    const w=PAYMENT.whatsapp.trim();
+    const wt=document.getElementById('pay-whatsapp');if(wt)wt.textContent=w;
+    const wl=document.getElementById('pay-whatsapp-link');if(wl)wl.href='https://wa.me/'+w.replace(/[^0-9]/g,'');
+  }
+  // "How to Pay" welcome media (video or image) uploaded by admin
+  const promo=document.getElementById('pay-promo');
+  if(promo&&PAYMENT.promo_url){
+    const cap=PAYMENT.promo_caption?('<div class="pay-media-cap" style="position:relative;z-index:1;padding:16px 18px"><span>'+esc(PAYMENT.promo_caption)+'</span></div>'):'';
+    if(PAYMENT.promo_type==='video'){
+      promo.innerHTML='<span class="pay-media-badge">Watch · How to Pay</span><video src="'+esc(PAYMENT.promo_url)+'" controls playsinline preload="metadata"></video>'+cap;
+    }else{
+      promo.innerHTML='<span class="pay-media-badge">How to Pay</span><img src="'+esc(PAYMENT.promo_url)+'" alt="How to pay"/>'+cap;
+    }
+  }
+}
+/* Tap-to-copy a payment number/account */
+function copyPayNum(btn){
+  const src=document.getElementById(btn.getAttribute('data-copy-from'));
+  if(!src)return;
+  const txt=(src.textContent||'').trim();
+  const done=()=>{const o=btn.textContent;btn.textContent='✓ Copied';btn.classList.add('ok');toast('📋 Copied: '+txt);setTimeout(()=>{btn.textContent=o;btn.classList.remove('ok')},1500)};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done).catch(done)}else{done()}
 }
 
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
@@ -1847,23 +1877,61 @@ async function addFinReport(){
 }
 
 /* ═══ PAYMENT DETAILS — single row (id=1), admin-editable, drives public Payment section ═══ */
+function _pdVal(id){const el=document.getElementById(id);return el?el.value.trim():''}
+// Upload a logo/media asset to storage; timestamped path defeats CDN caching
+async function _uploadPayAsset(inputId,prefix){
+  const el=document.getElementById(inputId);
+  const file=el&&el.files&&el.files[0];
+  if(!file)return null;
+  const ext=(file.name.split('.').pop()||'png').toLowerCase();
+  const path='payment/'+prefix+'-'+Date.now()+'.'+ext;
+  const {error}=await sb.storage.from('content-files').upload(path,file,{upsert:true,contentType:file.type});
+  if(error){console.error('pay asset upload',prefix,error);toast('⚠ Could not upload '+prefix+' — saved the rest.');return null}
+  return {url:sb.storage.from('content-files').getPublicUrl(path).data.publicUrl,type:file.type.startsWith('video')?'video':'image'};
+}
 async function savePaymentDetails(){
+  const btn=document.getElementById('pd-save-btn');
+  if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  toast('Saving payment details…');
   const pd={
     id:1,
-    bank:document.getElementById('pd-bank').value.trim(),
-    accno:document.getElementById('pd-accno').value.trim(),
-    branch:document.getElementById('pd-branch').value.trim(),
-    swift:document.getElementById('pd-swift').value.trim(),
-    mtn:document.getElementById('pd-mtn').value.trim(),
-    airtel:document.getElementById('pd-airtel').value.trim(),
+    bank:_pdVal('pd-bank'),accno:_pdVal('pd-accno'),branch:_pdVal('pd-branch'),
+    swift:_pdVal('pd-swift'),mtn:_pdVal('pd-mtn'),airtel:_pdVal('pd-airtel'),
+    whatsapp:_pdVal('pd-whatsapp'),acc_name:PAYMENT.acc_name||'Uganda Biodiversity Fund',
+    promo_caption:_pdVal('pd-promo-cap'),
+    // keep existing uploaded assets unless replaced below
+    stanbic_logo:PAYMENT.stanbic_logo||null,mtn_logo:PAYMENT.mtn_logo||null,
+    airtel_logo:PAYMENT.airtel_logo||null,promo_url:PAYMENT.promo_url||null,promo_type:PAYMENT.promo_type||null,
   };
+  const [sb_l,mtn_l,air_l,promo]=await Promise.all([
+    _uploadPayAsset('pd-logo-stanbic','stanbic-logo'),
+    _uploadPayAsset('pd-logo-mtn','mtn-logo'),
+    _uploadPayAsset('pd-logo-airtel','airtel-logo'),
+    _uploadPayAsset('pd-promo','promo'),
+  ]);
+  if(sb_l)pd.stanbic_logo=sb_l.url;
+  if(mtn_l)pd.mtn_logo=mtn_l.url;
+  if(air_l)pd.airtel_logo=air_l.url;
+  if(promo){pd.promo_url=promo.url;pd.promo_type=promo.type;}
   const {error}=await sb.from('payment_details').upsert(pd);
+  if(btn){btn.disabled=false;btn.textContent='Save Payment Details'}
   if(error){toast('⚠ Could not save payment details.');console.error(error);return}
-  await loadPayment();renderPaymentUI();toast('✅ Payment details saved and updated on the public site.');
+  await loadPayment();renderPaymentUI();loadPaymentAdmin();
+  toast('✅ Payment details saved and updated on the public site.');
 }
 function loadPaymentAdmin(){
-  const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-swift':PAYMENT.swift,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel};
+  const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-swift':PAYMENT.swift,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel,'pd-whatsapp':PAYMENT.whatsapp,'pd-promo-cap':PAYMENT.promo_caption};
   Object.entries(map).forEach(([id,val])=>{if(val){const el=document.getElementById(id);if(el)el.value=val}});
+  // show current uploaded assets as thumbnails
+  const thumbs={'pdp-stanbic':PAYMENT.stanbic_logo,'pdp-mtn':PAYMENT.mtn_logo,'pdp-airtel':PAYMENT.airtel_logo};
+  Object.entries(thumbs).forEach(([id,url])=>{if(url){const el=document.getElementById(id);if(el)el.innerHTML='<img src="'+esc(url)+'" alt=""/>'}});
+  if(PAYMENT.promo_url){const p=document.getElementById('pdp-promo');if(p)p.textContent=PAYMENT.promo_type==='video'?'🎬':'🖼'}
+}
+// Instant local preview when an admin picks a file (before saving)
+function pdPreview(input,thumbId){
+  const f=input.files&&input.files[0];const el=document.getElementById(thumbId);if(!f||!el)return;
+  if(f.type.startsWith('image')){el.innerHTML='<img src="'+URL.createObjectURL(f)+'" alt=""/>'}
+  else if(f.type.startsWith('video')){el.textContent='🎬'}
 }
 
 /* ═══ EMAIL CAMPAIGNS ═══

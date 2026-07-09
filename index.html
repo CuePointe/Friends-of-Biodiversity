@@ -285,36 +285,87 @@
   <div class="inner">
     <p class="eyebrow reveal" style="color:var(--gold-lt)">Make Your Commitment</p>
     <h2 class="sec-title reveal" style="color:var(--white)">How to <em style="color:var(--gold-lt)">Pay</em></h2>
-    <p class="sec-body reveal" style="color:rgba(255,255,255,.6)">Contributions can be made via bank transfer or Mobile Money. After payment, complete the enrollment form below and attach your payment reference.</p>
+    <p class="sec-body reveal" style="color:rgba(255,255,255,.72)">You’re one transfer away from standing with Uganda’s forests, wetlands and wildlife. Here’s exactly how — step by step, no guesswork.</p>
+
+    <!-- Human welcome media + reassurance -->
+    <div class="pay-top reveal">
+      <div class="pay-media" id="pay-promo">
+        <!-- default until an admin uploads a video/image -->
+        <span class="pay-media-badge">Watch · How to Pay</span>
+        <div class="pay-media-fallback">
+          <div class="pay-play" aria-hidden="true"><svg width="20" height="22" viewBox="0 0 22 24" fill="#fff"><path d="M0 0l22 12L0 24z"/></svg></div>
+          <div class="pay-media-cap"><b>“Paying is easier than you think.”</b><span>Your UBF walkthrough appears here once uploaded.</span></div>
+        </div>
+      </div>
+      <div class="pay-trust">
+        <div class="pay-trow"><span class="pay-ti">🧾</span><span><b>Every shilling is receipted</b>Your membership certificate follows once we confirm.</span></div>
+        <div class="pay-trow"><span class="pay-ti">✅</span><span><b>Verified within 48 hours</b>We match your reference and activate your Green Card.</span></div>
+        <div class="pay-trow"><span class="pay-ti">💬</span><span><b>Stuck at any step?</b>WhatsApp <a id="pay-whatsapp-link" href="https://wa.me/256772000000" target="_blank" rel="noopener"><span id="pay-whatsapp">+256 772 000 000</span></a> — a real person replies.</span></div>
+      </div>
+    </div>
+
+    <div class="pay-official reveal"><b>Our three official channels only.</b><span>UBF will never ask you to send money to any other number or account. If in doubt, message us first.</span></div>
+
     <div class="pay-grid">
-      <div class="pay-card reveal">
-        <div class="pay-card-header">
-          <div class="pay-card-icon"><svg width="44" height="40" viewBox="0 0 44 40" role="img" aria-label="Bank transfer"><rect width="44" height="40" rx="9" fill="#003B7A"/><g fill="#fff"><path d="M22 8 34 15.5H10z"/><rect x="12.5" y="18" width="3" height="10"/><rect x="20.5" y="18" width="3" height="10"/><rect x="28.5" y="18" width="3" height="10"/><rect x="10" y="29.5" width="24" height="3" rx="1"/></g></svg></div>
-          <div><div class="pay-card-label">Bank Transfer</div><div class="pay-card-sub">Stanbic · Absa · Centenary</div></div>
+      <!-- STANBIC -->
+      <article class="pay-card reveal">
+        <div class="pay-chead">
+          <div class="pay-logo stanbic" id="pay-logo-stanbic"><svg width="52" height="52" viewBox="0 0 52 52" role="img" aria-label="Stanbic Bank"><circle cx="26" cy="19" r="9" fill="#fff"/><circle cx="26" cy="19" r="4.4" fill="#0033A0"/><text x="26" y="43" text-anchor="middle" font-family="Georgia,serif" font-size="8.5" font-weight="700" fill="#fff">Stanbic</text></svg></div>
+          <div><div class="pay-ctitle">Stanbic Bank</div><div class="pay-csub">Bank transfer</div></div>
         </div>
-        <div class="pay-row"><span class="lbl">Bank Name</span><span class="val" id="pay-bank-name">To be updated by UBF Admin</span></div>
-        <div class="pay-row"><span class="lbl">Account Name</span><span class="val" id="pay-acc-name">Uganda Biodiversity Fund</span></div>
-        <div class="pay-row"><span class="lbl">Account Number</span><span class="val" id="pay-acc-no">To be updated by UBF Admin</span></div>
-        <p class="pay-note">Use your full name as the payment reference. Send proof of payment to <strong>info@ugandabiodiversityfund.org</strong></p>
-      </div>
-      <div class="pay-card reveal">
-        <div class="pay-card-header">
-          <div class="pay-card-icon"><svg width="46" height="40" viewBox="0 0 46 40" role="img" aria-label="MTN Mobile Money"><rect width="46" height="40" rx="9" fill="#FFCB05"/><ellipse cx="23" cy="20" rx="16" ry="8.6" fill="none" stroke="#111" stroke-width="2.1"/><text x="23" y="23.6" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="800" font-size="9.6" fill="#111" letter-spacing="-.2">MTN</text></svg></div>
-          <div><div class="pay-card-label">MTN Mobile Money</div><div class="pay-card-sub">Dial *165# → Send Money</div></div>
+        <ol class="pay-steps">
+          <li><span class="n">1</span>Open your bank app, or visit any Stanbic branch.</li>
+          <li><span class="n">2</span>Transfer to the account below.</li>
+          <li><span class="n">3</span>Put <strong>your full name</strong> as the reference.</li>
+          <li><span class="n">4</span>Email the receipt to <code>info@ugandabiodiversityfund.org</code>.</li>
+        </ol>
+        <div class="pay-numrow">
+          <div><div class="lbl">Account no.</div><div class="val" id="pay-acc-no">To be updated by UBF Admin</div></div>
+          <button class="pay-copy" data-copy-from="pay-acc-no" onclick="copyPayNum(this)" type="button">Copy</button>
         </div>
-        <div class="pay-row"><span class="lbl">MoMo Number</span><span class="val" id="pay-mtn">To be updated by UBF Admin</span></div>
-        <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
-        <p class="pay-note">Screenshot your MoMo confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
-      </div>
-      <div class="pay-card reveal">
-        <div class="pay-card-header">
-          <div class="pay-card-icon"><svg width="50" height="40" viewBox="0 0 50 40" role="img" aria-label="Airtel Money"><rect width="50" height="40" rx="9" fill="#fff" stroke="#eee" stroke-width="1"/><path d="M17 23.5c-.6-8 5.5-13.5 13-11.7 5.5 1.3 7 6.6 3.6 9.4-2.4 2-6 1.4-7.2-1.1" fill="none" stroke="#E40000" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><text x="25" y="35" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="700" font-size="8.2" fill="#E40000" letter-spacing=".2">airtel</text></svg></div>
-          <div><div class="pay-card-label">Airtel Money</div><div class="pay-card-sub">Dial *185# → Send Money</div></div>
+        <span class="pay-amtchip">💳 Account name: <strong id="pay-acc-name">Uganda Biodiversity Fund</strong></span>
+        <p class="pay-foot"><strong>Branch</strong> <span id="pay-branch">Main</span> · <strong>SWIFT</strong> <span id="pay-swift">—</span></p>
+      </article>
+
+      <!-- MTN -->
+      <article class="pay-card reveal">
+        <div class="pay-chead">
+          <div class="pay-logo mtn" id="pay-logo-mtn"><svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="MTN Mobile Money"><ellipse cx="27" cy="23" rx="20" ry="12" fill="none" stroke="#001A70" stroke-width="2.4"/><text x="27" y="28" text-anchor="middle" font-family="Arial,sans-serif" font-size="15" font-weight="900" fill="#001A70" letter-spacing="-.5">MTN</text></svg></div>
+          <div><div class="pay-ctitle">MTN MoMo</div><div class="pay-csub">Mobile Money · *165#</div></div>
         </div>
-        <div class="pay-row"><span class="lbl">Airtel Number</span><span class="val" id="pay-airtel">To be updated by UBF Admin</span></div>
-        <div class="pay-row"><span class="lbl">Registered Name</span><span class="val">Uganda Biodiversity Fund</span></div>
-        <p class="pay-note">Screenshot your Airtel Money confirmation and email to <strong>info@ugandabiodiversityfund.org</strong> with your membership tier.</p>
-      </div>
+        <ol class="pay-steps">
+          <li><span class="n">1</span>Dial <code>*165#</code> on your MTN line.</li>
+          <li><span class="n">2</span>Choose <code>Send Money</code>.</li>
+          <li><span class="n">3</span>Enter the number below &amp; your tier amount.</li>
+          <li><span class="n">4</span>Reference: <strong>your name</strong>. Screenshot the SMS.</li>
+        </ol>
+        <div class="pay-numrow">
+          <div><div class="lbl">MoMo number</div><div class="val" id="pay-mtn">To be updated by UBF Admin</div></div>
+          <button class="pay-copy" data-copy-from="pay-mtn" onclick="copyPayNum(this)" type="button">Copy</button>
+        </div>
+        <span class="pay-amtchip">👤 Registered: <strong>Uganda Biodiversity Fund</strong></span>
+        <p class="pay-foot">Send your confirmation SMS to <strong>info@ugandabiodiversityfund.org</strong> with your tier.</p>
+      </article>
+
+      <!-- AIRTEL -->
+      <article class="pay-card reveal">
+        <div class="pay-chead">
+          <div class="pay-logo airtel" id="pay-logo-airtel"><svg width="54" height="46" viewBox="0 0 54 46" role="img" aria-label="Airtel Money"><path d="M14 30c-1-11 8-18 18-15.5 7 1.8 9 8.6 4.6 12.2-3.1 2.6-7.8 1.8-9.4-1.4" fill="none" stroke="#E40000" stroke-width="5" stroke-linecap="round"/><text x="30" y="42" text-anchor="middle" font-family="Arial,sans-serif" font-size="9.5" font-weight="700" fill="#E40000">airtel</text></svg></div>
+          <div><div class="pay-ctitle">Airtel Money</div><div class="pay-csub">Mobile Money · *185#</div></div>
+        </div>
+        <ol class="pay-steps">
+          <li><span class="n">1</span>Dial <code>*185#</code> on your Airtel line.</li>
+          <li><span class="n">2</span>Choose <code>Send Money</code>.</li>
+          <li><span class="n">3</span>Enter the number below &amp; your tier amount.</li>
+          <li><span class="n">4</span>Reference: <strong>your name</strong>. Screenshot the confirmation.</li>
+        </ol>
+        <div class="pay-numrow">
+          <div><div class="lbl">Airtel number</div><div class="val" id="pay-airtel">To be updated by UBF Admin</div></div>
+          <button class="pay-copy" data-copy-from="pay-airtel" onclick="copyPayNum(this)" type="button">Copy</button>
+        </div>
+        <span class="pay-amtchip">👤 Registered: <strong>Uganda Biodiversity Fund</strong></span>
+        <p class="pay-foot">Send your confirmation to <strong>info@ugandabiodiversityfund.org</strong> with your tier.</p>
+      </article>
     </div>
   </div>
 </section>
@@ -567,14 +618,39 @@
 
   <div id="ap-payment" class="adm-panel">
     <div class="adm-sec"><span>Payment Details</span></div>
-    <div class="adm-card" style="max-width:600px">
-      <h4>Update Payment Information</h4>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.25rem">These details appear publicly on the website's "How to Pay" section. Fill in your actual bank and Mobile Money numbers.</p>
-      <div class="fg"><label>Bank Name</label><input id="pd-bank" placeholder="e.g. Stanbic Bank Uganda"/></div>
-      <div class="fg"><label>Account Number</label><input id="pd-accno" placeholder="e.g. 9030012345678"/></div>
-      <div class="fg"><label>MTN MoMo Number</label><input id="pd-mtn" placeholder="e.g. 0771234567"/></div>
-      <div class="fg"><label>Airtel Money Number</label><input id="pd-airtel" placeholder="e.g. 0701234567"/></div>
-      <button class="btn btn-gold" onclick="savePaymentDetails()">Save Payment Details</button>
+
+    <div class="adm-card" style="max-width:760px">
+      <h4>Official channel logos</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">Upload the real MTN, Airtel and Stanbic logos. These are the only official channels shown to members. Square or wide PNG/JPG works best; if left empty a clean placeholder is shown.</p>
+      <div class="pd-uploads">
+        <label class="pd-drop"><input type="file" id="pd-logo-stanbic" accept="image/*" onchange="pdPreview(this,'pdp-stanbic')" hidden/><span class="pd-thumb" id="pdp-stanbic" style="background:#0033A0">SB</span><b>Stanbic logo</b><span class="pd-hint">Tap to choose</span></label>
+        <label class="pd-drop"><input type="file" id="pd-logo-mtn" accept="image/*" onchange="pdPreview(this,'pdp-mtn')" hidden/><span class="pd-thumb" id="pdp-mtn" style="background:#FFCB05;color:#001A70">MTN</span><b>MTN logo</b><span class="pd-hint">Tap to choose</span></label>
+        <label class="pd-drop"><input type="file" id="pd-logo-airtel" accept="image/*" onchange="pdPreview(this,'pdp-airtel')" hidden/><span class="pd-thumb" id="pdp-airtel" style="background:#fff;color:#E40000">airtel</span><b>Airtel logo</b><span class="pd-hint">Tap to choose</span></label>
+      </div>
+    </div>
+
+    <div class="adm-card" style="max-width:760px">
+      <h4>“How to Pay” welcome media</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">A short video (30–60s) or a single image that greets members at the top of the section — the human touch. Video or image both work.</p>
+      <label class="pd-drop pd-drop-wide"><input type="file" id="pd-promo" accept="image/*,video/*" onchange="pdPreview(this,'pdp-promo')" hidden/><span class="pd-thumb" id="pdp-promo" style="background:rgba(200,168,75,.2)">🎬</span><b>Upload video or image</b><span class="pd-hint">Tap to choose · replaces the current one</span></label>
+      <div class="fg" style="margin-top:1rem"><label>Media caption (optional)</label><input id="pd-promo-cap" placeholder="e.g. A 60-second walkthrough from our team"/></div>
+    </div>
+
+    <div class="adm-card" style="max-width:760px">
+      <h4>Numbers &amp; account</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">These appear on the public “How to Pay” cards. Changes go live instantly.</p>
+      <div class="fg"><label>Stanbic Bank name</label><input id="pd-bank" placeholder="e.g. Stanbic Bank Uganda"/></div>
+      <div class="fg"><label>Account number</label><input id="pd-accno" placeholder="e.g. 9030012345678"/></div>
+      <div class="pd-row2">
+        <div class="fg"><label>Branch</label><input id="pd-branch" placeholder="e.g. Garden City"/></div>
+        <div class="fg"><label>SWIFT code</label><input id="pd-swift" placeholder="e.g. SBICUGKX"/></div>
+      </div>
+      <div class="pd-row2">
+        <div class="fg"><label>MTN MoMo number</label><input id="pd-mtn" placeholder="e.g. 0771234567"/></div>
+        <div class="fg"><label>Airtel Money number</label><input id="pd-airtel" placeholder="e.g. 0701234567"/></div>
+      </div>
+      <div class="fg"><label>WhatsApp help line</label><input id="pd-whatsapp" placeholder="e.g. +256772000000"/></div>
+      <button class="btn btn-gold" id="pd-save-btn" onclick="savePaymentDetails()">Save Payment Details</button>
     </div>
   </div>
 
