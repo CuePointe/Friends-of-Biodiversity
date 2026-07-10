@@ -65,10 +65,9 @@ const ADMIN_NAMES={
   's.abonyo@ugandabiodiversityfund.org':'Administration Officer',
   'm.ndimu@ugandabiodiversityfund.org':'Finance Officer',
 };
-// Internal seed password for brand-new admin accounts only. Randomised per load so
-// there is NO shared/known default anywhere; a freshly seeded admin must reset via
-// "My Password" (all current admins already exist, so this rarely runs).
-const ADMIN_SEED_PASS='Fob!'+Math.random().toString(36).slice(2,10)+'#'+Date.now().toString(36);
+// Default password for admin accounts. Used at first login; each admin changes it
+// under "My Password". Kept out of all on-screen text so it's never displayed.
+const ADMIN_SEED_PASS='UBF@2026!';
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
 const SLIDE_IMAGES=Array.from({length:17},(_,i)=>`slide-${i+1}.jpg`);
@@ -323,9 +322,13 @@ function renderProtectGallery(){
   if(cs)cs.textContent=spN;if(cp)cp.textContent=plN;
   if(!items.length){wrap.innerHTML='<p class="protect-empty">Nothing added here yet — the admin can add species and places from the Conservation Gallery panel.</p>';return;}
   wrap.innerHTML=items.map(p=>{
-    const img=p.image_url?'<img src="'+esc(p.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
+    const isVid=p.media_type==='video'&&p.video_url;
+    const media=isVid
+      ?'<video src="'+esc(p.video_url)+'" muted loop playsinline autoplay preload="metadata"'+(p.image_url?' poster="'+esc(p.image_url)+'"':'')+'></video>'
+      :(p.image_url?'<img src="'+esc(p.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'');
+    const hasMedia=isVid||p.image_url;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
-    return '<article class="pg-card"'+(p.image_url?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+img+
+    return '<article class="pg-card"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+
       '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
       (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
   }).join('');
@@ -356,7 +359,7 @@ function fillProtectForm(p){
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
   if(g('pf-save'))g('pf-save').textContent=p.id?'Update':'Add to gallery';
-  const t=g('pf-thumb');if(t)t.innerHTML=p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':'🖼';
+  const t=g('pf-thumb');if(t)t.innerHTML=(p.media_type==='video'&&p.video_url)?'🎬':(p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':'🖼');
 }
 function resetProtectForm(){fillProtectForm({kind:'species',active:true});const f=document.getElementById('pf-img');if(f)f.value='';}
 function openProtectEdit(id){const p=PROTECT.find(x=>x.id===id);if(!p)return;fillProtectForm(p);const a=document.getElementById('protect-form-card');if(a)a.scrollIntoView({behavior:'smooth',block:'center'});}
@@ -366,14 +369,16 @@ async function saveProtectItem(){
   const btn=document.getElementById('pf-save');if(btn){btn.disabled=true;btn.textContent='Saving…'}
   const cur=_protectEditId?PROTECT.find(p=>p.id===_protectEditId):null;
   let image_url=cur?(cur.image_url||null):null;
+  let video_url=cur?(cur.video_url||null):null;
+  let media_type=cur?(cur.media_type||'image'):'image';
   const up=await _uploadPayAsset('pf-img','protect');
-  if(up)image_url=up.url;
-  const row={kind:document.getElementById('pf-kind').value,name,
+  if(up){ if(up.type==='video'){video_url=up.url;media_type='video';} else {image_url=up.url;media_type='image';} }
+  const row={kind:document.getElementById('pf-kind').value,name,image_url,video_url,media_type,
     status:(document.getElementById('pf-status').value||'').trim(),
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
     tier:document.getElementById('pf-tier').value||null,
-    active:document.getElementById('pf-active').checked,image_url};
+    active:document.getElementById('pf-active').checked};
   if(_protectEditId)row.id=_protectEditId;
   const {error}=await sb.from('protect_gallery').upsert(row);
   if(btn){btn.disabled=false;btn.textContent=_protectEditId?'Update':'Add to gallery'}
@@ -430,7 +435,7 @@ function renderProtectAdmin(){
   const el=document.getElementById('protect-admin-list');if(!el)return;
   el.innerHTML=PROTECT.map(p=>
     '<div class="pa-row">'+
-      '<span class="pa-thumb">'+(p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':(p.kind==='place'?'🌍':'🦍'))+'</span>'+
+      '<span class="pa-thumb">'+((p.media_type==='video'&&p.video_url)?'🎬':(p.image_url?'<img src="'+esc(p.image_url)+'" alt=""/>':(p.kind==='place'?'🌍':'🦍')))+'</span>'+
       '<div class="pa-info"><strong>'+esc(p.name)+'</strong><span>'+esc(p.kind)+(p.status?' · '+esc(p.status):'')+(p.active===false?' · hidden':'')+'</span></div>'+
       '<button class="btn btn-ghost btn-sm" onclick="openProtectEdit(\''+p.id+'\')">Edit</button>'+
       '<button class="btn btn-danger btn-sm" onclick="delProtectItem(\''+p.id+'\')">Delete</button>'+
@@ -652,7 +657,7 @@ async function doAdminLogin(){
   await loadMembers();
   const acct=MEMBERS.find(m=>m.email.toLowerCase()===em&&m.role==='admin');
   if(!acct){toast('⚠ No admin account found for this email in the database — ask your developer to check the members table.');return}
-  if(acct.pass!==pw){recordLoginFailure(em);toast('⚠ Incorrect password. Contact the administrator if you have forgotten it.');return}
+  if(acct.pass!==pw){recordLoginFailure(em);toast('⚠ Incorrect password.');return}
   clearRateLimit(em);
   currentUser=acct;persistSession(acct);closeModal('m-admin-login');updateNav();
   document.getElementById('adm-user-info').textContent=esc(acct.name)+' ('+esc(ADMIN_NAMES[em]||'Admin')+') — '+esc(em);
