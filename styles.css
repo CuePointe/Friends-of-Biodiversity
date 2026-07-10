@@ -296,6 +296,10 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .int-chip.on{border-color:var(--canopy);background:var(--canopy);color:#fff;font-weight:600}
 .mem-interests{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.5rem}
 .mem-interests .mi{font-size:.74rem;background:rgba(200,168,75,.16);border:1px solid rgba(200,168,75,.35);color:var(--canopy);border-radius:99px;padding:.2rem .6rem;font-weight:600}
+/* password field with show/hide eye */
+.pw-field{position:relative;display:block}
+.pw-field input{width:100%;padding-right:2.6rem;box-sizing:border-box}
+.pw-eye{position:absolute;right:.5rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1.05rem;line-height:1;padding:.2rem}
 
 /* LEARNING EXCHANGE */
 #learn{background:var(--mist)}

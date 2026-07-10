@@ -65,8 +65,10 @@ const ADMIN_NAMES={
   's.abonyo@ugandabiodiversityfund.org':'Administration Officer',
   'm.ndimu@ugandabiodiversityfund.org':'Finance Officer',
 };
-// Internal seed password for brand-new admin accounts only (never shown on screen).
-const ADMIN_SEED_PASS='UBF@2026!';
+// Internal seed password for brand-new admin accounts only. Randomised per load so
+// there is NO shared/known default anywhere; a freshly seeded admin must reset via
+// "My Password" (all current admins already exist, so this rarely runs).
+const ADMIN_SEED_PASS='Fob!'+Math.random().toString(36).slice(2,10)+'#'+Date.now().toString(36);
 
 /* ═══ HERO SLIDESHOW IMAGES (static files shipped with the site) ═══ */
 const SLIDE_IMAGES=Array.from({length:17},(_,i)=>`slide-${i+1}.jpg`);
@@ -386,24 +388,44 @@ async function delProtectItem(id){
   if(error){toast('⚠ Could not delete.');console.error(error);return}
   await loadProtect();renderProtectGallery();renderProtectAdmin();toast('Removed from the gallery.');
 }
-/* Admin self-service password change */
-async function changeAdminPassword(){
-  if(!currentUser||currentUser.role!=='admin'){toast('⚠ Admins only.');return}
-  const cur=document.getElementById('pw-current').value;
-  const nw=document.getElementById('pw-new').value;
-  const cf=document.getElementById('pw-confirm').value;
-  if(currentUser.pass!==cur){toast('⚠ Current password is incorrect.');return}
+/* Show/hide a password field (eye toggle) */
+function togglePw(id,btn){
+  const el=document.getElementById(id);if(!el)return;
+  const hidden=el.type==='password';
+  el.type=hidden?'text':'password';
+  if(btn)btn.textContent=hidden?'🙈':'👁';
+  if(btn)btn.title=hidden?'Hide password':'Show password';
+}
+/* Reveal the signed-in user's current password into a element (members & admins) */
+function revealMyPassword(targetId,btn){
+  if(!currentUser){toast('⚠ Please sign in first.');return}
+  const el=document.getElementById(targetId);if(!el)return;
+  if(el.dataset.shown==='1'){el.textContent='';el.dataset.shown='';if(btn)btn.textContent='👁 Show my current password';return;}
+  el.textContent='Your current password: '+(currentUser.pass||'(not set)');
+  el.dataset.shown='1';if(btn)btn.textContent='🙈 Hide my current password';
+}
+/* Shared password-change routine (members & admins). curId optional. */
+async function doChangePassword(newId,confirmId,curId,btnId){
+  if(!currentUser){toast('⚠ Please sign in first.');return}
+  const nw=document.getElementById(newId).value;
+  const cf=document.getElementById(confirmId).value;
+  if(curId){const c=document.getElementById(curId);if(c&&c.value&&currentUser.pass!==c.value){toast('⚠ Current password is incorrect.');return}}
   if(nw.length<8){toast('⚠ New password must be at least 8 characters.');return}
   if(nw!==cf){toast('⚠ New passwords do not match.');return}
-  if(nw===cur){toast('⚠ Choose a password different from your current one.');return}
-  const btn=document.getElementById('pw-save');if(btn){btn.disabled=true;btn.textContent='Updating…'}
+  if(nw===currentUser.pass){toast('⚠ Choose a password different from your current one.');return}
+  const btn=btnId?document.getElementById(btnId):null;if(btn){btn.disabled=true;btn.textContent='Updating…'}
   const {error}=await sb.from('members').update({pass:nw}).eq('id',currentUser.id);
   if(btn){btn.disabled=false;btn.textContent='Update password'}
   if(error){toast('⚠ Could not update password.');console.error(error);return}
   currentUser.pass=nw;persistSession(currentUser);
-  ['pw-current','pw-new','pw-confirm'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  [newId,confirmId,curId].forEach(id=>{if(id){const e=document.getElementById(id);if(e)e.value='';}});
   toast('✅ Password updated — use it next time you sign in.');
 }
+function changeAdminPassword(){
+  if(!currentUser||currentUser.role!=='admin'){toast('⚠ Admins only.');return}
+  doChangePassword('pw-new','pw-confirm','pw-current','pw-save');
+}
+function changeMyPassword(){doChangePassword('mp-new','mp-confirm',null,'mp-save');}
 function renderProtectAdmin(){
   const el=document.getElementById('protect-admin-list');if(!el)return;
   el.innerHTML=PROTECT.map(p=>
