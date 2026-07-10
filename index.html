@@ -486,7 +486,7 @@
           <!-- STEP 5 · Account -->
           <div class="wz-step" data-step="5" hidden>
             <div class="wz-prompt"><span class="em">🔐</span><div><b>Create your login</b><span>Last step — set a password for your member dashboard (active once your payment is confirmed).</span></div></div>
-            <div><label>Create Password *</label><input id="ef-pass" type="password" placeholder="Minimum 8 characters"/></div>
+            <div><label>Create Password *</label><div class="pw-field"><input id="ef-pass" type="password" placeholder="Minimum 8 characters"/><button type="button" class="pw-eye" onclick="togglePw('ef-pass',this)" title="Show password">👁</button></div></div>
             <small style="color:rgba(255,255,255,.3);font-size:.7rem;display:block;margin-top:.3rem">This creates your member login account.</small>
             <p style="font-size:.7rem;color:rgba(255,255,255,.3);margin-top:.7rem">Your data is handled in confidence and used solely for membership administration.</p>
           </div>
@@ -761,10 +761,11 @@
     <div class="adm-card" style="max-width:480px">
       <h4>Change your password</h4>
       <p style="font-size:.82rem;color:var(--muted);margin-bottom:1.1rem">Set a personal password for your admin account. Use at least 8 characters.</p>
-      <div class="fg"><label>Current password</label><input id="pw-current" type="password" placeholder="Your current password"/></div>
-      <div class="fg"><label>New password</label><input id="pw-new" type="password" placeholder="At least 8 characters"/></div>
-      <div class="fg"><label>Confirm new password</label><input id="pw-confirm" type="password" placeholder="Re-type new password"/></div>
-      <button class="btn btn-gold" id="pw-save" onclick="changeAdminPassword()">Update password</button>
+      <div class="fg"><label>Current password</label><div class="pw-field"><input id="pw-current" type="password" placeholder="Your current password"/><button type="button" class="pw-eye" onclick="togglePw('pw-current',this)" title="Show password">👁</button></div></div>
+      <div class="fg"><label>New password</label><div class="pw-field"><input id="pw-new" type="password" placeholder="At least 8 characters"/><button type="button" class="pw-eye" onclick="togglePw('pw-new',this)" title="Show password">👁</button></div></div>
+      <div class="fg"><label>Confirm new password</label><div class="pw-field"><input id="pw-confirm" type="password" placeholder="Re-type new password"/><button type="button" class="pw-eye" onclick="togglePw('pw-confirm',this)" title="Show password">👁</button></div></div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center"><button class="btn btn-gold" id="pw-save" onclick="changeAdminPassword()">Update password</button><button type="button" class="btn btn-ghost btn-sm" onclick="revealMyPassword('pw-current-view',this)">👁 Show my current password</button></div>
+      <div id="pw-current-view" style="font-size:.82rem;color:var(--muted);margin-top:.6rem;font-family:var(--ff-m)"></div>
     </div>
   </div>
 
@@ -942,7 +943,7 @@
     <h2>Sign In</h2>
     <p class="msub">Access your member dashboard and the Learning Exchange library.</p>
     <div class="fg"><label>Email Address</label><input id="li-email" type="email" placeholder="you@example.com"/></div>
-    <div class="fg"><label>Password</label><input id="li-pass" type="password" placeholder="Your password"/></div>
+    <div class="fg"><label>Password</label><div class="pw-field"><input id="li-pass" type="password" placeholder="Your password"/><button type="button" class="pw-eye" onclick="togglePw('li-pass',this)" title="Show password">👁</button></div></div>
     <button class="btn btn-canopy btn-full" onclick="doLogin()">Sign In</button>
     <div class="dtext">or</div>
     <button class="btn btn-gold btn-full" onclick="closeModal('m-login');document.getElementById('enroll').scrollIntoView({behavior:'smooth'})">Create a New Account →</button>
@@ -956,9 +957,9 @@
     <button class="modal-close" onclick="closeModal('m-admin-login')">✕</button>
     <h2>Admin Sign In</h2>
     <div class="admin-note">🔒 Restricted to verified UBF work email accounts (@ugandabiodiversityfund.org)</div>
-    <p class="msub">Enter your UBF credentials. Default password for first login: <strong>UBF@2026!</strong></p>
+    <p class="msub">Enter your UBF admin credentials. You can change your password anytime under <strong>My Password</strong>. Forgot it? Contact the Executive Director.</p>
     <div class="fg"><label>UBF Email</label><input id="al-email" type="email" placeholder="i.amani@ugandabiodiversityfund.org"/></div>
-    <div class="fg"><label>Password</label><input id="al-pass" type="password" placeholder="Admin password"/></div>
+    <div class="fg"><label>Password</label><div class="pw-field"><input id="al-pass" type="password" placeholder="Admin password"/><button type="button" class="pw-eye" onclick="togglePw('al-pass',this)" title="Show password">👁</button></div></div>
     <button class="btn btn-canopy btn-full" onclick="doAdminLogin()">Sign In as Admin</button>
     <div class="auth-sw"><a onclick="openModal('m-login');closeModal('m-admin-login')">← Member login</a></div>
   </div>
@@ -1275,6 +1276,15 @@
       <div class="int-chips" id="ep-interests"></div>
     </div>
     <button class="btn btn-canopy btn-full" onclick="saveProfile()">Save Profile</button>
+
+    <div style="border-top:1px solid var(--border);margin-top:1.2rem;padding-top:1.1rem">
+      <label style="font-weight:700;color:var(--canopy)">🔑 Password</label>
+      <p style="font-size:.78rem;color:var(--muted);margin:.2rem 0 .7rem">See your current password, or set a new one.</p>
+      <div class="fg"><label>New password</label><div class="pw-field"><input id="mp-new" type="password" placeholder="At least 8 characters"/><button type="button" class="pw-eye" onclick="togglePw('mp-new',this)" title="Show password">👁</button></div></div>
+      <div class="fg"><label>Confirm new password</label><div class="pw-field"><input id="mp-confirm" type="password" placeholder="Re-type new password"/><button type="button" class="pw-eye" onclick="togglePw('mp-confirm',this)" title="Show password">👁</button></div></div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center"><button type="button" class="btn btn-gold btn-sm" id="mp-save" onclick="changeMyPassword()">Update password</button><button type="button" class="btn btn-ghost btn-sm" onclick="revealMyPassword('mp-current-view',this)">👁 Show my current password</button></div>
+      <div id="mp-current-view" style="font-size:.82rem;color:var(--muted);margin-top:.6rem;font-family:var(--ff-m)"></div>
+    </div>
   </div>
 </div>
 
