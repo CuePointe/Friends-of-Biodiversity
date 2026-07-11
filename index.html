@@ -745,7 +745,9 @@
         <select id="pf-tier"><option value="">Not linked — show in gallery only</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
       </div>
       <div class="fg"><label>Short story</label><textarea id="pf-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One line on why it matters."></textarea></div>
-      <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*" onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>Upload photo</b><span class="pd-hint">PNG or JPG · tap to choose</span></label>
+      <div class="fg"><label>Image filename in your repo — the simplest way</label><input id="pf-imgurl" placeholder="e.g. gorilla.jpg  (drop the file in your GitHub repo, then type its exact name here)"/></div>
+      <p style="font-size:.78rem;color:var(--muted);margin:-.4rem 0 .8rem">Drop the photo into your repo like a slide, type its filename above, and Save — it shows instantly. You can also paste a full image URL. (The upload button below is optional.)</p>
+      <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*,video/*" onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>…or upload a photo / short video</b><span class="pd-hint">Optional — tap to choose a file from this device.</span></label>
       <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text);margin-bottom:1rem"><input type="checkbox" id="pf-active" checked/> Show on the public page</label>
       <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="pf-save" onclick="saveProtectItem()">Add to gallery</button><button class="btn btn-ghost" onclick="resetProtectForm()">Clear</button></div>
     </div>
@@ -957,7 +959,7 @@
     <button class="modal-close" onclick="closeModal('m-admin-login')">✕</button>
     <h2>Admin Sign In</h2>
     <div class="admin-note">🔒 Restricted to verified UBF work email accounts (@ugandabiodiversityfund.org)</div>
-    <p class="msub">Enter your UBF admin credentials. You can change your password anytime under <strong>My Password</strong>. Forgot it? Contact the Executive Director.</p>
+    <p class="msub">Enter your UBF admin credentials. You can change your password anytime under <strong>My Password</strong>.</p>
     <div class="fg"><label>UBF Email</label><input id="al-email" type="email" placeholder="i.amani@ugandabiodiversityfund.org"/></div>
     <div class="fg"><label>Password</label><div class="pw-field"><input id="al-pass" type="password" placeholder="Admin password"/><button type="button" class="pw-eye" onclick="togglePw('al-pass',this)" title="Show password">👁</button></div></div>
     <button class="btn btn-canopy btn-full" onclick="doAdminLogin()">Sign In as Admin</button>
@@ -1184,12 +1186,20 @@
 </div>
 
 <!-- CREATE / EDIT POST MODAL -->
+<div class="overlay" id="m-postview">
+  <div class="modal" style="max-width:600px;padding:0;overflow:hidden">
+    <button class="modal-close" onclick="closePostModal()" style="z-index:5">✕</button>
+    <div id="open-post-body" style="max-height:82vh;overflow-y:auto"></div>
+  </div>
+</div>
+
 <div class="overlay" id="m-create-post">
   <div class="modal" style="max-width:600px">
     <button class="modal-close" onclick="closeModal('m-create-post')">✕</button>
     <h2 id="post-modal-title">Create a Post</h2>
     <p class="msub">Share thoughts, updates, or conservation stories with the UBF community. Maximum 400 words. Posts appear instantly and are visible to all members.</p>
     <input type="hidden" id="post-edit-id"/>
+    <div class="fg"><label>Headline <span style="color:var(--muted);font-weight:400">(optional — a short title for the digest)</span></label><input id="post-title" maxlength="90" placeholder="e.g. 2,000 seedlings planted at Nkuringo this month"/></div>
     <div class="fg"><label>What's on your mind? *</label><textarea id="post-body" class="post-body-lg" rows="8" placeholder="Share your conservation story, project update, or community experience..."></textarea></div>
     <div class="composer-tools">
       <span class="composer-tools-label">Add to your post</span>
