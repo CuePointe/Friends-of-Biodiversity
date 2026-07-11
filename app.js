@@ -355,6 +355,7 @@ function fillProtectForm(p){
   if(g('pf-status'))g('pf-status').value=p.status||'';
   if(g('pf-blurb'))g('pf-blurb').value=p.blurb||'';
   if(g('pf-region'))g('pf-region').value=p.region||'';
+  if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(p.image_url||'');
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
@@ -373,6 +374,11 @@ async function saveProtectItem(){
   let media_type=cur?(cur.media_type||'image'):'image';
   const up=await _uploadPayAsset('pf-img','protect');
   if(up){ if(up.type==='video'){video_url=up.url;media_type='video';} else {image_url=up.url;media_type='image';} }
+  else {
+    // Simplest path: a repo image filename (or pasted URL) typed by the admin
+    const typed=(document.getElementById('pf-imgurl')?document.getElementById('pf-imgurl').value.trim():'');
+    if(typed){image_url=typed;media_type='image';}
+  }
   const row={kind:document.getElementById('pf-kind').value,name,image_url,video_url,media_type,
     status:(document.getElementById('pf-status').value||'').trim(),
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
@@ -1266,6 +1272,7 @@ function buildNotifications(){
 function openNotifItem(kind,id){
   closeModal('m-notifications');
   if(kind==='member'){viewMemberProfile(id);return}
+  if(kind==='post'){showView('member');openPostModal(id);return}
   const dest={
     content:{view:'main',target:'card-'+id,fallback:'learn'},
     post:{view:'main',target:'post-'+id,fallback:'community-feed-wrap'},
@@ -2616,14 +2623,57 @@ function _postsArchiveToggle(){
   if(!older.length)return '';
   return '<button class="archive-toggle" onclick="_showAll.posts=!_showAll.posts;renderPosts()">'+(_showAll.posts?'↑ Hide older posts':'View earlier posts ('+older.length+') →')+'</button>';
 }
-function renderPosts(filter){
-  currentPostFilter=filter||currentPostFilter;
-  const el=document.getElementById('posts-feed');if(!el)return;
-  const items=POSTS.filter(p=>_showAll.posts||!_isArchived(p));
-
-  // LinkedIn-style "Start a post" bar at top
-  const promptHtml=currentUser?
-    '<div class="post-prompt" onclick="openModal(\'m-create-post\')">'+
+/* ═══ COMMUNITY — digest/feed views, sort, pin, open-post modal ═══ */
+const POST_EMOJIS=[
+  {key:'likes',emoji:'❤️',label:'Love'},
+  {key:'thumbsup',emoji:'👍',label:'Like'},
+  {key:'support',emoji:'🤝',label:'Support'},
+  {key:'wow',emoji:'😮',label:'Wow'},
+  {key:'celebrate',emoji:'🎉',label:'Celebrate'},
+];
+let _postView=LS.get('post_view','digest'); // 'digest' | 'feed'
+let _postSort='new';                         // 'new' | 'top' | 'discussed'
+let _openPostId=null;
+function setPostView(v){_postView=v;LS.set('post_view',v);renderPosts();}
+function setPostSort(v){_postSort=v;renderPosts();}
+function _reactTotal(p){return Object.values(p.reactions||{}).reduce((a,b)=>a+(b||0),0);}
+function _timeAgo(ts){if(!ts)return '';const d=(Date.now()-new Date(ts).getTime())/1000;if(isNaN(d))return String(ts).slice(0,10);if(d<3600)return Math.max(1,Math.round(d/60))+'m';if(d<86400)return Math.round(d/3600)+'h';if(d<604800)return Math.round(d/86400)+'d';return String(ts).slice(0,10);}
+function _avatarColor(seed){const c=['#8A6E1E','#2E7D9A','#2D6A4F','#B5451B','#5b5cc4','#0f766e'];seed=String(seed||'');let h=0;for(let i=0;i<seed.length;i++)h=(h*31+seed.charCodeAt(i))>>>0;return c[h%c.length];}
+function postTitle(p){
+  if(p.title&&p.title.trim())return p.title.trim();
+  const b=(p.body||'').trim();
+  if(!b)return p.image_url?'📷 Photo':p.video_url?'🎬 Video':p.doc_url?('📄 '+(p.doc_name||'Document')):'Post';
+  const first=b.split('\n')[0];
+  return first.length>90?first.slice(0,90)+'…':first;
+}
+function postSnippet(p){
+  const b=(p.body||'').trim();
+  if(p.title&&p.title.trim())return b.slice(0,140);
+  return b.split('\n').slice(1).join(' ').slice(0,140);
+}
+function _sortPosts(list){
+  const arr=list.slice();
+  if(_postSort==='top')arr.sort((a,b)=>_reactTotal(b)-_reactTotal(a));
+  else if(_postSort==='discussed')arr.sort((a,b)=>((b.comments||[]).length)-((a.comments||[]).length));
+  else arr.sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||'')));
+  arr.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)); // pinned float to top (stable sort keeps order)
+  return arr;
+}
+function _postsHeader(count){
+  const opt={new:'🕐 Newest',top:'🔥 Top',discussed:'💬 Most discussed'};
+  return '<div class="feed-head">'+
+    '<div class="feed-title">🌿 Community <span class="fh-n">'+count+' post'+(count!==1?'s':'')+'</span></div>'+
+    '<div class="feed-ctrls">'+
+      '<select class="feed-sort" onchange="setPostSort(this.value)">'+
+        ['new','top','discussed'].map(v=>'<option value="'+v+'"'+(_postSort===v?' selected':'')+'>'+opt[v]+'</option>').join('')+
+      '</select>'+
+      '<div class="feed-seg"><button class="'+(_postView==='digest'?'on':'')+'" onclick="setPostView(\'digest\')">☰ Digest</button><button class="'+(_postView==='feed'?'on':'')+'" onclick="setPostView(\'feed\')">▦ Feed</button></div>'+
+    '</div>'+
+  '</div>';
+}
+function _postStarter(){
+  if(!currentUser)return '';
+  return '<div class="post-prompt" onclick="openModal(\'m-create-post\')">'+
       '<div class="post-prompt-avatar">'+
         (currentUser.photo_url
           ?'<img src="'+currentUser.photo_url+'" style="width:40px;height:40px;border-radius:50%;object-fit:cover"/>'
@@ -2635,90 +2685,134 @@ function renderPosts(filter){
       '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">📷 Photo</button>'+
       '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">🎬 Video</button>'+
       '<button class="post-prompt-btn" onclick="openModal(\'m-create-post\')">✍ Write</button>'+
-    '</div>'
-    :'';
-
-  if(!items.length){
-    el.innerHTML=promptHtml+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
-    return;
-  }
-  const myReacts=LS.get('post_reacts',{});
-  const POST_EMOJIS=[
-    {key:'likes',emoji:'❤️',label:'Love'},
-    {key:'thumbsup',emoji:'👍',label:'Like'},
-    {key:'support',emoji:'🤝',label:'Support'},
-    {key:'wow',emoji:'😮',label:'Wow'},
-    {key:'celebrate',emoji:'🎉',label:'Celebrate'},
-  ];
-  el.innerHTML=promptHtml+items.map(p=>{
-    const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
-    // Find author's photo from loaded members
-    const authorMember=MEMBERS.find(m=>m.id===p.author_id);
-    const authorPhoto=authorMember&&authorMember.photo_url;
-    const avatarHtml=authorPhoto
-      ?'<img src="'+authorPhoto+'" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,168,75,.3)"/>'
-      :'<div class="post-avatar">'+initials+'</div>';
-    const isOwner=currentUser&&currentUser.id===p.author_id;
-    const isAdmin=currentUser&&currentUser.role==='admin';
-    const pComments=p.comments||[];
-    const commentCount=pComments.length;
-    const totalReacts=Object.values(p.reactions||{}).reduce((a,b)=>a+(b||0),0);
-    return '<div class="post-card" id="post-'+p.id+'">'+
-      '<div class="post-header">'+
-        avatarHtml+
-        '<div class="post-meta">'+
-          '<div class="post-author" onclick="viewMemberProfile(\''+p.author_id+'\')" style="cursor:pointer">'+p.author_name+'</div>'+
-          '<div class="post-tier">'+td.emoji+' '+td.label+' · '+(p.created_at||'').slice(0,10)+'</div>'+
-        '</div>'+
-        (isOwner||isAdmin?
-          '<div class="post-menu-wrap">'+
-            '<button class="post-menu-btn" onclick="togglePostMenu(\'menu-'+p.id+'\')">⋯</button>'+
-            '<div class="post-menu" id="menu-'+p.id+'" style="display:none">'+
-              (isOwner?'<button onclick="editPost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'">✏ Edit</button>':'')+
-              '<button onclick="deletePost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'" style="color:var(--rust)">'+(isAdmin&&!isOwner?'🚫 Remove':'🗑 Delete')+'</button>'+
-            '</div>'+
-          '</div>'
-        :'')+
-      '</div>'+
-      (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
-      (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image" onclick="openImageFull(\''+p.image_url+'\')"/>':'')+
-      (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline preload="metadata"></video></div>':'')+
-      (p.doc_url?'<a class="post-doc" href="'+esc(p.doc_url)+'" target="_blank" rel="noopener"><span class="post-doc-ico">📄</span><span class="post-doc-meta"><span class="post-doc-name">'+esc(p.doc_name||'Document')+'</span><span class="post-doc-sub">Tap to open · PDF / document</span></span><span class="post-doc-dl">⬇</span></a>':'')+
-      (totalReacts>0?'<div class="post-react-summary">'+POST_EMOJIS.filter(r=>(p.reactions[r.key]||0)>0).map(r=>r.emoji+' '+p.reactions[r.key]).join('  ')+'<span style="margin-left:auto">'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>':'<div class="post-react-summary"><span>'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>')+
-      '<div class="post-reactions">'+
-        POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' '+r.label+'</button>').join('')+
-        '<button class="post-react-btn comment-btn" onclick="focusPostComment(\'pci-'+p.id+'\')">💬 Comment</button>'+
-      '</div>'+
-      '<div class="post-comments-wrap" id="pcomments-'+p.id+'">'+
-        (pComments.length?pComments.map(c=>{
-          const cM=MEMBERS.find(m=>m.id===c.author_id);
-          const cP=cM&&cM.photo_url;
-          const cI=(c.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-          const cTd=TIERS_DATA[c.author_tier]||TIERS_DATA.silver;
-          const canDel=currentUser&&(currentUser.id===c.author_id||currentUser.role==='admin');
-          return '<div class="post-comment" id="pcomment-'+c.id+'">'+
-            '<div class="pc-avatar">'+(cP?'<img src="'+cP+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':cI)+'</div>'+
-            '<div class="pc-bubble">'+
-              '<span class="pc-name">'+c.author_name+' <span class="pc-tier">'+cTd.emoji+'</span></span>'+
-              '<div class="pc-text">'+escHtml(c.body)+'</div>'+
-              '<div class="pc-time">'+(c.created_at||'').slice(0,16).replace('T',' ')+'</div>'+
-            '</div>'+
-            (canDel?'<button class="pc-del" onclick="deletePostComment(\''+c.id+'\',\''+p.id+'\')">✕</button>':'')+
-          '</div>';
-        }).join(''):'<div class="pc-empty">No comments yet — be the first!</div>')+
-        (currentUser?
-          '<div class="post-comment-input-wrap">'+
-            '<div class="pc-avatar">'+(currentUser.photo_url?'<img src="'+currentUser.photo_url+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase())+'</div>'+
-            '<div class="pc-input-row">'+
-              '<input id="pci-'+p.id+'" class="pc-input" placeholder="Write a comment..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitPostComment(\''+p.id+'\')}" />'+
-              '<button class="pc-send" onclick="submitPostComment(\''+p.id+'\')">➤</button>'+
-            '</div>'+
-          '</div>'
-        :'<p style="font-size:.78rem;color:var(--muted);padding:.6rem 1.25rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment</p>')+
-      '</div>'+
     '</div>';
-  }).join('')+_postsArchiveToggle();
+}
+function postDigestRowHTML(p){
+  const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
+  const am=MEMBERS.find(m=>m.id===p.author_id);
+  const photo=am&&am.photo_url;
+  const av=photo?'<img class="dg-av" src="'+photo+'" alt=""/>':'<div class="dg-av dg-init" style="background:'+_avatarColor(p.author_id)+'">'+initials+'</div>';
+  const cc=(p.comments||[]).length,rc=_reactTotal(p);
+  const thumb=p.image_url?'<img class="dg-thumb" src="'+esc(p.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':(p.video_url?'<div class="dg-thumb dg-vid">🎬</div>':'');
+  const snip=postSnippet(p);
+  return '<div class="dg-row" onclick="openPostModal(\''+p.id+'\')">'+
+    av+
+    '<div class="dg-main">'+
+      '<div class="dg-title">'+(p.pinned?'<span class="dg-pin">📌 Pinned</span>':'')+escHtml(postTitle(p))+'</div>'+
+      '<div class="dg-meta"><span class="dg-who">'+esc(p.author_name||'Member')+'</span> <span class="dg-tierb">'+td.emoji+' '+td.label+'</span> <span class="dg-dot">·</span> '+_timeAgo(p.created_at)+'</div>'+
+      (snip?'<div class="dg-snip">'+escHtml(snip)+'</div>':'')+
+    '</div>'+
+    '<div class="dg-side">'+thumb+'<div class="dg-counts">💬 '+cc+' &nbsp; ❤ '+rc+'</div><span class="dg-chev">›</span></div>'+
+  '</div>';
+}
+function postCardHTML(p){
+  const myReacts=LS.get('post_reacts',{});
+  const initials=(p.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const td=TIERS_DATA[p.author_tier]||TIERS_DATA.silver;
+  const authorMember=MEMBERS.find(m=>m.id===p.author_id);
+  const authorPhoto=authorMember&&authorMember.photo_url;
+  const avatarHtml=authorPhoto
+    ?'<img src="'+authorPhoto+'" style="width:42px;height:42px;border-radius:50%;object-fit:cover;border:2px solid rgba(200,168,75,.3)"/>'
+    :'<div class="post-avatar">'+initials+'</div>';
+  const isOwner=currentUser&&currentUser.id===p.author_id;
+  const isAdmin=currentUser&&currentUser.role==='admin';
+  const pComments=p.comments||[];
+  const commentCount=pComments.length;
+  const totalReacts=_reactTotal(p);
+  return '<div class="post-card" id="post-'+p.id+'">'+
+    '<div class="post-header">'+
+      avatarHtml+
+      '<div class="post-meta">'+
+        '<div class="post-author" onclick="viewMemberProfile(\''+p.author_id+'\')" style="cursor:pointer">'+p.author_name+(p.pinned?' <span class="post-pin-tag">📌 Pinned</span>':'')+'</div>'+
+        '<div class="post-tier">'+td.emoji+' '+td.label+' · '+(p.created_at||'').slice(0,10)+'</div>'+
+      '</div>'+
+      (isOwner||isAdmin?
+        '<div class="post-menu-wrap">'+
+          '<button class="post-menu-btn" onclick="togglePostMenu(\'menu-'+p.id+'\')">⋯</button>'+
+          '<div class="post-menu" id="menu-'+p.id+'" style="display:none">'+
+            (isAdmin?'<button onclick="togglePin(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'">'+(p.pinned?'📌 Unpin':'📌 Pin to top')+'</button>':'')+
+            (isOwner?'<button onclick="editPost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'">✏ Edit</button>':'')+
+            '<button onclick="deletePost(\''+p.id+'\');document.getElementById(\'menu-'+p.id+'\').style.display=\'none\'" style="color:var(--rust)">'+(isAdmin&&!isOwner?'🚫 Remove':'🗑 Delete')+'</button>'+
+          '</div>'+
+        '</div>'
+      :'')+
+    '</div>'+
+    (p.title&&p.title.trim()?'<div class="post-title-h">'+escHtml(p.title.trim())+'</div>':'')+
+    (p.body?'<div class="post-body">'+escHtml(p.body)+'</div>':'')+
+    (p.image_url?'<img src="'+p.image_url+'" class="post-image" alt="Post image" onclick="openImageFull(\''+p.image_url+'\')"/>':'')+
+    (p.video_url?'<div class="post-video-wrap"><video src="'+p.video_url+'" controls playsinline preload="metadata"></video></div>':'')+
+    (p.doc_url?'<a class="post-doc" href="'+esc(p.doc_url)+'" target="_blank" rel="noopener"><span class="post-doc-ico">📄</span><span class="post-doc-meta"><span class="post-doc-name">'+esc(p.doc_name||'Document')+'</span><span class="post-doc-sub">Tap to open · PDF / document</span></span><span class="post-doc-dl">⬇</span></a>':'')+
+    (totalReacts>0?'<div class="post-react-summary">'+POST_EMOJIS.filter(r=>(p.reactions[r.key]||0)>0).map(r=>r.emoji+' '+p.reactions[r.key]).join('  ')+'<span style="margin-left:auto">'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>':'<div class="post-react-summary"><span>'+commentCount+' comment'+(commentCount!==1?'s':'')+'</span></div>')+
+    '<div class="post-reactions">'+
+      POST_EMOJIS.map(r=>'<button class="post-react-btn'+(myReacts[p.id]===r.key?' active':'')+'" onclick="reactToPost(\''+p.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' '+r.label+'</button>').join('')+
+      '<button class="post-react-btn comment-btn" onclick="focusPostComment(\'pci-'+p.id+'\')">💬 Comment</button>'+
+    '</div>'+
+    '<div class="post-comments-wrap" id="pcomments-'+p.id+'">'+
+      (pComments.length?pComments.map(c=>{
+        const cM=MEMBERS.find(m=>m.id===c.author_id);
+        const cP=cM&&cM.photo_url;
+        const cI=(c.author_name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+        const cTd=TIERS_DATA[c.author_tier]||TIERS_DATA.silver;
+        const canDel=currentUser&&(currentUser.id===c.author_id||currentUser.role==='admin');
+        return '<div class="post-comment" id="pcomment-'+c.id+'">'+
+          '<div class="pc-avatar">'+(cP?'<img src="'+cP+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':cI)+'</div>'+
+          '<div class="pc-bubble">'+
+            '<span class="pc-name">'+c.author_name+' <span class="pc-tier">'+cTd.emoji+'</span></span>'+
+            '<div class="pc-text">'+escHtml(c.body)+'</div>'+
+            '<div class="pc-time">'+(c.created_at||'').slice(0,16).replace('T',' ')+'</div>'+
+          '</div>'+
+          (canDel?'<button class="pc-del" onclick="deletePostComment(\''+c.id+'\',\''+p.id+'\')">✕</button>':'')+
+        '</div>';
+      }).join(''):'<div class="pc-empty">No comments yet — be the first!</div>')+
+      (currentUser?
+        '<div class="post-comment-input-wrap">'+
+          '<div class="pc-avatar">'+(currentUser.photo_url?'<img src="'+currentUser.photo_url+'" style="width:32px;height:32px;border-radius:50%;object-fit:cover"/>':currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase())+'</div>'+
+          '<div class="pc-input-row">'+
+            '<input id="pci-'+p.id+'" class="pc-input" placeholder="Write a comment..." onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();submitPostComment(\''+p.id+'\')}" />'+
+            '<button class="pc-send" onclick="submitPostComment(\''+p.id+'\')">➤</button>'+
+          '</div>'+
+        '</div>'
+      :'<p style="font-size:.78rem;color:var(--muted);padding:.6rem 1.25rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment</p>')+
+    '</div>'+
+  '</div>';
+}
+function openPostModal(id){
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  _openPostId=id;
+  const b=document.getElementById('open-post-body');if(b)b.innerHTML=postCardHTML(p);
+  openModal('m-postview');
+}
+function closePostModal(){_openPostId=null;closeModal('m-postview');}
+function refreshOpenPostModal(){
+  if(!_openPostId)return;
+  const p=POSTS.find(x=>x.id===_openPostId);
+  const b=document.getElementById('open-post-body');
+  if(p&&b)b.innerHTML=postCardHTML(p);
+  else if(!p){_openPostId=null;closeModal('m-postview');}
+}
+async function togglePin(id){
+  const p=POSTS.find(x=>x.id===id);if(!p)return;
+  const {error}=await sb.from('member_posts').update({pinned:!p.pinned}).eq('id',id);
+  if(error){toast('⚠ Could not update.');console.error(error);return}
+  await loadPosts();renderPosts();toast(p.pinned?'Unpinned.':'📌 Pinned to top.');
+}
+function renderPosts(filter){
+  currentPostFilter=filter||currentPostFilter;
+  const el=document.getElementById('posts-feed');if(!el)return;
+  let items=POSTS.filter(p=>_showAll.posts||!_isArchived(p));
+  items=_sortPosts(items);
+  const header=_postsHeader(items.length);
+  const starter=_postStarter();
+  if(!items.length){
+    el.innerHTML=header+starter+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    refreshOpenPostModal();return;
+  }
+  const body=_postView==='feed'
+    ? items.map(postCardHTML).join('')
+    : '<div class="digest-list">'+items.map(postDigestRowHTML).join('')+'</div>';
+  el.innerHTML=header+starter+body+_postsArchiveToggle();
+  refreshOpenPostModal();
 }
 
 function escHtml(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
@@ -2835,6 +2929,8 @@ document.addEventListener('input',e=>{
 async function submitPost(){
   if(!currentUser){toast('Sign in to post.');return}
   const body=document.getElementById('post-body').value.trim();
+  const titleEl=document.getElementById('post-title');
+  const title=titleEl?titleEl.value.trim().slice(0,90):'';
   const editId=document.getElementById('post-edit-id').value;
   if(!body&&!postImageData&&!postVideoFile&&!postDocFile){toast('⚠ Write something or attach a photo, video, or document.');return}
   const words=body.split(/\s+/).filter(Boolean).length;
@@ -2869,7 +2965,7 @@ async function submitPost(){
   }
 
   if(editId){
-    const updates={body};
+    const updates={body,title:title||null};
     if(imageUrl)updates.image_url=imageUrl;
     if(videoUrl)updates.video_url=videoUrl;
     if(docUrl){updates.doc_url=docUrl;updates.doc_name=docName;}
@@ -2882,6 +2978,7 @@ async function submitPost(){
       author_name:currentUser.name,
       author_tier:currentUser.tier||'silver',
       body,
+      title:title||null,
       image_url:imageUrl||null,
       video_url:videoUrl||null,
       doc_url:docUrl||null,
@@ -2895,6 +2992,7 @@ async function submitPost(){
 
   // Reset form
   document.getElementById('post-body').value='';
+  {const pt=document.getElementById('post-title');if(pt)pt.value='';}
   document.getElementById('post-img-prev').innerHTML='';
   document.getElementById('post-vid-prev').innerHTML='';
   const dp=document.getElementById('post-doc-prev');if(dp)dp.innerHTML='';
@@ -2913,6 +3011,7 @@ function editPost(id){
   if(currentUser.id!==p.author_id&&currentUser.role!=='admin'){toast('You can only edit your own posts.');return}
   document.getElementById('post-edit-id').value=id;
   document.getElementById('post-modal-title').textContent='Edit Post';
+  {const pt=document.getElementById('post-title');if(pt)pt.value=p.title||'';}
   document.getElementById('post-body').value=p.body||'';
   document.getElementById('post-img-prev').innerHTML='';
   document.getElementById('post-vid-prev').innerHTML='';
