@@ -1311,5 +1311,22 @@
   </div>
 </div>
 
+<!-- ═══ APP SHELL — fixed bottom tabs (members) + compose FAB ═══ -->
+<button id="app-fab" onclick="openModal('m-create-post')" aria-label="Create a post">+</button>
+<nav id="app-tabbar" aria-label="Primary">
+  <button class="app-tab" data-tab="home" onclick="appNav('home')"><span class="ic">🏠</span><span>Home</span></button>
+  <button class="app-tab" data-tab="learn" onclick="appNav('learn')"><span class="ic">🎓</span><span>Learn</span></button>
+  <button class="app-tab" data-tab="card" onclick="appNav('card')"><span class="ic">🪪</span><span>Card</span></button>
+  <button class="app-tab" data-tab="alerts" onclick="appNav('alerts')"><span class="ic">🔔</span><span>Alerts</span><span class="app-tab-dot" id="app-tab-dot" style="display:none"></span></button>
+  <button class="app-tab" data-tab="profile" onclick="appNav('profile')"><span class="ic">👤</span><span>Profile</span></button>
+</nav>
+
+<!-- install-to-home nudge -->
+<div id="app-install" style="display:none">
+  <span>📲 Install Friends of Biodiversity as an app</span>
+  <button onclick="promptInstall()">Install</button>
+  <button class="x" onclick="dismissInstall()" aria-label="Dismiss">✕</button>
+</div>
+
 </body>
 </html>

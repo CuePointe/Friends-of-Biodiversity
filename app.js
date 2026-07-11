@@ -451,7 +451,7 @@ function renderProtectAdmin(){
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
-  showLoadingToast();
+  showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
   await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
@@ -559,6 +559,34 @@ function showView(v){
   window.scrollTo(0,0);
   if(v==='member')renderMemberView();
   if(v==='admin')renderAdminAll();
+}
+
+/* ═══ APP SHELL — bottom-tab navigation for signed-in members ═══ */
+let _appTab='home';
+function appNav(tab){
+  _appTab=tab;
+  document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
+  const scrollTo=(id)=>setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},140);
+  if(tab==='home'){showView('main');scrollTo('community-feed-wrap');}
+  else if(tab==='learn'){showView('main');scrollTo('learn');}
+  else if(tab==='card'){openCertModal();}
+  else if(tab==='alerts'){openNotifications();}
+  else if(tab==='profile'){showView('member');window.scrollTo({top:0,behavior:'smooth'});}
+}
+/* PWA install nudge */
+let _deferredInstall=null;
+window.addEventListener('beforeinstallprompt',function(e){
+  e.preventDefault();_deferredInstall=e;
+  if(!localStorage.getItem('install_dismissed')){const el=document.getElementById('app-install');if(el)el.style.display='flex';}
+});
+function promptInstall(){if(_deferredInstall){_deferredInstall.prompt();_deferredInstall=null;}dismissInstall();}
+function dismissInstall(){const el=document.getElementById('app-install');if(el)el.style.display='none';localStorage.setItem('install_dismissed','1');}
+/* Skeleton placeholders while first data loads (app-like perceived speed) */
+function showSkeletons(){
+  const skRow='<div class="sk-row"><div class="sk-c"></div><div class="sk-l"><div class="sk-bar" style="width:75%"></div><div class="sk-bar sk-sm" style="width:40%"></div><div class="sk-bar sk-sm" style="width:60%"></div></div></div>';
+  const f=document.getElementById('posts-feed');if(f&&!f.children.length)f.innerHTML=skRow+skRow+skRow;
+  const skCard='<div class="sk-card"><div class="sk-thumb"></div><div class="sk-bar" style="width:80%"></div><div class="sk-bar sk-sm" style="width:55%"></div></div>';
+  const c=document.getElementById('content-grid');if(c&&!c.children.length)c.innerHTML=skCard+skCard+skCard;
 }
 
 /* ═══ MODALS ═══ */
@@ -682,6 +710,9 @@ function updateNav(){
   document.getElementById('mob-adm').style.display=adm?'':'none';
   document.getElementById('upload-btn-slot').style.display=adm?'':'none';
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
+  // App shell: show bottom tabs + compose FAB only for signed-in members
+  const memberMode=in_&&!adm;
+  document.body.classList.toggle('has-tabbar',memberMode);
   renderContent();
   renderPosts();
   updatePostCreateBtn();
@@ -1290,10 +1321,12 @@ function openNotifItem(kind,id){
 }
 function _notifId(i){return (i.date||'')+'|'+(i.text||'')}
 function updateNotifBadge(){
-  const badge=document.getElementById('notif-badge');if(!badge)return;
   const items=buildNotifications();const last=LS.get('notif_last','');
   let n=0;for(const i of items){if(_notifId(i)===last)break;n++;}
-  if(n>0){badge.textContent=n>9?'9+':String(n);badge.style.display='flex';}else{badge.style.display='none';}
+  const badge=document.getElementById('notif-badge');
+  if(badge){if(n>0){badge.textContent=n>9?'9+':String(n);badge.style.display='flex';}else{badge.style.display='none';}}
+  const dot=document.getElementById('app-tab-dot');
+  if(dot)dot.style.display=n>0?'block':'none';
 }
 function renderNotifications(){
   const el=document.getElementById('notif-list');if(!el)return;
@@ -3053,12 +3086,13 @@ async function reactToPost(id,key,btn){
     reactions[key]=(reactions[key]||0)+1;
     myReacts[id]=key;
   }
+  // Optimistic UI: update in-memory + repaint instantly, then sync in the background
   p.reactions=reactions;
   LS.set('post_reacts',myReacts);
-  await sb.from('member_posts').update({reactions}).eq('id',id);
-  // Re-render just this post card to update reaction counts and states
-  await loadPosts();
   renderPosts();
+  refreshOpenPostModal();
+  const {error}=await sb.from('member_posts').update({reactions}).eq('id',id);
+  if(error){console.error('react sync',error);toast('⚠ Reaction not saved — check your connection.');}
 }
 
 function filterAdminPosts(f){renderAdminPosts(f)}

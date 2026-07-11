@@ -329,6 +329,29 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .dg-chev{color:#b7c1b7;font-size:1.1rem;line-height:1}
 .post-title-h{font-family:var(--ff-d);font-size:1.15rem;font-weight:700;color:var(--canopy);padding:0 1.25rem;margin:.2rem 0 .4rem;line-height:1.3}
 .post-pin-tag{font-size:.6rem;background:var(--gold);color:var(--canopy);border-radius:4px;padding:.05rem .35rem;font-weight:800;vertical-align:middle}
+/* ── APP SHELL: bottom tabs, compose FAB, install nudge, skeletons ── */
+#app-tabbar{display:none}
+body.has-tabbar #app-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:800;background:#fff;border-top:1px solid var(--border);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
+.app-tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.62rem;color:var(--muted);font-weight:600;cursor:pointer;padding:4px 0;position:relative;transition:color .15s}
+.app-tab .ic{font-size:1.3rem;line-height:1}
+.app-tab.on{color:var(--canopy)}
+.app-tab-dot{position:absolute;top:1px;right:calc(50% - 17px);width:8px;height:8px;background:var(--rust);border-radius:50%;border:1.5px solid #fff}
+#app-fab{display:none}
+body.has-tabbar #app-fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:801;width:54px;height:54px;border-radius:50%;background:var(--gold);color:var(--canopy);border:none;font-size:1.9rem;line-height:1;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);cursor:pointer}
+body.has-tabbar{padding-bottom:66px}
+#app-install{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:802;background:var(--canopy);color:#fff;border-radius:14px;padding:.7rem .9rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;box-shadow:0 16px 40px -14px rgba(0,0,0,.5)}
+#app-install span{flex:1}
+#app-install button{background:var(--gold);color:var(--canopy);border:none;border-radius:8px;padding:.4rem .8rem;font-weight:700;font-size:.82rem;cursor:pointer}
+#app-install button.x{background:transparent;color:rgba(255,255,255,.7);padding:.4rem;font-size:.9rem}
+@keyframes sk-shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+.sk-bar,.sk-c,.sk-thumb{background:#e9ede9;background-image:linear-gradient(90deg,#e9ede9 0,#f4f7f3 60px,#e9ede9 120px);background-size:200px 100%;animation:sk-shimmer 1.2s infinite linear;border-radius:7px}
+.sk-row{display:flex;gap:11px;background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px;margin-bottom:10px}
+.sk-c{width:40px;height:40px;border-radius:50%;flex:none}
+.sk-l{flex:1;display:flex;flex-direction:column;gap:8px}
+.sk-bar{height:12px}.sk-bar.sk-sm{height:9px}
+.sk-card{background:#fff;border:1px solid var(--border);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.sk-thumb{width:100%;height:120px;border-radius:10px}
+@media(prefers-reduced-motion:reduce){.sk-bar,.sk-c,.sk-thumb{animation:none}}
 
 /* LEARNING EXCHANGE */
 #learn{background:var(--mist)}
