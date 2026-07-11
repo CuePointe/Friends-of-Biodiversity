@@ -330,15 +330,26 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .post-title-h{font-family:var(--ff-d);font-size:1.15rem;font-weight:700;color:var(--canopy);padding:0 1.25rem;margin:.2rem 0 .4rem;line-height:1.3}
 .post-pin-tag{font-size:.6rem;background:var(--gold);color:var(--canopy);border-radius:4px;padding:.05rem .35rem;font-weight:800;vertical-align:middle}
 /* ── APP SHELL: bottom tabs, compose FAB, install nudge, skeletons ── */
-#app-tabbar{display:none}
-body.has-tabbar #app-tabbar{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:800;background:#fff;border-top:1px solid var(--border);padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -6px 20px -12px rgba(0,0,0,.25)}
+/* App shell: bottom tab nav for signed-in members — on BOTH mobile and desktop.
+   Full-width on phones; a centered floating bar on wide screens so it reads as
+   an app nav, not a stretched website footer. */
+#app-tabbar,#app-fab{display:none}
+#app-tabbar{position:fixed;left:0;right:0;bottom:0;margin:0 auto;max-width:560px;z-index:800;background:#fff;border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:6px 4px calc(6px + env(safe-area-inset-bottom,0px));box-shadow:0 -8px 30px -14px rgba(0,0,0,.35)}
 .app-tab{flex:1;background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.62rem;color:var(--muted);font-weight:600;cursor:pointer;padding:4px 0;position:relative;transition:color .15s}
 .app-tab .ic{font-size:1.3rem;line-height:1}
 .app-tab.on{color:var(--canopy)}
+.app-tab:hover{color:var(--canopy-lt)}
 .app-tab-dot{position:absolute;top:1px;right:calc(50% - 17px);width:8px;height:8px;background:var(--rust);border-radius:50%;border:1.5px solid #fff}
-#app-fab{display:none}
-body.has-tabbar #app-fab{display:grid;place-items:center;position:fixed;right:16px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:801;width:54px;height:54px;border-radius:50%;background:var(--gold);color:var(--canopy);border:none;font-size:1.9rem;line-height:1;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);cursor:pointer}
-body.has-tabbar{padding-bottom:66px}
+#app-fab{place-items:center;position:fixed;right:16px;bottom:calc(66px + env(safe-area-inset-bottom,0px));z-index:801;width:54px;height:54px;border-radius:50%;background:var(--gold);color:var(--canopy);border:none;font-size:1.9rem;line-height:1;box-shadow:0 10px 24px -8px rgba(0,0,0,.45);cursor:pointer}
+body.has-tabbar #app-tabbar{display:flex}
+body.has-tabbar #app-fab{display:grid}
+body.has-tabbar{padding-bottom:72px}
+@media(min-width:861px){
+  /* floating centered pill on desktop */
+  #app-tabbar{bottom:18px;border-radius:20px;border:1px solid var(--border)}
+  body.has-tabbar #app-fab{right:calc(50% - 300px)}
+  body.has-tabbar{padding-bottom:104px}
+}
 #app-install{position:fixed;left:12px;right:12px;bottom:calc(72px + env(safe-area-inset-bottom,0px));z-index:802;background:var(--canopy);color:#fff;border-radius:14px;padding:.7rem .9rem;display:flex;align-items:center;gap:.6rem;font-size:.85rem;box-shadow:0 16px 40px -14px rgba(0,0,0,.5)}
 #app-install span{flex:1}
 #app-install button{background:var(--gold);color:var(--canopy);border:none;border-radius:8px;padding:.4rem .8rem;font-weight:700;font-size:.82rem;cursor:pointer}
