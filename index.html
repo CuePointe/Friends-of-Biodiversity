@@ -619,6 +619,7 @@
           <button class="adm-nav-item" data-ap="ap-finance" onclick="showAdminPanel(this)">📄 Financial Reports</button>
           <button class="adm-nav-item" data-ap="ap-payment" onclick="showAdminPanel(this)">💳 Payment Details</button>
           <button class="adm-nav-item" data-ap="ap-protect" onclick="showAdminPanel(this)">🦍 Conservation Gallery</button>
+          <button class="adm-nav-item" data-ap="ap-ads" onclick="showAdminPanel(this)">📣 Ad Campaigns</button>
           <button class="adm-nav-item" data-ap="ap-account" onclick="showAdminPanel(this)">🔑 My Password</button>
           <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
           <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
@@ -755,6 +756,33 @@
     <div class="adm-card" style="max-width:760px">
       <h4>Current gallery</h4>
       <div id="protect-admin-list"></div>
+    </div>
+  </div>
+
+  <div id="ap-ads" class="adm-panel">
+    <div class="adm-sec"><span>Ad Campaigns — in-app marketing</span></div>
+    <div class="adm-card" id="ad-form-card" style="max-width:760px">
+      <h4 id="ad-form-title">Create a campaign</h4>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Your ad appears inside the members' community feed as a “Sponsored” card, only between its start and end dates. Update or stop it anytime.</p>
+      <div class="fg"><label>Title</label><input id="ad-title" placeholder="e.g. Join our Bwindi tree-planting weekend"/></div>
+      <div class="fg"><label>Message</label><textarea id="ad-body" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One or two lines of campaign copy."></textarea></div>
+      <div class="pd-row2">
+        <div class="fg"><label>Image (repo filename or URL, optional)</label><input id="ad-img" placeholder="e.g. campaign1.jpg"/></div>
+        <div class="fg"><label>Link (where the button goes)</label><input id="ad-link" placeholder="e.g. https://… or #payment"/></div>
+      </div>
+      <div class="pd-row2">
+        <div class="fg"><label>Button label</label><input id="ad-cta" placeholder="e.g. Sign up →"/></div>
+        <div class="fg"><label>&nbsp;</label><label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem"><input type="checkbox" id="ad-active" checked/> Campaign is on</label></div>
+      </div>
+      <div class="pd-row2">
+        <div class="fg"><label>Starts</label><input id="ad-start" type="date"/></div>
+        <div class="fg"><label>Ends</label><input id="ad-end" type="date"/></div>
+      </div>
+      <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="ad-save" onclick="saveAd()">Launch campaign</button><button class="btn btn-ghost" onclick="resetAdForm()">Clear</button></div>
+    </div>
+    <div class="adm-card" style="max-width:760px">
+      <h4>Your campaigns</h4>
+      <div id="ads-admin-list"></div>
     </div>
   </div>
 
@@ -1311,15 +1339,62 @@
   </div>
 </div>
 
-<!-- ═══ APP SHELL — fixed bottom tabs (members) + compose FAB ═══ -->
+<!-- ═══ APP SHELL — compact app header + fixed bottom tabs (members) + compose FAB ═══ -->
+<div id="app-header">
+  <span class="ah-logo">🌿</span><b class="ah-name">Friends of Biodiversity</b>
+  <button class="ah-bell" onclick="openNotifications()" aria-label="Notifications">🔔<span id="ah-badge" style="display:none"></span></button>
+  <button class="ah-av" id="ah-avatar" onclick="appNav('profile')" aria-label="My profile">👤</button>
+</div>
 <button id="app-fab" onclick="openModal('m-create-post')" aria-label="Create a post">+</button>
 <nav id="app-tabbar" aria-label="Primary">
   <button class="app-tab" data-tab="home" onclick="appNav('home')"><span class="ic">🏠</span><span>Home</span></button>
   <button class="app-tab" data-tab="learn" onclick="appNav('learn')"><span class="ic">🎓</span><span>Learn</span></button>
-  <button class="app-tab" data-tab="card" onclick="appNav('card')"><span class="ic">🪪</span><span>Card</span></button>
+  <button class="app-tab" data-tab="chats" onclick="appNav('chats')"><span class="ic">💬</span><span>Chats</span><span class="app-tab-badge" id="chat-tab-badge" style="display:none"></span></button>
   <button class="app-tab" data-tab="alerts" onclick="appNav('alerts')"><span class="ic">🔔</span><span>Alerts</span><span class="app-tab-dot" id="app-tab-dot" style="display:none"></span></button>
   <button class="app-tab" data-tab="profile" onclick="appNav('profile')"><span class="ic">👤</span><span>Profile</span></button>
 </nav>
+
+<!-- ═══ PRIVATE MESSAGES ═══ -->
+<div class="overlay" id="m-chats">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-chats')">✕</button>
+    <h2>💬 Messages</h2>
+    <div class="fg" style="margin-top:.6rem"><input id="chat-search" type="search" placeholder="Find a member to message…" oninput="searchChatMembers(this.value)" autocomplete="off"/></div>
+    <div id="chat-search-results"></div>
+    <div id="chats-list" style="max-height:52vh;overflow-y:auto"></div>
+  </div>
+</div>
+<div class="overlay" id="m-chat">
+  <div class="modal chat-modal" style="max-width:480px;padding:0;overflow:hidden">
+    <div class="chat-head">
+      <button class="chat-back" onclick="closeModal('m-chat');openChats()">‹</button>
+      <div class="chat-who" id="chat-who">Chat</div>
+      <button class="modal-close" style="position:static" onclick="closeModal('m-chat')">✕</button>
+    </div>
+    <div id="chat-thread" class="chat-thread"></div>
+    <div class="chat-inputbar">
+      <input id="chat-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"/>
+      <button onclick="sendChatMsg()">➤</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TIER CHANGE ═══ -->
+<div class="overlay" id="m-tier">
+  <div class="modal" style="max-width:480px">
+    <button class="modal-close" onclick="closeModal('m-tier')">✕</button>
+    <h2>⇅ Change your tier</h2>
+    <p class="msub">Upgrade or adjust your Green Card tier — no re-registration needed. Every change is recorded in your history.</p>
+    <div class="fg"><label>New tier</label>
+      <select id="tier-new"><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+    </div>
+    <div class="fg"><label>New annual commitment (UGX)</label><input id="tier-amount" type="number" placeholder="e.g. 1500000"/></div>
+    <div class="fg"><label>Note (optional)</label><input id="tier-note" placeholder="e.g. upgrading after our CSR budget review"/></div>
+    <button class="btn btn-gold btn-full" id="tier-save" onclick="saveTierChange()">Save tier change</button>
+    <div class="mem-sec-title" style="margin-top:1.2rem;font-size:.85rem">Your tier history</div>
+    <div id="tier-history-list" style="max-height:30vh;overflow-y:auto"></div>
+  </div>
+</div>
 
 <!-- install-to-home nudge -->
 <div id="app-install" style="display:none">
