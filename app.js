@@ -1453,6 +1453,7 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
       '<button class="btn btn-ghost btn-sm" style="position:relative" onclick="openNotifications()">🔔 Updates<span id="notif-badge" class="notif-badge"></span></button>'+
       '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
+      '<button class="btn btn-ghost btn-sm" style="color:var(--rust);border-color:rgba(181,69,27,.45)" onclick="doLogout()">🚪 Sign Out</button>'+
     '</div>'+
     // Discover / follow other members
     '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
@@ -1902,7 +1903,7 @@ async function saveProfile(){
   if(epPhotoFile){
     const ext=(epPhotoFile.type.split('/')[1]||'jpg').replace('jpeg','jpg');
     const path='profiles/photo_'+currentUser.id+'_'+Date.now()+'.'+ext;
-    const{error}=await sb.storage.from('fame-photos').upload(path,epPhotoFile,{upsert:true,contentType:epPhotoFile.type});
+    const{error}=await sb.storage.from('fame-photos').upload(path,epPhotoFile,{contentType:epPhotoFile.type});
     if(!error){
       const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
       updates.photo_url=data.publicUrl;
@@ -1913,7 +1914,7 @@ async function saveProfile(){
   if(epWallpaperFile){
     const ext=(epWallpaperFile.type.split('/')[1]||'jpg').replace('jpeg','jpg');
     const path='profiles/wall_'+currentUser.id+'_'+Date.now()+'.'+ext;
-    const{error}=await sb.storage.from('fame-photos').upload(path,epWallpaperFile,{upsert:true,contentType:epWallpaperFile.type});
+    const{error}=await sb.storage.from('fame-photos').upload(path,epWallpaperFile,{contentType:epWallpaperFile.type});
     if(!error){
       const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
       updates.wallpaper_url=data.publicUrl;
@@ -2039,7 +2040,7 @@ async function uploadProfilePhoto(e){
   const f=e.target.files[0];if(!f||!currentUser)return;
   toast('⬆ Uploading profile photo...');
   const path='profiles/'+currentUser.id+'_'+Date.now()+'.'+f.name.split('.').pop().toLowerCase();
-  const{error:upErr}=await sb.storage.from('fame-photos').upload(path,f,{upsert:true,contentType:f.type});
+  const{error:upErr}=await sb.storage.from('fame-photos').upload(path,f,{contentType:f.type});
   if(upErr){toast('⚠ Upload failed. Try a smaller image.');console.error(upErr);return}
   const{data}=sb.storage.from('fame-photos').getPublicUrl(path);
   const photoUrl=data.publicUrl;// unique path — no cache-bust needed
@@ -2426,8 +2427,8 @@ async function _uploadPayAsset(inputId,prefix){
   if(!file)return null;
   const ext=(file.name.split('.').pop()||'png').toLowerCase();
   const path='payment/'+prefix+'-'+Date.now()+'.'+ext;
-  const {error}=await sb.storage.from('content-files').upload(path,file,{upsert:true,contentType:file.type});
-  if(error){console.error('pay asset upload',prefix,error);toast('⚠ Could not upload '+prefix+' — saved the rest.');return null}
+  const {error}=await sb.storage.from('content-files').upload(path,file,{contentType:file.type});
+  if(error){console.error('pay asset upload',prefix,error);toast('⚠ Upload failed ('+prefix+'): '+(error.message||'storage error'));return null}
   return {url:sb.storage.from('content-files').getPublicUrl(path).data.publicUrl,type:file.type.startsWith('video')?'video':'image'};
 }
 async function savePaymentDetails(){
