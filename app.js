@@ -107,7 +107,7 @@ async function restoreSession(){
   const s=LS.get('session',null);
   if(!s||!s.id)return;
   const fresh=MEMBERS.find(m=>m.id===s.id&&m.status==='active'&&m.role===s.role);
-  if(fresh){currentUser=fresh;updateNav();if(s.role==='admin'){document.getElementById('adm-user-info').textContent=fresh.name+' ('+ADMIN_NAMES[fresh.email]||'Admin'+') — '+fresh.email;showView('admin');}else{showView('member');}}
+  if(fresh){currentUser=fresh;updateNav();if(s.role==='admin'){document.getElementById('adm-user-info').textContent=fresh.name+' ('+ADMIN_NAMES[fresh.email]||'Admin'+') — '+fresh.email;showView('admin');}else{loadMessages().then(updateChatBadge);appNav('home');}}
   else{LS.set('session',null);}
 }
 
@@ -448,11 +448,212 @@ function renderProtectAdmin(){
     '</div>').join('')||'<p style="color:var(--muted);font-size:.85rem">No items yet — add your first below.</p>';
 }
 
+/* ═══ PRIVATE MESSAGES — LinkedIn/FB-style member DMs ═══ */
+let MSGS=[];let _chatWith=null;
+async function loadMessages(){
+  if(!currentUser){MSGS=[];return}
+  const{data,error}=await sb.from('member_messages').select('*')
+    .or('from_id.eq.'+currentUser.id+',to_id.eq.'+currentUser.id)
+    .order('created_at',{ascending:true});
+  if(error){console.error('loadMessages',error);return}
+  MSGS=data||[];
+}
+function _convs(){
+  const map={};
+  MSGS.forEach(m=>{const other=m.from_id===currentUser.id?m.to_id:m.from_id;(map[other]=map[other]||[]).push(m);});
+  return Object.entries(map).map(([id,msgs])=>({id,msgs,last:msgs[msgs.length-1],
+    unread:msgs.filter(x=>x.to_id===currentUser.id&&!x.read).length}))
+    .sort((a,b)=>String(b.last.created_at).localeCompare(String(a.last.created_at)));
+}
+function updateChatBadge(){
+  const n=currentUser?MSGS.filter(m=>m.to_id===currentUser.id&&!m.read).length:0;
+  const b=document.getElementById('chat-tab-badge');
+  if(b){b.textContent=n>9?'9+':String(n);b.style.display=n>0?'grid':'none';}
+}
+function _chatAvatar(m,size){
+  const s=size||38;
+  const init=(m&&m.name?m.name:'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  return (m&&m.photo_url)
+    ?'<img src="'+m.photo_url+'" style="width:'+s+'px;height:'+s+'px;border-radius:50%;object-fit:cover" alt=""/>'
+    :'<span class="chat-init" style="width:'+s+'px;height:'+s+'px;background:'+_avatarColor(m?m.id:'x')+'">'+init+'</span>';
+}
+function openChats(){
+  if(!currentUser){openModal('m-login');return}
+  const sr=document.getElementById('chat-search-results');if(sr)sr.innerHTML='';
+  const si=document.getElementById('chat-search');if(si)si.value='';
+  renderChats();openModal('m-chats');
+}
+function renderChats(){
+  const el=document.getElementById('chats-list');if(!el)return;
+  const convs=_convs();
+  if(!convs.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted);padding:.8rem 0">No conversations yet — search a member above, or tap ✉ Message on any member profile.</p>';return}
+  el.innerHTML=convs.map(c=>{
+    const m=MEMBERS.find(x=>x.id===c.id)||{name:'Member'};
+    const mine=c.last.from_id===currentUser.id;
+    return '<div class="conv-row" onclick="openChat(\''+c.id+'\')">'+
+      _chatAvatar(m,40)+
+      '<div class="conv-main"><b>'+esc(m.name||'Member')+'</b><span class="conv-last">'+(mine?'You: ':'')+esc((c.last.body||'').slice(0,48))+'</span></div>'+
+      '<div class="conv-side"><span class="conv-time">'+_timeAgo(c.last.created_at)+'</span>'+(c.unread?'<span class="conv-unread">'+c.unread+'</span>':'')+'</div>'+
+    '</div>';
+  }).join('');
+}
+function searchChatMembers(q){
+  const el=document.getElementById('chat-search-results');if(!el)return;
+  q=(q||'').trim().toLowerCase();
+  if(q.length<2){el.innerHTML='';return}
+  const hits=MEMBERS.filter(m=>m.role==='member'&&m.status==='active'&&m.id!==(currentUser&&currentUser.id)&&(m.name||'').toLowerCase().includes(q)).slice(0,6);
+  el.innerHTML=hits.map(m=>'<div class="conv-row" onclick="openChat(\''+m.id+'\')">'+_chatAvatar(m,34)+'<div class="conv-main"><b>'+esc(m.name)+'</b><span class="conv-last">Start a conversation</span></div><span class="dg-chev">›</span></div>').join('')||'<p style="font-size:.8rem;color:var(--muted)">No member found.</p>';
+}
+async function openChat(otherId){
+  if(!currentUser){openModal('m-login');return}
+  _chatWith=otherId;
+  closeModal('m-chats');closeModal('m-member-profile');
+  const m=MEMBERS.find(x=>x.id===otherId);
+  const who=document.getElementById('chat-who');if(who)who.innerHTML=_chatAvatar(m,30)+'<span>'+esc((m&&m.name)||'Member')+'</span>';
+  renderChatThread();openModal('m-chat');
+  // mark their messages to me as read (optimistic, then sync)
+  let dirty=false;
+  MSGS.forEach(x=>{if(x.from_id===otherId&&x.to_id===currentUser.id&&!x.read){x.read=true;dirty=true;}});
+  updateChatBadge();
+  if(dirty)await sb.from('member_messages').update({read:true}).eq('from_id',otherId).eq('to_id',currentUser.id).eq('read',false);
+}
+function renderChatThread(){
+  const el=document.getElementById('chat-thread');if(!el||!_chatWith)return;
+  const msgs=MSGS.filter(m=>(m.from_id===_chatWith&&m.to_id===currentUser.id)||(m.from_id===currentUser.id&&m.to_id===_chatWith));
+  el.innerHTML=msgs.length?msgs.map(m=>{
+    const mine=m.from_id===currentUser.id;
+    return '<div class="chat-b '+(mine?'me':'them')+'"><div class="chat-bubble">'+escHtml(m.body)+'</div><span class="chat-t">'+_timeAgo(m.created_at)+'</span></div>';
+  }).join(''):'<p style="font-size:.82rem;color:var(--muted);text-align:center;padding:1.2rem 0">Say hello 👋 — this conversation is private between the two of you.</p>';
+  el.scrollTop=el.scrollHeight;
+}
+async function sendChatMsg(){
+  if(!currentUser||!_chatWith)return;
+  const input=document.getElementById('chat-input');
+  const body=(input.value||'').trim();if(!body)return;
+  input.value='';_buzz();
+  // Optimistic: show instantly, sync behind
+  const local={id:'tmp-'+Date.now(),from_id:currentUser.id,to_id:_chatWith,body,read:false,created_at:new Date().toISOString()};
+  MSGS.push(local);renderChatThread();
+  const{error}=await sb.from('member_messages').insert({from_id:currentUser.id,to_id:_chatWith,body});
+  if(error){console.error('sendChat',error);toast('⚠ Message not sent — check your connection.');MSGS=MSGS.filter(m=>m.id!==local.id);renderChatThread();}
+}
+
+/* ═══ TIER CHANGES — self-service upgrade/downgrade with full history ═══ */
+async function openTierModal(){
+  if(!currentUser)return;
+  const sel=document.getElementById('tier-new');if(sel)sel.value=currentUser.tier||'silver';
+  const amt=document.getElementById('tier-amount');if(amt)amt.value=currentUser.amount||'';
+  const note=document.getElementById('tier-note');if(note)note.value='';
+  openModal('m-tier');
+  const list=document.getElementById('tier-history-list');
+  if(list){
+    list.innerHTML='<p style="font-size:.8rem;color:var(--muted)">Loading…</p>';
+    const{data}=await sb.from('tier_history').select('*').eq('member_id',currentUser.id).order('created_at',{ascending:false});
+    const rows=data||[];
+    list.innerHTML=rows.length?rows.map(h=>{
+      const up=(TIERS_DATA[h.new_tier]&&TIERS_DATA[h.old_tier])?((TIERS_DATA[h.new_tier].r||0)>=(TIERS_DATA[h.old_tier].r||0)):true;
+      return '<div class="th-row"><span class="th-ico">'+(up?'⬆':'⬇')+'</span><div class="th-main"><b>'+esc(h.old_tier||'—')+' → '+esc(h.new_tier||'—')+'</b><span>UGX '+((h.old_amount||0).toLocaleString())+' → UGX '+((h.new_amount||0).toLocaleString())+(h.note?' · '+esc(h.note):'')+'</span></div><span class="th-date">'+String(h.created_at||'').slice(0,10)+'</span></div>';
+    }).join(''):'<p style="font-size:.8rem;color:var(--muted)">No changes yet — your first change will appear here.</p>';
+  }
+}
+async function saveTierChange(){
+  if(!currentUser)return;
+  const newTier=document.getElementById('tier-new').value;
+  const newAmount=parseInt(document.getElementById('tier-amount').value)||0;
+  const note=(document.getElementById('tier-note').value||'').trim();
+  if(!newAmount){toast('⚠ Enter your new annual commitment.');return}
+  if(newTier===currentUser.tier&&newAmount===(currentUser.amount||0)){toast('⚠ That is already your current tier and amount.');return}
+  const btn=document.getElementById('tier-save');if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  const hist={member_id:currentUser.id,member_name:currentUser.name,
+    old_tier:currentUser.tier,new_tier:newTier,
+    old_amount:currentUser.amount||0,new_amount:newAmount,note:note||null};
+  const{error:e1}=await sb.from('tier_history').insert(hist);
+  const{error:e2}=await sb.from('members').update({tier:newTier,amount:newAmount}).eq('id',currentUser.id);
+  if(btn){btn.disabled=false;btn.textContent='Save tier change'}
+  if(e1||e2){toast('⚠ Could not save the change.');console.error(e1||e2);return}
+  currentUser.tier=newTier;currentUser.amount=newAmount;persistSession(currentUser);
+  const idx=MEMBERS.findIndex(m=>m.id===currentUser.id);if(idx!==-1)Object.assign(MEMBERS[idx],{tier:newTier,amount:newAmount});
+  renderMemberView();closeModal('m-tier');
+  toast('✅ Tier updated to '+((TIERS_DATA[newTier]||{}).label||newTier)+' — recorded in your history.');
+}
+
+/* ═══ AD CAMPAIGNS — scheduled in-app marketing ═══ */
+let ADS=[];
+async function loadAds(){
+  const{data,error}=await sb.from('ads').select('*').order('sort',{ascending:true});
+  if(error){console.error('loadAds',error);return}
+  ADS=data||[];
+}
+function activeAds(){
+  const t=new Date().toISOString().slice(0,10);
+  return ADS.filter(a=>a.active!==false&&(!a.starts_at||a.starts_at<=t)&&(!a.ends_at||a.ends_at>=t));
+}
+function adCardHTML(a){
+  const img=a.image_url?'<img class="ad-img" src="'+esc(a.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
+  const cta=a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';
+  return '<div class="ad-card"><span class="ad-tag">Sponsored · UBF</span>'+img+
+    '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+cta+'</div></div>';
+}
+function _adStatus(a){
+  const t=new Date().toISOString().slice(0,10);
+  if(a.active===false)return['Off','#888'];
+  if(a.starts_at&&a.starts_at>t)return['Scheduled','#2E7D9A'];
+  if(a.ends_at&&a.ends_at<t)return['Ended','#B5451B'];
+  return['● Live','#2D6A4F'];
+}
+let _adEditId=null;
+function resetAdForm(){_adEditId=null;['ad-title','ad-body','ad-img','ad-link','ad-cta','ad-start','ad-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('ad-active');if(a)a.checked=true;const t=document.getElementById('ad-form-title');if(t)t.textContent='Create a campaign';const b=document.getElementById('ad-save');if(b)b.textContent='Launch campaign';}
+function editAd(id){
+  const a=ADS.find(x=>x.id===id);if(!a)return;_adEditId=id;
+  const g=i=>document.getElementById(i);
+  g('ad-title').value=a.title||'';g('ad-body').value=a.body||'';g('ad-img').value=a.image_url||'';
+  g('ad-link').value=a.link_url||'';g('ad-cta').value=a.cta||'';
+  g('ad-start').value=a.starts_at||'';g('ad-end').value=a.ends_at||'';
+  g('ad-active').checked=a.active!==false;
+  g('ad-form-title').textContent='Editing: '+(a.title||'');g('ad-save').textContent='Update campaign';
+  const c=document.getElementById('ad-form-card');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveAd(){
+  const title=(document.getElementById('ad-title').value||'').trim();
+  if(!title){toast('⚠ A campaign title is required.');return}
+  const row={title,body:(document.getElementById('ad-body').value||'').trim(),
+    image_url:(document.getElementById('ad-img').value||'').trim()||null,
+    link_url:(document.getElementById('ad-link').value||'').trim()||null,
+    cta:(document.getElementById('ad-cta').value||'').trim()||null,
+    starts_at:document.getElementById('ad-start').value||null,
+    ends_at:document.getElementById('ad-end').value||null,
+    active:document.getElementById('ad-active').checked};
+  if(_adEditId)row.id=_adEditId;
+  const btn=document.getElementById('ad-save');if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  const{error}=await sb.from('ads').upsert(row);
+  if(btn){btn.disabled=false;btn.textContent=_adEditId?'Update campaign':'Launch campaign'}
+  if(error){toast('⚠ Could not save the campaign.');console.error(error);return}
+  await loadAds();renderAdsAdmin();renderPosts();resetAdForm();
+  toast('✅ Campaign saved.');
+}
+async function delAd(id){
+  const a=ADS.find(x=>x.id===id);
+  if(!confirm('Delete campaign "'+((a&&a.title)||'')+'"? This cannot be undone.'))return;
+  const{error}=await sb.from('ads').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');return}
+  await loadAds();renderAdsAdmin();renderPosts();toast('Campaign deleted.');
+}
+function renderAdsAdmin(){
+  const el=document.getElementById('ads-admin-list');if(!el)return;
+  el.innerHTML=ADS.length?ADS.map(a=>{
+    const[st,col]=_adStatus(a);
+    return '<div class="pa-row"><span class="pa-thumb">📣</span>'+
+      '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+'</span></div>'+
+      '<button class="btn btn-ghost btn-sm" onclick="editAd(\''+a.id+'\')">Edit</button>'+
+      '<button class="btn btn-danger btn-sm" onclick="delAd(\''+a.id+'\')">Delete</button></div>';
+  }).join(''):'<p style="font-size:.85rem;color:var(--muted)">No campaigns yet — create your first above.</p>';
+}
+
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -489,6 +690,8 @@ function subscribeRealtime(){
   sb.channel('public:dashboard_meta').on('postgres_changes',{event:'*',schema:'public',table:'dashboard_meta'},async()=>{await loadDashboard();renderAccountabilityDashboard();renderDashboardAdmin()}).subscribe();
   sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();updateNotifBadge();}).subscribe();
   sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
+  sb.channel('public:member_messages').on('postgres_changes',{event:'*',schema:'public',table:'member_messages'},async()=>{await loadMessages();updateChatBadge();renderChats();renderChatThread();}).subscribe();
+  sb.channel('public:ads').on('postgres_changes',{event:'*',schema:'public',table:'ads'},async()=>{await loadAds();renderPosts();renderAdsAdmin();}).subscribe();
 }
 
 function updatePostCreateBtn(){
@@ -561,17 +764,22 @@ function showView(v){
   if(v==='admin')renderAdminAll();
 }
 
-/* ═══ APP SHELL — bottom-tab navigation for signed-in members ═══ */
+/* ═══ APP SHELL — full-screen app mode for signed-in members.
+   The marketing site disappears; tabs switch between real screens. ═══ */
 let _appTab='home';
+function _buzz(){if(navigator.vibrate){try{navigator.vibrate(8)}catch(e){}}}
 function appNav(tab){
-  _appTab=tab;
+  _appTab=tab;_buzz();
   document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
-  const scrollTo=(id)=>setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},140);
-  if(tab==='home'){showView('main');scrollTo('community-feed-wrap');}
-  else if(tab==='learn'){showView('main');scrollTo('learn');}
-  else if(tab==='card'){openCertModal();}
-  else if(tab==='alerts'){openNotifications();}
-  else if(tab==='profile'){showView('member');window.scrollTo({top:0,behavior:'smooth'});}
+  if(tab==='chats'){openChats();return}
+  if(tab==='alerts'){openNotifications();return}
+  document.body.classList.remove('tab-home','tab-learn');
+  let screen=null;
+  if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}
+  else if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
+  else if(tab==='profile'){showView('member');screen=document.getElementById('view-member');}
+  window.scrollTo(0,0);
+  if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
 }
 /* PWA install nudge */
 let _deferredInstall=null;
@@ -619,7 +827,9 @@ async function doLogin(){
 }
 function finishLogin(u){
   currentUser=u;persistSession(u);closeModal('m-login');updateNav();
-  toast('🌿 Welcome back, '+esc(u.name.split(' ')[0])+'!');showView('member');
+  toast('🌿 Welcome back, '+esc(u.name.split(' ')[0])+'!');
+  loadMessages().then(updateChatBadge);
+  appNav('home');
 }
 
 /* ═══ EMAIL VERIFICATION (Supabase Auth OTP) ═══
@@ -710,9 +920,17 @@ function updateNav(){
   document.getElementById('mob-adm').style.display=adm?'':'none';
   document.getElementById('upload-btn-slot').style.display=adm?'':'none';
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
-  // App shell: show bottom tabs + compose FAB only for signed-in members
+  // App shell: signed-in members get the full-screen app (marketing site hidden)
   const memberMode=in_&&!adm;
   document.body.classList.toggle('has-tabbar',memberMode);
+  document.body.classList.toggle('app-mode',memberMode);
+  if(!memberMode)document.body.classList.remove('tab-home','tab-learn');
+  const av=document.getElementById('ah-avatar');
+  if(av&&memberMode){
+    av.innerHTML=currentUser.photo_url
+      ?'<img src="'+currentUser.photo_url+'" alt=""/>'
+      :currentUser.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  }
   renderContent();
   renderPosts();
   updatePostCreateBtn();
@@ -1229,6 +1447,7 @@ function renderMemberView(){
     // Actions
     '<div class="mem-action-row">'+
       '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openTierModal()">⇅ Change Tier</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
@@ -1327,6 +1546,8 @@ function updateNotifBadge(){
   if(badge){if(n>0){badge.textContent=n>9?'9+':String(n);badge.style.display='flex';}else{badge.style.display='none';}}
   const dot=document.getElementById('app-tab-dot');
   if(dot)dot.style.display=n>0?'block':'none';
+  const ah=document.getElementById('ah-badge');
+  if(ah){ah.textContent=n>9?'9+':String(n);ah.style.display=n>0?'grid':'none';}
 }
 function renderNotifications(){
   const el=document.getElementById('notif-list');if(!el)return;
@@ -1754,9 +1975,11 @@ async function viewMemberProfile(memberId){
         (m.photo_url?'<img src="'+m.photo_url+'" style="width:100%;height:100%;object-fit:cover"/>':initials)+
       '</div>'+
       (currentUser&&currentUser.id!==memberId?
+        '<div style="display:flex;gap:.4rem">'+
+        '<button class="btn btn-gold btn-sm" onclick="openChat(\''+memberId+'\')">✉ Message</button>'+
         '<button id="follow-btn-'+memberId+'" class="btn '+(isFollowing?'btn-ghost':'btn-canopy')+' btn-sm" onclick="toggleFollow(\''+memberId+'\',\''+safeName+'\')">'+
           (isFollowing?'✓ Following':'+ Follow')+
-        '</button>'
+        '</button></div>'
       :'')+
     '</div>'+
     // Info
@@ -1908,7 +2131,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
@@ -2692,9 +2915,15 @@ function _sortPosts(list){
   arr.sort((a,b)=>(b.pinned?1:0)-(a.pinned?1:0)); // pinned float to top (stable sort keeps order)
   return arr;
 }
+function _appGreeting(){
+  if(!document.body.classList.contains('app-mode')||!currentUser)return '';
+  const h=new Date().getHours();
+  const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
+  return '<div class="app-greet">'+g+',<b>'+esc(currentUser.name.split(' ')[0])+' 🌿</b></div>';
+}
 function _postsHeader(count){
   const opt={new:'🕐 Newest',top:'🔥 Top',discussed:'💬 Most discussed'};
-  return '<div class="feed-head">'+
+  return _appGreeting()+'<div class="feed-head">'+
     '<div class="feed-title">🌿 Community <span class="fh-n">'+count+' post'+(count!==1?'s':'')+'</span></div>'+
     '<div class="feed-ctrls">'+
       '<select class="feed-sort" onchange="setPostSort(this.value)">'+
@@ -2841,9 +3070,17 @@ function renderPosts(filter){
     el.innerHTML=header+starter+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
     refreshOpenPostModal();return;
   }
+  // Weave in live ad campaigns as Sponsored cards (after the 2nd item, then every 5)
+  const ads=activeAds();
+  const pieces=items.map(_postView==='feed'?postCardHTML:postDigestRowHTML);
+  if(ads.length){
+    let ai=0;
+    for(let pos=2;pos<=pieces.length&&ai<ads.length;pos+=6){pieces.splice(pos,0,adCardHTML(ads[ai%ads.length]));ai++;}
+    if(pieces.length<=2&&ai===0)pieces.push(adCardHTML(ads[0]));
+  }
   const body=_postView==='feed'
-    ? items.map(postCardHTML).join('')
-    : '<div class="digest-list">'+items.map(postDigestRowHTML).join('')+'</div>';
+    ? pieces.join('')
+    : '<div class="digest-list">'+pieces.join('')+'</div>';
   el.innerHTML=header+starter+body+_postsArchiveToggle();
   refreshOpenPostModal();
 }
