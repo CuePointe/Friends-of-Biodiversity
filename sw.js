@@ -7,7 +7,7 @@
    and see the last loaded content.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v4';
+const CACHE_NAME = 'fob-app-v5';
 
 // Core files to cache immediately on install.
 // RELATIVE paths so the app works under a GitHub project subpath
@@ -24,9 +24,9 @@ const CORE_FILES = [
   './icon192.png',
   './icon512.png',
   './icon-512-maskable.png',
-  './slide-1.jpg',
-  './slide-2.jpg',
-  './slide-3.jpg',
+  './slide1sm.jpg',
+  './slide2sm.jpg',
+  './slide3sm.jpg',
 ];
 
 // ── INSTALL: cache core files (each independently, so one missing

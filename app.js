@@ -196,7 +196,16 @@ function lockedBenefitsHTML(){
     .map(p=>'<div class="locked-perk"><span>'+p+'</span><span class="lk">🔒</span></div>').join('')+
   '</div>';
 }
-function goToPayment(){showView('main');setTimeout(()=>{const e=document.getElementById('payment');if(e)e.scrollIntoView({behavior:'smooth'})},200);}
+function goToPayment(){
+  if(document.body.classList.contains('app-mode')){
+    // In app mode the marketing sections are hidden — surface just the payment screen
+    document.body.classList.remove('tab-home','tab-learn');
+    document.body.classList.add('tab-pay');
+    showView('main');window.scrollTo(0,0);
+    return;
+  }
+  showView('main');setTimeout(()=>{const e=document.getElementById('payment');if(e)e.scrollIntoView({behavior:'smooth'})},200);
+}
 function showLockedModal(name){
   const b=document.getElementById('locked-body');
   if(b)b.innerHTML='<div class="locked-status">MEMBERSHIP STATUS: <span class="locked-pill">● Pending payment</span></div>'+
@@ -851,7 +860,7 @@ function renderEventsAdmin(){
 
 /* ═══ IMPACT BADGES ═══ */
 function memberBadges(u,posts){
-  const b=[];
+  const b=['💚 Friend of Biodiversity'];// baseline — every member wears the colours
   if((u.year||9999)<=2025)b.push('🌱 Founding member');
   if(['platinum','diamond'].includes(u.tier))b.push('🛡 Guardian');
   if(posts>=5)b.push('✍ Storyteller');else if(posts>=1)b.push('🌿 Green voice');
@@ -1000,7 +1009,7 @@ function appNav(tab){
   document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   if(tab==='chats'){openChats();return}
   if(tab==='alerts'){openNotifications();return}
-  document.body.classList.remove('tab-home','tab-learn');
+  document.body.classList.remove('tab-home','tab-learn','tab-pay');
   let screen=null;
   if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}
   else if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
@@ -1057,6 +1066,7 @@ function finishLogin(u){
   toast('🌿 Welcome back, '+esc(u.name.split(' ')[0])+'!');
   loadMessages().then(updateChatBadge);
   appNav('home');
+  if(membershipDue(u))setTimeout(()=>toast('🔄 Your '+u.year+' membership has ended — renew from your Profile tab.'),2500);
 }
 
 /* ═══ EMAIL VERIFICATION (Supabase Auth OTP) ═══
@@ -1680,7 +1690,7 @@ function renderMemberView(){
       '<button class="btn btn-gold btn-sm" onclick="openTierModal()">⇅ Change Tier</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="showView(\'main\');setTimeout(()=>document.getElementById(\'learn\').scrollIntoView({behavior:\'smooth\'}),150)">📚 Learn</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="appNav(\'learn\')">📚 Learn</button>'+
       '<button class="btn btn-ghost btn-sm" style="position:relative" onclick="openNotifications()">🔔 Updates<span id="notif-badge" class="notif-badge"></span></button>'+
       '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
       '<button class="btn btn-ghost btn-sm" style="color:var(--rust);border-color:rgba(181,69,27,.45)" onclick="doLogout()">🚪 Sign Out</button>'+
@@ -1744,6 +1754,7 @@ function dashToggleFull(){
 /* ═══ NOTIFICATIONS / UPDATES ═══ */
 function buildNotifications(){
   const items=[];
+  if(currentUser&&membershipDue(currentUser))items.push({icon:'🔄',cat:'Membership renewal',text:'Your '+currentUser.year+' membership has ended — tap to renew for '+new Date().getFullYear(),date:new Date().toISOString().slice(0,10),kind:'renew',tid:'me'});
   (ANNOUNCES||[]).forEach(a=>items.push({icon:'📢',cat:'Announcement',text:a.title,date:a.date,kind:'announce',tid:a.id}));
   (CONTENT||[]).forEach(c=>items.push({icon:'📚',cat:'New '+(c.type||'resource'),text:c.title,date:c.date,kind:'content',tid:c.id}));
   (FIN_REPORTS||[]).forEach(r=>items.push({icon:'📄',cat:'Financial report',text:r.title,date:r.date,kind:'report',tid:r.id}));
@@ -1756,6 +1767,7 @@ function buildNotifications(){
 function openNotifItem(kind,id){
   closeModal('m-notifications');
   if(kind==='member'){viewMemberProfile(id);return}
+  if(kind==='renew'){openRenewModal();return}
   if(kind==='post'){showView('member');openPostModal(id);return}
   const dest={
     content:{view:'main',target:'card-'+id,fallback:'learn'},
