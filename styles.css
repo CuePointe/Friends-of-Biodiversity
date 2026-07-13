@@ -81,6 +81,15 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 .hero-title em{font-style:italic;color:var(--gold-lt)}
 .hero-desc{font-size:clamp(.95rem,2.5vw,1.15rem);color:rgba(255,255,255,.75);max-width:560px;line-height:1.75;margin-bottom:2.5rem;opacity:0;animation:fadeUp .8s .7s forwards}
 .hero-acts{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;opacity:0;animation:fadeUp .8s .9s forwards}
+/* Mobile-first hero: shorter, message-led — the photo supports, it doesn't dominate */
+@media(max-width:640px){
+  .hero{min-height:66svh}
+  .hero-content{min-height:66svh;padding:5.2rem 1.25rem 2.6rem;justify-content:flex-end;text-align:left;align-items:flex-start}
+  .hero-title{font-size:clamp(1.9rem,8.5vw,2.6rem);margin-bottom:.9rem}
+  .hero-desc{margin-bottom:1.4rem;font-size:.92rem;line-height:1.6}
+  .hero-veil{background:linear-gradient(to bottom,rgba(11,38,24,.35) 0%,rgba(11,38,24,.25) 35%,rgba(11,38,24,.92) 100%)}
+  .hero-acts{justify-content:flex-start}
+}
 .slide-dots{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);z-index:3;display:flex;gap:.5rem}
 .dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);cursor:pointer;transition:background var(--tr),transform var(--tr)}
 .dot.active{background:var(--gold);transform:scale(1.4)}
@@ -437,6 +446,33 @@ body.app-mode #app-header{display:flex;position:fixed;top:0;left:0;right:0;z-ind
 .th-main b{font-size:.85rem;color:var(--canopy);text-transform:capitalize}
 .th-main span{font-size:.74rem;color:var(--muted)}
 .th-date{font-size:.7rem;color:var(--muted);font-family:var(--ff-m);flex:none}
+/* renewal banner */
+.renew-banner{display:flex;align-items:center;gap:12px;justify-content:space-between;background:linear-gradient(120deg,#0c2a19,#174530);border:1px solid rgba(200,168,75,.4);border-radius:14px;padding:.9rem 1.1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.renew-banner b{color:#fff;display:block;font-size:.92rem}
+.renew-banner span{color:rgba(255,255,255,.7);font-size:.78rem}
+/* impact badges */
+.badge-row{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.55rem}
+.badge-chip{font-size:.72rem;font-weight:700;background:linear-gradient(120deg,rgba(200,168,75,.2),rgba(200,168,75,.1));border:1px solid rgba(200,168,75,.45);color:var(--gold-dk);border-radius:99px;padding:.22rem .65rem}
+/* events */
+.ev-row{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:14px;padding:.8rem .9rem;margin-bottom:.6rem}
+.ev-cal{width:46px;height:50px;border-radius:10px;background:var(--canopy);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;flex:none}
+.ev-cal span{font-size:.58rem;text-transform:uppercase;letter-spacing:.08em;color:var(--gold-lt);font-weight:800}
+.ev-cal b{font-size:1.15rem;font-family:var(--ff-d);line-height:1}
+.ev-main{flex:1;min-width:0}
+.ev-main b{font-size:.92rem;color:var(--canopy);display:block}
+.ev-main span{font-size:.78rem;color:var(--muted);line-height:1.45}
+.ev-going{display:block;color:var(--canopy-lt);font-weight:700;margin-top:2px}
+/* fundraisers */
+.camp-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.camp-card{background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column}
+.camp-img{width:100%;height:120px;object-fit:cover}
+.camp-body{padding:12px 14px;display:flex;flex-direction:column;gap:.45rem}
+.camp-body b{font-family:var(--ff-d);color:var(--canopy);font-size:.98rem}
+.camp-body p{margin:0;font-size:.8rem;color:var(--muted);line-height:1.5}
+.camp-bar{height:8px;border-radius:99px;background:rgba(45,106,79,.12);overflow:hidden}
+.camp-bar span{display:block;height:100%;background:linear-gradient(90deg,var(--canopy-lt),var(--gold));border-radius:99px;transition:width .5s}
+.camp-nums{font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.camp-card .btn{align-self:flex-start}
 
 /* LEARNING EXCHANGE */
 #learn{background:var(--mist)}

@@ -390,7 +390,7 @@ async function saveProtectItem(){
   if(btn){btn.disabled=false;btn.textContent=_protectEditId?'Update':'Add to gallery'}
   if(error){toast('⚠ Could not save.');console.error(error);return}
   await loadProtect();renderProtectGallery();renderProtectAdmin();resetProtectForm();
-  toast('✅ Saved to the gallery.');
+  audit('Saved gallery item',name);toast('✅ Saved to the gallery.');
 }
 async function delProtectItem(id){
   const p=PROTECT.find(x=>x.id===id);
@@ -588,9 +588,13 @@ function activeAds(){
   const t=new Date().toISOString().slice(0,10);
   return ADS.filter(a=>a.active!==false&&(!a.starts_at||a.starts_at<=t)&&(!a.ends_at||a.ends_at>=t));
 }
+const _adSeen=new Set();
+function _adView(id){if(_adSeen.has(id))return;_adSeen.add(id);sb.rpc('ad_hit',{aid:id,kind:'view'}).then(()=>{},()=>{});}
+function adClick(id){sb.rpc('ad_hit',{aid:id,kind:'click'}).then(()=>{},()=>{});}
 function adCardHTML(a){
+  _adView(a.id);
   const img=a.image_url?'<img class="ad-img" src="'+esc(a.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
-  const cta=a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';
+  const cta=a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\')" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';
   return '<div class="ad-card"><span class="ad-tag">Sponsored · UBF</span>'+img+
     '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+cta+'</div></div>';
 }
@@ -629,31 +633,249 @@ async function saveAd(){
   if(btn){btn.disabled=false;btn.textContent=_adEditId?'Update campaign':'Launch campaign'}
   if(error){toast('⚠ Could not save the campaign.');console.error(error);return}
   await loadAds();renderAdsAdmin();renderPosts();resetAdForm();
-  toast('✅ Campaign saved.');
+  audit('Saved ad campaign',title);toast('✅ Campaign saved.');
 }
 async function delAd(id){
   const a=ADS.find(x=>x.id===id);
   if(!confirm('Delete campaign "'+((a&&a.title)||'')+'"? This cannot be undone.'))return;
   const{error}=await sb.from('ads').delete().eq('id',id);
   if(error){toast('⚠ Could not delete.');return}
-  await loadAds();renderAdsAdmin();renderPosts();toast('Campaign deleted.');
+  audit('Deleted ad campaign',(a&&a.title)||id);await loadAds();renderAdsAdmin();renderPosts();toast('Campaign deleted.');
 }
 function renderAdsAdmin(){
   const el=document.getElementById('ads-admin-list');if(!el)return;
   el.innerHTML=ADS.length?ADS.map(a=>{
     const[st,col]=_adStatus(a);
     return '<div class="pa-row"><span class="pa-thumb">📣</span>'+
-      '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+'</span></div>'+
+      '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+' · 👁 '+(a.impressions||0)+' views · 🖱 '+(a.clicks||0)+' clicks</span></div>'+
       '<button class="btn btn-ghost btn-sm" onclick="editAd(\''+a.id+'\')">Edit</button>'+
       '<button class="btn btn-danger btn-sm" onclick="delAd(\''+a.id+'\')">Delete</button></div>';
   }).join(''):'<p style="font-size:.85rem;color:var(--muted)">No campaigns yet — create your first above.</p>';
+}
+
+/* ═══ MEMBERSHIP RENEWALS — lifecycle with pending→approved flow ═══ */
+function membershipDue(u){return u&&u.role==='member'&&(u.year||0)<new Date().getFullYear();}
+function renewBannerHTML(u){
+  if(!membershipDue(u))return '';
+  const y=new Date().getFullYear();
+  return '<div class="renew-banner"><div><b>Your '+esc(String(u.year))+' membership needs renewal for '+y+'</b><span>Renew to keep your benefits active — it takes a minute.</span></div><button class="btn btn-gold btn-sm" onclick="openRenewModal()">🔄 Renew now</button></div>';
+}
+async function openRenewModal(){
+  if(!currentUser)return;
+  const y=new Date().getFullYear();
+  const lbl=document.getElementById('renew-year-label');if(lbl)lbl.textContent=String(y);
+  const amt=document.getElementById('renew-amount');if(amt)amt.value=currentUser.amount||'';
+  const pr=document.getElementById('renew-payref');if(pr)pr.value='';
+  const{data}=await sb.from('renewals').select('id').eq('member_id',currentUser.id).eq('to_year',y).eq('status','pending');
+  const note=document.getElementById('renew-pending-note');
+  if(note)note.style.display=(data&&data.length)?'block':'none';
+  openModal('m-renew');
+}
+async function submitRenewal(){
+  if(!currentUser)return;
+  const y=new Date().getFullYear();
+  const amount=parseInt(document.getElementById('renew-amount').value)||0;
+  const payref=(document.getElementById('renew-payref').value||'').trim();
+  if(!amount){toast('⚠ Enter your renewal amount.');return}
+  const{error}=await sb.from('renewals').insert({member_id:currentUser.id,member_name:currentUser.name,from_year:currentUser.year,to_year:y,amount,payref});
+  if(error){toast('⚠ Could not submit — try again.');console.error(error);return}
+  closeModal('m-renew');
+  toast('✅ Renewal submitted — we activate it once your payment is confirmed (within 48h).');
+}
+async function approveRenewal(id){
+  const{data:r}=await sb.from('renewals').select('*').eq('id',id).single();
+  if(!r)return;
+  if(!confirm('Approve renewal for '+(r.member_name||'member')+' → '+r.to_year+'? Confirm the payment reference first.'))return;
+  await sb.from('renewals').update({status:'approved'}).eq('id',id);
+  await sb.from('members').update({year:r.to_year,amount:r.amount||undefined}).eq('id',r.member_id);
+  audit('Approved renewal','member '+(r.member_name||r.member_id)+' → '+r.to_year);
+  await loadMembers();renderAdminOverview();renderAdminMembers();
+  toast('✅ Renewal approved.');
+}
+
+/* ═══ CONTRIBUTION RECEIPT (PDF) ═══ */
+function downloadReceipt(){
+  if(!currentUser)return;
+  const J=(window.jspdf||{}).jsPDF;
+  if(!J){toast('⚠ PDF engine still loading — try again in a moment.');return}
+  const d=new J();const u=currentUser;const td=TIERS_DATA[u.tier]||{label:u.tier};
+  const line=(y)=>{d.setDrawColor(200,168,75);d.line(20,y,190,y)};
+  d.setFillColor(11,38,24);d.rect(0,0,210,34,'F');
+  d.setTextColor(228,201,122);d.setFont('helvetica','bold');d.setFontSize(16);
+  d.text('UGANDA BIODIVERSITY FUND',105,15,{align:'center'});
+  d.setFontSize(10);d.setTextColor(255,255,255);
+  d.text('Friends of Biodiversity — Contribution Receipt',105,24,{align:'center'});
+  d.setTextColor(30,30,30);d.setFontSize(11);d.setFont('helvetica','normal');
+  const rows=[['Receipt No','FOB-'+String(u.id||'').slice(0,8).toUpperCase()],
+    ['Date issued',new Date().toLocaleDateString()],
+    ['Member',u.name||''],['Member type',(u.type||'individual')+(u.org?' — '+u.org:'')],
+    ['Green Card tier',td.label||u.tier],['Membership year',String(u.year||'')],
+    ['Annual contribution','UGX '+(u.amount||0).toLocaleString()],
+    ['Payment reference',u.payref||'—']];
+  let y=48;
+  rows.forEach(([k,v])=>{d.setFont('helvetica','bold');d.text(k,25,y);d.setFont('helvetica','normal');d.text(String(v),80,y);y+=9;});
+  line(y);y+=10;
+  d.setFontSize(10);d.setTextColor(90,90,90);
+  d.text('Thank you for standing with Uganda\'s forests, wetlands and wildlife.',25,y);y+=6;
+  d.text('Every shilling becomes measurable protection on the ground.',25,y);y+=10;
+  d.setFontSize(9);d.text('Uganda Biodiversity Fund · info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org',25,y);
+  d.save('UBF-Receipt-'+(u.year||'')+'.pdf');
+  toast('🧾 Receipt downloaded.');
+}
+
+/* ═══ FUNDRAISING CAMPAIGNS + DONATIONS ═══ */
+let CAMPAIGNS=[];
+async function loadCampaigns(){const{data}=await sb.from('campaigns').select('*').order('created_at',{ascending:false});CAMPAIGNS=data||[];}
+function campaignCardHTML(c){
+  const pct=c.goal>0?Math.min(100,Math.round((c.raised||0)*100/c.goal)):0;
+  return '<div class="camp-card">'+(c.image_url?'<img class="camp-img" src="'+esc(c.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'')+
+    '<div class="camp-body"><b>'+esc(c.title)+'</b>'+(c.blurb?'<p>'+esc(c.blurb)+'</p>':'')+
+    '<div class="camp-bar"><span style="width:'+pct+'%"></span></div>'+
+    '<div class="camp-nums">UGX '+((c.raised||0).toLocaleString())+' raised'+(c.goal?' of UGX '+c.goal.toLocaleString()+' ('+pct+'%)':'')+(c.ends_at?' · ends '+esc(c.ends_at):'')+'</div>'+
+    '<button class="btn btn-gold btn-sm" onclick="openDonate(\''+c.id+'\')">💚 Donate</button></div></div>';
+}
+let _donateCampaign=null;
+function openDonate(cid){
+  _donateCampaign=cid||null;
+  const c=CAMPAIGNS.find(x=>x.id===cid);
+  const t=document.getElementById('donate-camp-label');if(t)t.textContent=c?c.title:'General conservation fund';
+  ['donate-amount','donate-payref','donate-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const nm=document.getElementById('donate-name');if(nm&&currentUser)nm.value=currentUser.name;
+  openModal('m-donate');
+}
+async function submitDonation(){
+  const amount=parseInt(document.getElementById('donate-amount').value)||0;
+  const payref=(document.getElementById('donate-payref').value||'').trim();
+  const donor=(document.getElementById('donate-name').value||'').trim()||'Anonymous friend';
+  if(!amount){toast('⚠ Enter an amount.');return}
+  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref});
+  if(error){toast('⚠ Could not record the donation.');console.error(error);return}
+  closeModal('m-donate');
+  toast('💚 Thank you, '+esc(donor.split(' ')[0])+'! It counts once payment is confirmed.');
+}
+async function approveDonation(id){
+  const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
+  if(!dn)return;
+  if(!confirm('Confirm donation of UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'donor')+'?'))return;
+  await sb.from('donations').update({status:'approved'}).eq('id',id);
+  if(dn.campaign_id){const c=CAMPAIGNS.find(x=>x.id===dn.campaign_id);if(c)await sb.from('campaigns').update({raised:(c.raised||0)+(dn.amount||0)}).eq('id',c.id);}
+  audit('Confirmed donation','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||''));
+  await loadCampaigns();renderCampaignsAdmin();renderMemberView();
+  toast('✅ Donation confirmed and added to the campaign.');
+}
+let _campEditId=null;
+function resetCampForm(){_campEditId=null;['camp-title','camp-blurb','camp-goal','camp-img','camp-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('camp-active');if(a)a.checked=true;const b=document.getElementById('camp-save');if(b)b.textContent='Create fundraiser';}
+function editCamp(id){const c=CAMPAIGNS.find(x=>x.id===id);if(!c)return;_campEditId=id;const g=i=>document.getElementById(i);g('camp-title').value=c.title||'';g('camp-blurb').value=c.blurb||'';g('camp-goal').value=c.goal||'';g('camp-img').value=c.image_url||'';g('camp-end').value=c.ends_at||'';g('camp-active').checked=c.active!==false;g('camp-save').textContent='Update fundraiser';}
+async function saveCamp(){
+  const title=(document.getElementById('camp-title').value||'').trim();
+  if(!title){toast('⚠ A title is required.');return}
+  const row={title,blurb:(document.getElementById('camp-blurb').value||'').trim(),
+    goal:parseInt(document.getElementById('camp-goal').value)||0,
+    image_url:(document.getElementById('camp-img').value||'').trim()||null,
+    ends_at:document.getElementById('camp-end').value||null,
+    active:document.getElementById('camp-active').checked};
+  if(_campEditId)row.id=_campEditId;
+  const{error}=await sb.from('campaigns').upsert(row);
+  if(error){toast('⚠ Could not save.');console.error(error);return}
+  audit('Saved fundraiser',title);
+  await loadCampaigns();renderCampaignsAdmin();resetCampForm();toast('✅ Fundraiser saved.');
+}
+async function renderCampaignsAdmin(){
+  const el=document.getElementById('camps-admin-list');if(!el)return;
+  el.innerHTML=CAMPAIGNS.map(c=>'<div class="pa-row"><span class="pa-thumb">🎯</span><div class="pa-info"><strong>'+esc(c.title)+'</strong><span>UGX '+((c.raised||0).toLocaleString())+' / '+((c.goal||0).toLocaleString())+(c.active===false?' · off':'')+'</span></div><button class="btn btn-ghost btn-sm" onclick="editCamp(\''+c.id+'\')">Edit</button></div>').join('')||'<p style="font-size:.85rem;color:var(--muted)">No fundraisers yet.</p>';
+  const dl=document.getElementById('donations-pending-list');
+  if(dl){
+    const{data}=await sb.from('donations').select('*').eq('status','pending').order('created_at',{ascending:false});
+    dl.innerHTML=(data&&data.length)?data.map(d=>'<div class="pa-row"><span class="pa-thumb">💚</span><div class="pa-info"><strong>UGX '+((d.amount||0).toLocaleString())+' — '+esc(d.donor_name||'Anonymous')+'</strong><span>'+(d.payref?'Ref: '+esc(d.payref):'no reference')+' · '+String(d.created_at||'').slice(0,10)+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveDonation(\''+d.id+'\')">✓ Confirm</button></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No pending donations.</p>';
+  }
+}
+
+/* ═══ EVENTS & RSVP ═══ */
+let EVENTS=[];let RSVPS=[];
+async function loadEvents(){
+  const[e,r]=await Promise.all([
+    sb.from('events').select('*').order('event_date',{ascending:true}),
+    sb.from('event_rsvps').select('*')
+  ]);
+  EVENTS=e.data||[];RSVPS=r.data||[];
+}
+function upcomingEvents(){const t=new Date().toISOString().slice(0,10);return EVENTS.filter(ev=>ev.active!==false&&(!ev.event_date||ev.event_date>=t));}
+function eventRowHTML(ev){
+  const going=RSVPS.filter(r=>r.event_id===ev.id);
+  const mine=currentUser&&going.some(r=>r.member_id===currentUser.id);
+  const d=ev.event_date?new Date(ev.event_date+'T00:00:00'):null;
+  const cal=d?'<div class="ev-cal"><span>'+d.toLocaleString('en',{month:'short'})+'</span><b>'+d.getDate()+'</b></div>':'<div class="ev-cal"><b>📅</b></div>';
+  return '<div class="ev-row">'+cal+'<div class="ev-main"><b>'+esc(ev.title)+'</b><span>'+[ev.event_time,ev.location].filter(Boolean).map(esc).join(' · ')+(ev.blurb?'<br>'+esc(ev.blurb):'')+'</span><span class="ev-going">🙌 '+going.length+' going</span></div>'+
+    (currentUser?'<button class="btn '+(mine?'btn-ghost':'btn-canopy')+' btn-sm" onclick="toggleRsvp(\''+ev.id+'\')">'+(mine?'✓ Going':'RSVP')+'</button>':'')+'</div>';
+}
+async function toggleRsvp(eventId){
+  if(!currentUser){openModal('m-login');return}
+  _buzz();
+  const mine=RSVPS.find(r=>r.event_id===eventId&&r.member_id===currentUser.id);
+  if(mine){RSVPS=RSVPS.filter(r=>r!==mine);renderMemberView();await sb.from('event_rsvps').delete().eq('id',mine.id);}
+  else{const local={id:'tmp'+Date.now(),event_id:eventId,member_id:currentUser.id,member_name:currentUser.name};RSVPS.push(local);renderMemberView();
+    const{data,error}=await sb.from('event_rsvps').insert({event_id:eventId,member_id:currentUser.id,member_name:currentUser.name}).select().single();
+    if(error){RSVPS=RSVPS.filter(r=>r!==local);renderMemberView();toast('⚠ Could not RSVP.');}else{local.id=data.id;toast('🙌 See you there!');}}
+}
+let _evEditId=null;
+function resetEventForm(){_evEditId=null;['ev-title','ev-date','ev-time','ev-loc','ev-blurb'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('ev-active');if(a)a.checked=true;const b=document.getElementById('ev-save');if(b)b.textContent='Publish event';}
+function editEvent(id){const ev=EVENTS.find(x=>x.id===id);if(!ev)return;_evEditId=id;const g=i=>document.getElementById(i);g('ev-title').value=ev.title||'';g('ev-date').value=ev.event_date||'';g('ev-time').value=ev.event_time||'';g('ev-loc').value=ev.location||'';g('ev-blurb').value=ev.blurb||'';g('ev-active').checked=ev.active!==false;g('ev-save').textContent='Update event';}
+async function saveEvent(){
+  const title=(document.getElementById('ev-title').value||'').trim();
+  if(!title){toast('⚠ An event title is required.');return}
+  const row={title,event_date:document.getElementById('ev-date').value||null,
+    event_time:(document.getElementById('ev-time').value||'').trim()||null,
+    location:(document.getElementById('ev-loc').value||'').trim()||null,
+    blurb:(document.getElementById('ev-blurb').value||'').trim()||null,
+    active:document.getElementById('ev-active').checked};
+  if(_evEditId)row.id=_evEditId;
+  const{error}=await sb.from('events').upsert(row);
+  if(error){toast('⚠ Could not save.');console.error(error);return}
+  audit('Saved event',title);
+  await loadEvents();renderEventsAdmin();resetEventForm();renderMemberView();toast('✅ Event published.');
+}
+async function delEvent(id){
+  const ev=EVENTS.find(x=>x.id===id);
+  if(!confirm('Delete event "'+((ev&&ev.title)||'')+'"?'))return;
+  await sb.from('events').delete().eq('id',id);
+  audit('Deleted event',(ev&&ev.title)||id);
+  await loadEvents();renderEventsAdmin();renderMemberView();toast('Event deleted.');
+}
+function renderEventsAdmin(){
+  const el=document.getElementById('events-admin-list');if(!el)return;
+  el.innerHTML=EVENTS.map(ev=>{
+    const n=RSVPS.filter(r=>r.event_id===ev.id).length;
+    return '<div class="pa-row"><span class="pa-thumb">📅</span><div class="pa-info"><strong>'+esc(ev.title)+'</strong><span>'+(ev.event_date||'no date')+(ev.location?' · '+esc(ev.location):'')+' · 🙌 '+n+' going'+(ev.active===false?' · hidden':'')+'</span></div><button class="btn btn-ghost btn-sm" onclick="editEvent(\''+ev.id+'\')">Edit</button><button class="btn btn-danger btn-sm" onclick="delEvent(\''+ev.id+'\')">Delete</button></div>';
+  }).join('')||'<p style="font-size:.85rem;color:var(--muted)">No events yet.</p>';
+}
+
+/* ═══ IMPACT BADGES ═══ */
+function memberBadges(u,posts){
+  const b=[];
+  if((u.year||9999)<=2025)b.push('🌱 Founding member');
+  if(['platinum','diamond'].includes(u.tier))b.push('🛡 Guardian');
+  if(posts>=5)b.push('✍ Storyteller');else if(posts>=1)b.push('🌿 Green voice');
+  if((u.followers_count||0)>=5)b.push('🤝 Connector');
+  if(RSVPS.filter(r=>r.member_id===u.id).length>=1)b.push('🙌 Event-goer');
+  return b;
+}
+
+/* ═══ ADMIN AUDIT TRAIL ═══ */
+function audit(action,target){
+  if(!currentUser||currentUser.role!=='admin')return;
+  sb.from('admin_audit').insert({admin_email:currentUser.email,action,target:(target||'').slice(0,180)}).then(()=>{},()=>{});
+}
+async function renderAuditLog(){
+  const el=document.getElementById('audit-list');if(!el)return;
+  const{data}=await sb.from('admin_audit').select('*').order('created_at',{ascending:false}).limit(100);
+  el.innerHTML=(data&&data.length)?data.map(a=>'<div class="pa-row"><span class="pa-thumb">🧾</span><div class="pa-info"><strong>'+esc(a.action||'')+'</strong><span>'+esc(a.target||'')+'</span></div><span style="font-size:.72rem;color:var(--muted);font-family:var(--ff-m);text-align:right">'+esc(a.admin_email||'').split('@')[0]+'<br>'+String(a.created_at||'').slice(0,16).replace('T',' ')+'</span></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No admin actions recorded yet.</p>';
 }
 
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -702,13 +924,16 @@ function updatePostCreateBtn(){
 /* ═══ HERO SLIDESHOW ═══ */
 let curSlide=0;
 /* ═══ PRELOAD ONLY FIRST 3 SLIDES — rest loaded lazily ═══ */
+// Phones get compressed 900px versions (slideNsm.jpg ≈ 75% smaller); desktop keeps the originals.
+function _slideSmall(src){return src.replace('slide-','slide').replace('.jpg','sm.jpg')}
+function slideSrc(src){return window.innerWidth<=860?_slideSmall(src):src}
 function preloadSlides(){
-  SLIDE_IMAGES.slice(0,3).forEach(src=>{const img=new Image();img.src=src;});
+  SLIDE_IMAGES.slice(0,3).forEach(src=>{const img=new Image();img.src=slideSrc(src);});
   // Lazy load the rest after a short idle delay
   if('requestIdleCallback' in window){
-    requestIdleCallback(()=>SLIDE_IMAGES.slice(3).forEach(src=>{const img=new Image();img.src=src;}),{timeout:5000});
+    requestIdleCallback(()=>SLIDE_IMAGES.slice(3).forEach(src=>{const img=new Image();img.src=slideSrc(src);}),{timeout:5000});
   }else{
-    setTimeout(()=>SLIDE_IMAGES.slice(3).forEach(src=>{const img=new Image();img.src=src;}),3000);
+    setTimeout(()=>SLIDE_IMAGES.slice(3).forEach(src=>{const img=new Image();img.src=slideSrc(src);}),3000);
   }
 }
 
@@ -722,7 +947,9 @@ function initSlideshow(){
   imgs.forEach((src,i)=>{
     const d=document.createElement('div');
     d.className='slide'+(i===0?' active':'');
-    d.style.backgroundImage=`url('${src}')`;
+    const chosen=slideSrc(src);
+    d.style.backgroundImage=`url('${chosen}')`;
+    if(chosen!==src){const probe=new Image();probe.onerror=()=>{d.style.backgroundImage=`url('${src}')`};probe.src=chosen;}
     track.appendChild(d);
     const dot=document.createElement('div');
     dot.className='dot'+(i===0?' active':'');
@@ -1418,6 +1645,7 @@ function renderMemberView(){
         (u.bio?'<div class="profile-bio">'+esc(u.bio)+'</div>':
           '<div class="profile-bio" style="color:var(--muted);font-style:italic;font-size:.82rem">No bio yet — <a href="#" onclick="openEditProfile();return false" style="color:var(--canopy-lt)">add one</a></div>')+
         (Array.isArray(u.engage_prefs)&&u.engage_prefs.length?'<div class="mem-interests">'+u.engage_prefs.map(function(p){return '<span class="mi">'+esc(p)+'</span>';}).join('')+'</div>':'')+
+        (function(){const bs=memberBadges(u,myPostCount);return bs.length?'<div class="badge-row">'+bs.map(b=>'<span class="badge-chip">'+b+'</span>').join('')+'</div>':'';})()+
         '<div class="profile-stats">'+
           '<span><strong>'+(u.followers_count||0)+'</strong> followers</span>'+
           '<span>·</span>'+
@@ -1436,13 +1664,15 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
+    renewBannerHTML(u)+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
     // Certificate
     '<div class="mem-cert-row">'+
       '<div><div class="mem-cert-title">Green Card Certificate</div><div class="mem-cert-sub">Your official UBF Friends of Biodiversity membership certificate</div></div>'+
-      '<button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Download</button>'+
+      '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Certificate</button>'+
+      '<button class="btn btn-ghost btn-sm" onclick="downloadReceipt()">🧾 Receipt</button></div>'+
     '</div>'+
     // Actions
     '<div class="mem-action-row">'+
@@ -1460,6 +1690,9 @@ function renderMemberView(){
     '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
     '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
     '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+    // Events & fundraisers
+    (upcomingEvents().length?'<div class="mem-sec-title" style="margin-top:1.75rem">📅 Upcoming Events</div>'+upcomingEvents().map(eventRowHTML).join(''):'')+
+    (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.75rem">🎯 Fundraisers</div><div class="camp-grid">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
     // Announcements
     '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
     (ANNOUNCES.length
@@ -2132,7 +2365,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
@@ -2291,6 +2524,7 @@ async function adminMarkVerified(id,name){
   const{error}=await sb.from('members').update({email_verified:true}).eq('id',id);
   if(error){toast('⚠ Could not update.');console.error(error);return}
   await loadMembers();renderAdminMembers();
+  audit('Manually verified email',name);
   toast('✉ '+name+' marked as verified.');
 }
 async function adminApproveMember(id,name){
@@ -2298,6 +2532,7 @@ async function adminApproveMember(id,name){
   const{error}=await sb.from('members').update({status:'active'}).eq('id',id);
   if(error){toast('⚠ Could not approve member.');console.error(error);return}
   await loadMembers();renderAdminMembers();
+  audit('Approved member',name);
   toast('✅ '+name+' approved and activated.');
 }
 
@@ -2351,7 +2586,7 @@ async function delAnnounce(id){
   if(!confirm('Delete announcement: "'+((ann?ann.title:'')||'this announcement').slice(0,60)+'"? This cannot be undone.'))return;
   const {error}=await sb.from('announcements').delete().eq('id',id);
   if(error){toast('⚠ Could not delete.');console.error(error);return}
-  await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();toast('Announcement deleted.');
+  audit('Deleted announcement',(ann&&ann.title)||id);await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();toast('Announcement deleted.');
 }
 async function postAnnouncement(){
   const type=document.getElementById('ann-type').value;
@@ -2365,7 +2600,7 @@ async function postAnnouncement(){
   document.getElementById('ann-title').value='';document.getElementById('ann-body').value='';
   await loadAnnouncements();renderAdminAnnounces();renderPublicAnnounces();
   if(notify)await logEmail('['+type+'] '+title,'Broadcast to all members · '+new Date().toLocaleDateString());
-  toast('✅ Announcement published.'+(notify?' Email notification queued.':''));
+  audit('Published announcement',title);toast('✅ Announcement published.'+(notify?' Email notification queued.':''));
 }
 
 function renderFinancials(){
@@ -2468,7 +2703,7 @@ async function savePaymentDetails(){
   if(btn){btn.disabled=false;btn.textContent='Save Payment Details'}
   if(error){toast('⚠ Could not save payment details.');console.error(error);return}
   await loadPayment();renderPaymentUI();loadPaymentAdmin();
-  toast('✅ Payment details saved and updated on the public site.');
+  audit('Updated payment details','How to Pay section');toast('✅ Payment details saved and updated on the public site.');
 }
 function loadPaymentAdmin(){
   const map={'pd-bank':PAYMENT.bank,'pd-accno':PAYMENT.accno,'pd-branch':PAYMENT.branch,'pd-mtn':PAYMENT.mtn,'pd-airtel':PAYMENT.airtel,'pd-whatsapp':PAYMENT.whatsapp,'pd-promo-cap':PAYMENT.promo_caption};
@@ -2584,7 +2819,16 @@ function renderAdminOverview(){
       kpi('📚',(CONTENT||[]).length,'Resources published','ap-content')+
       kpi('📝',(POSTS||[]).length,'Community posts','ap-posts')+
       kpi('✉',unverified.length,'Unverified emails','ap-members',unverified.length>0)+
+      kpi('🔄',members.filter(m=>m.status==='active'&&(m.year||0)<new Date().getFullYear()).length,'Renewals due','ap-members')+
     '</div>'+
+    '<div class="mem-sec-title" style="margin-top:1.7rem">Revenue by tier (active members)</div>'+
+    (function(){
+      const tiers=['student','silver','gold','platinum','diamond'];
+      const sums=tiers.map(t=>active.filter(m=>m.tier===t).reduce((s,m)=>s+(m.amount||0),0));
+      const max=Math.max(1,...sums);
+      return '<div class="adm-card">'+tiers.map((t,i)=>'<div style="padding:.4rem 0;border-bottom:1px solid var(--border)"><div style="display:flex;justify-content:space-between;font-size:.8rem"><span style="color:var(--muted);text-transform:capitalize">'+t+' ('+active.filter(m=>m.tier===t).length+')</span><strong style="color:var(--canopy)">'+fmt(sums[i])+'</strong></div><div class="bar-wrap"><div class="bar-fill" style="width:'+Math.round(sums[i]*100/max)+'%"></div></div></div>').join('')+'</div>';
+    })()+
+    '<div class="mem-sec-title" style="margin-top:1.7rem">Pending renewals</div><div id="ov-renewals"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
     '<div class="mem-sec-title" style="margin-top:1.7rem">Quick Actions</div>'+
     '<div class="adm-ov-actions">'+
       (pending.length?'<button class="btn btn-canopy btn-sm" onclick="admGoto(\'ap-members\')">✓ Review '+pending.length+' pending member'+(pending.length===1?'':'s')+'</button>':'')+
@@ -2601,6 +2845,11 @@ function renderAdminOverview(){
         ?items.map(i=>'<div class="notif-item notif-click" onclick="admGoto(\''+(panelOf[i.kind]||'ap-overview')+'\')" title="Open in admin"><span class="notif-ico">'+i.icon+'</span><div class="notif-body"><div class="notif-cat">'+esc(i.cat)+'</div><div class="notif-text">'+esc(i.text)+'</div></div>'+(i.date?'<span class="notif-date">'+esc(i.date)+'</span>':'')+'<span class="notif-go">›</span></div>').join('')
         :'<p style="font-size:.85rem;color:var(--muted)">No activity in the last '+ARCHIVE_DAYS+' days.</p>';
     })();
+  // Pending renewals (async fill)
+  sb.from('renewals').select('*').eq('status','pending').order('created_at',{ascending:false}).then(({data})=>{
+    const box=document.getElementById('ov-renewals');if(!box)return;
+    box.innerHTML=(data&&data.length)?data.map(r=>'<div class="pa-row"><span class="pa-thumb">🔄</span><div class="pa-info"><strong>'+esc(r.member_name||'Member')+' → '+esc(String(r.to_year))+'</strong><span>UGX '+((r.amount||0).toLocaleString())+(r.payref?' · Ref: '+esc(r.payref):' · no reference')+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveRenewal(\''+r.id+'\')">✓ Approve</button></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No pending renewals.</p>';
+  });
 }
 
 /* ═══ ADMIN SIDEBAR NAVIGATION ═══ */

@@ -620,6 +620,9 @@
           <button class="adm-nav-item" data-ap="ap-payment" onclick="showAdminPanel(this)">💳 Payment Details</button>
           <button class="adm-nav-item" data-ap="ap-protect" onclick="showAdminPanel(this)">🦍 Conservation Gallery</button>
           <button class="adm-nav-item" data-ap="ap-ads" onclick="showAdminPanel(this)">📣 Ad Campaigns</button>
+          <button class="adm-nav-item" data-ap="ap-events" onclick="showAdminPanel(this)">📅 Events</button>
+          <button class="adm-nav-item" data-ap="ap-campaigns" onclick="showAdminPanel(this)">🎯 Fundraisers</button>
+          <button class="adm-nav-item" data-ap="ap-audit" onclick="showAdminPanel(this)">🧾 Audit Log</button>
           <button class="adm-nav-item" data-ap="ap-account" onclick="showAdminPanel(this)">🔑 My Password</button>
           <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
           <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
@@ -784,6 +787,46 @@
       <h4>Your campaigns</h4>
       <div id="ads-admin-list"></div>
     </div>
+  </div>
+
+  <div id="ap-events" class="adm-panel">
+    <div class="adm-sec"><span>Events &amp; RSVPs</span></div>
+    <div class="adm-card" style="max-width:760px">
+      <h4>Publish an event</h4>
+      <div class="fg"><label>Title</label><input id="ev-title" placeholder="e.g. Bwindi tree-planting weekend"/></div>
+      <div class="pd-row2">
+        <div class="fg"><label>Date</label><input id="ev-date" type="date"/></div>
+        <div class="fg"><label>Time (optional)</label><input id="ev-time" placeholder="e.g. 8:00 AM"/></div>
+      </div>
+      <div class="fg"><label>Location</label><input id="ev-loc" placeholder="e.g. Nkuringo, Kisoro"/></div>
+      <div class="fg"><label>Details (optional)</label><textarea id="ev-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="What members should know or bring."></textarea></div>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;margin-bottom:1rem"><input type="checkbox" id="ev-active" checked/> Visible to members</label>
+      <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="ev-save" onclick="saveEvent()">Publish event</button><button class="btn btn-ghost" onclick="resetEventForm()">Clear</button></div>
+    </div>
+    <div class="adm-card" style="max-width:760px"><h4>All events</h4><div id="events-admin-list"></div></div>
+  </div>
+
+  <div id="ap-campaigns" class="adm-panel">
+    <div class="adm-sec"><span>Fundraisers &amp; Donations</span></div>
+    <div class="adm-card" style="max-width:760px">
+      <h4>Create a fundraiser</h4>
+      <div class="fg"><label>Title</label><input id="camp-title" placeholder="e.g. Save Mabamba Wetland"/></div>
+      <div class="fg"><label>Story (one or two lines)</label><textarea id="camp-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit"></textarea></div>
+      <div class="pd-row2">
+        <div class="fg"><label>Goal (UGX)</label><input id="camp-goal" type="number" placeholder="e.g. 5000000"/></div>
+        <div class="fg"><label>Ends (optional)</label><input id="camp-end" type="date"/></div>
+      </div>
+      <div class="fg"><label>Image (repo filename or URL, optional)</label><input id="camp-img" placeholder="e.g. slide-5.jpg"/></div>
+      <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;margin-bottom:1rem"><input type="checkbox" id="camp-active" checked/> Fundraiser is live</label>
+      <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="camp-save" onclick="saveCamp()">Create fundraiser</button><button class="btn btn-ghost" onclick="resetCampForm()">Clear</button></div>
+    </div>
+    <div class="adm-card" style="max-width:760px"><h4>Fundraisers</h4><div id="camps-admin-list"></div></div>
+    <div class="adm-card" style="max-width:760px"><h4>Pending donations — confirm payments</h4><div id="donations-pending-list"></div></div>
+  </div>
+
+  <div id="ap-audit" class="adm-panel">
+    <div class="adm-sec"><span>Audit Log — who did what, when</span></div>
+    <div class="adm-card" style="max-width:760px"><div id="audit-list"></div></div>
   </div>
 
   <div id="ap-account" class="adm-panel">
@@ -1376,6 +1419,33 @@
       <input id="chat-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"/>
       <button onclick="sendChatMsg()">➤</button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ MEMBERSHIP RENEWAL ═══ -->
+<div class="overlay" id="m-renew">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('m-renew')">✕</button>
+    <h2>🔄 Renew for <span id="renew-year-label"></span></h2>
+    <p class="msub">Pay via any official channel (see “How to Pay”), then submit your reference — we confirm and extend your membership within 48 hours.</p>
+    <p id="renew-pending-note" style="display:none;font-size:.8rem;background:rgba(217,121,28,.12);border:1px solid rgba(217,121,28,.4);border-radius:8px;padding:.5rem .7rem;color:#9a5b12">⏳ You already have a renewal awaiting confirmation — submitting again is only needed if something changed.</p>
+    <div class="fg"><label>Renewal amount (UGX)</label><input id="renew-amount" type="number" placeholder="e.g. 1500000"/></div>
+    <div class="fg"><label>Payment reference</label><input id="renew-payref" placeholder="e.g. MTN Ref #12345"/></div>
+    <button class="btn btn-gold btn-full" onclick="submitRenewal()">Submit renewal</button>
+    <button class="btn btn-ghost btn-full" style="margin-top:.5rem" onclick="closeModal('m-renew');goToPayment()">See “How to Pay” first</button>
+  </div>
+</div>
+
+<!-- ═══ DONATE ═══ -->
+<div class="overlay" id="m-donate">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('m-donate')">✕</button>
+    <h2>💚 Donate</h2>
+    <p class="msub">Supporting: <strong id="donate-camp-label"></strong>. Pay via any official channel, then log it here.</p>
+    <div class="fg"><label>Your name</label><input id="donate-name" placeholder="Jane Akello (or 'Anonymous')"/></div>
+    <div class="fg"><label>Amount (UGX)</label><input id="donate-amount" type="number" placeholder="e.g. 50000"/></div>
+    <div class="fg"><label>Payment reference</label><input id="donate-payref" placeholder="e.g. MTN Ref #12345"/></div>
+    <button class="btn btn-gold btn-full" onclick="submitDonation()">Log my donation</button>
   </div>
 </div>
 
