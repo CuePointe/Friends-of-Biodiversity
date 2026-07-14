@@ -623,6 +623,7 @@
           <button class="adm-nav-item" data-ap="ap-events" onclick="showAdminPanel(this)">📅 Events</button>
           <button class="adm-nav-item" data-ap="ap-campaigns" onclick="showAdminPanel(this)">🎯 Fundraisers</button>
           <button class="adm-nav-item" data-ap="ap-audit" onclick="showAdminPanel(this)">🧾 Audit Log</button>
+          <button class="adm-nav-item" data-ap="ap-guide" onclick="showAdminPanel(this)">📖 Admin Guide</button>
           <button class="adm-nav-item" data-ap="ap-account" onclick="showAdminPanel(this)">🔑 My Password</button>
           <button class="adm-nav-item" data-ap="ap-dashboard" onclick="showAdminPanel(this)">📊 Accountability</button>
           <button class="adm-nav-item" data-ap="ap-footprint" onclick="showAdminPanel(this)">🌍 Our Footprint</button>
@@ -827,6 +828,60 @@
   <div id="ap-audit" class="adm-panel">
     <div class="adm-sec"><span>Audit Log — who did what, when</span></div>
     <div class="adm-card" style="max-width:760px"><div id="audit-list"></div></div>
+  </div>
+
+  <div id="ap-guide" class="adm-panel">
+    <div class="adm-sec"><span>Admin Guide — how to run the app</span></div>
+    <div class="adm-card" style="max-width:820px">
+      <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem">Everything an admin needs, panel by panel. Tap a section to expand it.</p>
+
+      <details class="guide-sec" open><summary>👥 Members — approve, verify, renew</summary>
+        <ol>
+          <li><b>New enrollments</b> arrive as <i>Pending</i>. Confirm their payment reference against your bank/MoMo statement, then press <b>✓ Approve</b>. The member's benefits unlock instantly.</li>
+          <li><b>✉ Verify</b> appears for members who couldn't receive their email code — only use it after confirming their identity.</li>
+          <li><b>Renewals</b>: members whose year has ended submit a renewal (amount + reference). Pending renewals appear on the <b>Overview</b> page — press <b>✓ Approve</b> to extend their membership year.</li>
+        </ol>
+      </details>
+
+      <details class="guide-sec"><summary>🖼 Images & videos — the two systems</summary>
+        <ol>
+          <li><b>Admin uploads (no GitHub needed)</b>: Conservation Gallery photos/videos, payment logos, “How to Pay” welcome media. Use the upload buttons in each panel — changes appear on the site instantly. If an upload fails you will see the exact error message.</li>
+          <li><b>Repo files (GitHub)</b>: hero slides, brand logos. Upload via <i>Add file → Upload files</i> (drag &amp; drop) on the <b>main</b> branch. Keep both <code>slide-N.jpg</code> (desktop) and <code>slideNsm.jpg</code> (phone) versions.</li>
+        </ol>
+      </details>
+
+      <details class="guide-sec"><summary>💳 Payment details & impact list</summary>
+        <p>Everything the public “How to Pay” section shows is edited here: bank/MoMo numbers, WhatsApp line, channel logos, the welcome video/image, and the <b>“Where your money goes”</b> list (one line per impact: <code>emoji | amount | what it achieves</code>). Saving updates the live site immediately.</p>
+      </details>
+
+      <details class="guide-sec"><summary>🦍 Conservation Gallery</summary>
+        <p>Each card = one species or place (name, IUCN status, story, region, photo <i>or</i> short video, optional Green Card tier link — linked items show as “You help protect …” on that tier). Untick <i>Show on the public page</i> to hide a card without deleting it.</p>
+      </details>
+
+      <details class="guide-sec"><summary>📣 Ad Campaigns</summary>
+        <p>Create a card with title, message, image, link and button label, then set <b>start and end dates</b> — it runs only inside that window and appears as a “Sponsored · UBF” card in the members' feed. The list shows each campaign's status (Scheduled / ● Live / Ended) plus 👁 views and 🖱 clicks.</p>
+      </details>
+
+      <details class="guide-sec"><summary>📅 Events & 🎯 Fundraisers</summary>
+        <p><b>Events</b>: publish with date, time and location; members RSVP and you see live counts. <b>Fundraisers</b>: set a goal; donations arrive as <i>pending</i> — press <b>✓ Confirm</b> once the payment is verified and the progress bar grows automatically.</p>
+      </details>
+
+      <details class="guide-sec"><summary>📚 Content, 📢 Announcements, 📄 Reports</summary>
+        <p>Upload Learning Exchange resources, post announcements (optionally emailed), publish financial reports. Items older than 21 days auto-archive out of the main feeds — nothing is deleted; use <i>View archived</i> or the Archive/Unarchive buttons.</p>
+      </details>
+
+      <details class="guide-sec"><summary>🧾 Audit Log & 🔑 Password</summary>
+        <p>The Audit Log records who approved, published, confirmed or deleted what, with timestamps. Every admin should set a personal password under <b>My Password</b> on first login.</p>
+      </details>
+
+      <details class="guide-sec"><summary>🆘 Troubleshooting</summary>
+        <ol>
+          <li><b>Changes not visible?</b> Hard-refresh (Ctrl+Shift+R / pull-down refresh on mobile). Code updates load fresh automatically; images may need one extra refresh.</li>
+          <li><b>Upload failed?</b> The red toast shows the exact reason. Files over ~50&nbsp;MB are rejected — compress videos first.</li>
+          <li><b>A member can't sign in?</b> Check their status (pending → approve; inactive → reactivate) and whether their email is verified.</li>
+        </ol>
+      </details>
+    </div>
   </div>
 
   <div id="ap-account" class="adm-panel">
