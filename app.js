@@ -1035,14 +1035,15 @@ function _speciesList(){
   (PROTECT||[]).forEach(p=>{if(p.active===false||p.kind==='place')return;const t=(p.name||'').trim();if(t&&!seen[t.toLowerCase()]){seen[t.toLowerCase()]=1;out.push({name:t,img:(Array.isArray(p.images)&&p.images[0])||p.image_url||''});}});
   return out;
 }
-let _sightPhoto=null,_sightSpecies=null,_sightCoords=null;
+let _sightPhoto=null,_sightSpecies=null,_sightCoords=null,_sightExtra={count:null,activity:null,habitat:null};
 function openSighting(){
   if(!currentUser){openModal('m-login');return}
-  _sightPhoto=null;_sightSpecies=null;_sightCoords=null;
+  _sightPhoto=null;_sightSpecies=null;_sightCoords=null;_sightExtra={count:null,activity:null,habitat:null};
   const g=id=>document.getElementById(id);
   if(g('sight-photo'))g('sight-photo').value='';
   if(g('sight-thumb'))g('sight-thumb').innerHTML='📷';
   if(g('sight-notes'))g('sight-notes').value='';
+  document.querySelectorAll('#m-sighting .sp-pill').forEach(b=>b.classList.remove('on'));
   // Species chips from the gallery
   const sp=_speciesList();
   if(g('sight-species')){
@@ -1067,6 +1068,11 @@ function pickSpecies(btn){
   document.querySelectorAll('#sight-species .sp-chip').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');_sightSpecies=btn.dataset.sp;
 }
+// count / activity / habitat pills — NEMA Annex 3 asks for number & breeding habits
+function sightPick(group,btn){
+  document.querySelectorAll('#m-sighting .sp-pill[data-g="'+group+'"]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');_sightExtra[group]=btn.dataset.v;
+}
 function sightPhotoPreview(input){
   const f=input.files&&input.files[0];if(!f)return;_sightPhoto=f;
   const t=document.getElementById('sight-thumb');
@@ -1081,7 +1087,8 @@ async function submitSighting(){
   if(_sightPhoto){const up=await _uploadFile(_sightPhoto,'sighting');if(up)photo_url=up.url;}
   const row={species:_sightSpecies,lat:_sightCoords?_sightCoords.lat:null,lng:_sightCoords?_sightCoords.lng:null,
     observed_at:new Date().toISOString(),member_id:currentUser.id,member_name:currentUser.name,
-    photo_url,notes:(document.getElementById('sight-notes').value||'').trim()||null,verified:false};
+    photo_url,notes:(document.getElementById('sight-notes').value||'').trim()||null,verified:false,
+    count_band:_sightExtra.count,activity:_sightExtra.activity,habitat:_sightExtra.habitat};
   const{error}=await sb.from('sightings').insert(row);
   if(btn){btn.disabled=false;btn.textContent='✓ Submit sighting';}
   if(error){toast('⚠ Could not save the sighting.');console.error(error);return}
@@ -1137,16 +1144,36 @@ function renderSightMap(){
 function exportSightings(){
   const rows=_mapCenter?_sightsInRadius():SIGHTINGS.filter(s=>s.lat!=null);
   if(!rows.length){toast('No sightings in this area yet.');return}
-  const hdr=['species','lat','lng','observed_at','verified','logged_by','notes'];
-  const csv=[hdr.join(',')].concat(rows.map(s=>hdr.map(k=>{
-    let v=k==='logged_by'?s.member_name:s[k];v=(v==null?'':String(v)).replace(/"/g,'""');
-    return /[",\n]/.test(v)?'"'+v+'"':v;
-  }).join(','))).join('\n');
-  const meta=_mapCenter?('# UBF Biodiversity Data Pack — species within '+_mapRadius+'km of '+_mapCenter.lat.toFixed(4)+','+_mapCenter.lng.toFixed(4)+'\n'):'';
-  const blob=new Blob([meta+csv],{type:'text/csv'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ubf-sightings-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
-  audit('Exported sightings data pack',_mapCenter?(rows.length+' rows near '+_mapCenter.lat.toFixed(3)+','+_mapCenter.lng.toFixed(3)):(rows.length+' rows'));
-  toast('⬇ Data pack exported ('+rows.length+' rows).');
+  const esc2=v=>{v=(v==null?'':String(v)).replace(/"/g,'""');return /[",\n]/.test(v)?'"'+v+'"':v;};
+  const hdr=['species','iucn_status','count','activity','habitat','lat','lng','observed_at','verified','logged_by','notes'];
+  const line=s=>[s.species,_speciesStatus(s.species),s.count_band,s.activity,s.habitat,s.lat,s.lng,s.observed_at,s.verified,s.member_name,s.notes].map(esc2).join(',');
+  const csv=[hdr.join(',')].concat(rows.map(line)).join('\n');
+  // Cover note that frames the pack as a legal INPUT, never an EIA itself
+  const nSpecies=new Set(rows.map(s=>s.species)).size, nVer=rows.filter(s=>s.verified).length;
+  const cover=[
+    '# UGANDA BIODIVERSITY FUND — Friends of Biodiversity',
+    '# BIODIVERSITY BASELINE DATA PACK (citizen-science)',
+    _mapCenter?('# Survey area: '+_mapRadius+' km radius around '+_mapCenter.lat.toFixed(4)+', '+_mapCenter.lng.toFixed(4)):'# Survey area: all mapped records',
+    '# Records: '+rows.length+'  |  Distinct species: '+nSpecies+'  |  Verified records: '+nVer,
+    '# Generated: '+new Date().toISOString().slice(0,10),
+    '#',
+    '# PURPOSE & LIMITS: This community-science dataset is provided to support the',
+    '# screening and baseline-study phases of an Environmental Impact Assessment under',
+    '# the EIA Regulations (No.13 of 1998) and the Wildlife Statute (No.14 of 1996, s.16).',
+    '# It does NOT constitute an EIA and does not replace a NEMA-approved practitioner.',
+    '# Records are observer-reported and admin-verified; use as indicative baseline',
+    '# evidence, aligned to NEMA EIA Annex 3 (Ecological Considerations).',
+    '#',''
+  ].join('\n');
+  const blob=new Blob([cover+csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ubf-baseline-data-pack-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  audit('Exported biodiversity baseline data pack',_mapCenter?(rows.length+' rows near '+_mapCenter.lat.toFixed(3)+','+_mapCenter.lng.toFixed(3)):(rows.length+' rows'));
+  toast('⬇ Baseline data pack exported ('+rows.length+' rows).');
+}
+// Conservation status comes from the gallery — never hardcoded
+function _speciesStatus(name){
+  const p=(PROTECT||[]).find(x=>(x.name||'').trim().toLowerCase()===(name||'').trim().toLowerCase());
+  return p&&p.status?p.status:'';
 }
 async function verifySighting(id,val){
   await sb.from('sightings').update({verified:val}).eq('id',id);
@@ -1168,7 +1195,9 @@ function renderSightingsAdmin(){
     '<div class="pa-row">'+
     (s.photo_url?'<span class="pa-thumb" style="background-image:url(\''+esc(s.photo_url.split('?')[0])+'\');background-size:cover"></span>':'<span class="pa-thumb">🐾</span>')+
     '<div class="pa-info"><strong>'+esc(s.species)+(s.verified?' <span style="color:var(--canopy-lt)">✓ verified</span>':'')+'</strong><span>'+
-      (s.lat!=null?'📍 '+s.lat.toFixed(3)+', '+s.lng.toFixed(3):'no location')+' · '+esc(s.member_name||'')+' · '+String(s.observed_at||s.created_at||'').slice(0,10)+(s.notes?'<br>'+esc(s.notes):'')+'</span></div>'+
+      (s.lat!=null?'📍 '+s.lat.toFixed(3)+', '+s.lng.toFixed(3):'no location')+' · '+esc(s.member_name||'')+' · '+String(s.observed_at||s.created_at||'').slice(0,10)+
+      (function(){const ex=[s.count_band?'🔢 '+esc(s.count_band):'',s.activity?'🌿 '+esc(s.activity):'',s.habitat?'🏞 '+esc(s.habitat):'',_speciesStatus(s.species)?'🛡 '+esc(_speciesStatus(s.species)):''].filter(Boolean);return ex.length?'<br>'+ex.join(' · '):'';})()+
+      (s.notes?'<br>'+esc(s.notes):'')+'</span></div>'+
     '<button class="btn '+(s.verified?'btn-ghost':'btn-canopy')+' btn-sm" onclick="verifySighting(\''+s.id+'\','+(!s.verified)+')">'+(s.verified?'Unverify':'✓ Verify')+'</button>'+
     '<button class="btn btn-danger btn-sm" onclick="delSighting(\''+s.id+'\')">Delete</button></div>'
   ).join(''):'<p style="font-size:.85rem;color:var(--muted)">No sightings logged yet.</p>';
