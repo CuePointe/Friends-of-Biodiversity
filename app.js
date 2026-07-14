@@ -1032,7 +1032,7 @@ async function loadSightings(){
 function _speciesList(){
   // Species come straight from your conservation gallery titles
   const seen={},out=[];
-  (PROTECT||[]).forEach(p=>{const t=(p.title||'').trim();if(t&&!seen[t.toLowerCase()]){seen[t.toLowerCase()]=1;out.push({name:t,img:(Array.isArray(p.images)&&p.images[0])||p.image_url||''});}});
+  (PROTECT||[]).forEach(p=>{if(p.active===false||p.kind==='place')return;const t=(p.name||'').trim();if(t&&!seen[t.toLowerCase()]){seen[t.toLowerCase()]=1;out.push({name:t,img:(Array.isArray(p.images)&&p.images[0])||p.image_url||''});}});
   return out;
 }
 let _sightPhoto=null,_sightSpecies=null,_sightCoords=null;
