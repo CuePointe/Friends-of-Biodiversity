@@ -999,6 +999,8 @@ function memberBadges(u,posts){
   if(posts>=5)b.push('✍ Storyteller');else if(posts>=1)b.push('🌿 Green voice');
   if((u.followers_count||0)>=5)b.push('🤝 Connector');
   if(RSVPS.filter(r=>r.member_id===u.id).length>=1)b.push('🙌 Event-goer');
+  const vs=myVerifiedSightings(u.id);
+  if(vs>=10)b.push('🔬 Citizen Scientist');else if(mySightings(u.id)>=1)b.push('🔭 Observer');
   return b;
 }
 
@@ -1013,11 +1015,199 @@ async function renderAuditLog(){
   el.innerHTML=(data&&data.length)?data.map(a=>'<div class="pa-row"><span class="pa-thumb">🧾</span><div class="pa-info"><strong>'+esc(a.action||'')+'</strong><span>'+esc(a.target||'')+'</span></div><span style="font-size:.72rem;color:var(--muted);font-family:var(--ff-m);text-align:right">'+esc(a.admin_email||'').split('@')[0]+'<br>'+String(a.created_at||'').slice(0,16).replace('T',' ')+'</span></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No admin actions recorded yet.</p>';
 }
 
+/* ═══ CITIZEN SCIENCE — sightings log, map & EIA data pack ═══
+   A member snaps a photo, picks a species from the conservation gallery,
+   and the phone auto-fills GPS + date. Each submission is one row in the
+   `sightings` table — thousands of rows become a biodiversity dataset that
+   EIA consultants, researchers and NGOs can use. 10 verified sightings
+   unlock the free Citizen Scientist badge. */
+let SIGHTINGS=[];
+// Uganda bounding box for the self-contained map (no external tiles needed)
+const UG_BBOX={lngMin:29.5,lngMax:35.1,latMin:-1.6,latMax:4.3};
+async function loadSightings(){
+  const{data,error}=await sb.from('sightings').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadSightings',error);return}
+  SIGHTINGS=data||[];
+}
+function _speciesList(){
+  // Species come straight from your conservation gallery titles
+  const seen={},out=[];
+  (PROTECT||[]).forEach(p=>{if(p.active===false||p.kind==='place')return;const t=(p.name||'').trim();if(t&&!seen[t.toLowerCase()]){seen[t.toLowerCase()]=1;out.push({name:t,img:(Array.isArray(p.images)&&p.images[0])||p.image_url||''});}});
+  return out;
+}
+let _sightPhoto=null,_sightSpecies=null,_sightCoords=null,_sightExtra={count:null,activity:null,habitat:null};
+function openSighting(){
+  if(!currentUser){openModal('m-login');return}
+  _sightPhoto=null;_sightSpecies=null;_sightCoords=null;_sightExtra={count:null,activity:null,habitat:null};
+  const g=id=>document.getElementById(id);
+  if(g('sight-photo'))g('sight-photo').value='';
+  if(g('sight-thumb'))g('sight-thumb').innerHTML='📷';
+  if(g('sight-notes'))g('sight-notes').value='';
+  document.querySelectorAll('#m-sighting .sp-pill').forEach(b=>b.classList.remove('on'));
+  // Species chips from the gallery
+  const sp=_speciesList();
+  if(g('sight-species')){
+    g('sight-species').innerHTML=sp.length?sp.map(s=>
+      '<button type="button" class="sp-chip" data-sp="'+esc(s.name)+'" onclick="pickSpecies(this)">'+
+      (s.img?'<span class="sp-im" style="background-image:url(\''+esc(s.img.split('?')[0])+'\')"></span>':'<span class="sp-im">🐾</span>')+
+      '<small>'+esc(s.name)+'</small></button>').join('')
+      :'<p style="font-size:.82rem;color:var(--muted)">Add species to the Conservation Gallery first — they become the options here.</p>';
+  }
+  if(g('sight-meta'))g('sight-meta').innerHTML='<span class="sm-auto">AUTO</span>🗓 '+new Date().toLocaleString('en',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'<br><span class="sm-auto">AUTO</span>👤 '+esc(currentUser.name)+'<br><span id="sight-loc"><span class="sm-auto">…</span>📍 finding your location…</span>';
+  openModal('m-sighting');
+  // Auto-capture GPS
+  if(navigator.geolocation){
+    navigator.geolocation.getCurrentPosition(
+      pos=>{_sightCoords={lat:pos.coords.latitude,lng:pos.coords.longitude};const l=g('sight-loc');if(l)l.innerHTML='<span class="sm-auto">AUTO</span>📍 '+_sightCoords.lat.toFixed(4)+', '+_sightCoords.lng.toFixed(4);},
+      ()=>{const l=g('sight-loc');if(l)l.innerHTML='<span class="sm-auto" style="background:rgba(181,69,27,.15);color:var(--rust)">OFF</span>📍 Location unavailable — turn on GPS to appear on the map.';},
+      {enableHighAccuracy:true,timeout:8000}
+    );
+  }else{const l=g('sight-loc');if(l)l.textContent='📍 This device cannot share location.';}
+}
+function pickSpecies(btn){
+  document.querySelectorAll('#sight-species .sp-chip').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');_sightSpecies=btn.dataset.sp;
+}
+// count / activity / habitat pills — NEMA Annex 3 asks for number & breeding habits
+function sightPick(group,btn){
+  document.querySelectorAll('#m-sighting .sp-pill[data-g="'+group+'"]').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');_sightExtra[group]=btn.dataset.v;
+}
+function sightPhotoPreview(input){
+  const f=input.files&&input.files[0];if(!f)return;_sightPhoto=f;
+  const t=document.getElementById('sight-thumb');
+  if(t){const u=URL.createObjectURL(f);t.innerHTML='<img src="'+u+'" alt=""/>';}
+}
+async function submitSighting(){
+  if(!currentUser)return;
+  if(!_sightSpecies){toast('⚠ Pick which species you saw.');return}
+  const btn=document.getElementById('sight-submit');
+  if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  let photo_url=null;
+  if(_sightPhoto){const up=await _uploadFile(_sightPhoto,'sighting');if(up)photo_url=up.url;}
+  const row={species:_sightSpecies,lat:_sightCoords?_sightCoords.lat:null,lng:_sightCoords?_sightCoords.lng:null,
+    observed_at:new Date().toISOString(),member_id:currentUser.id,member_name:currentUser.name,
+    photo_url,notes:(document.getElementById('sight-notes').value||'').trim()||null,verified:false,
+    count_band:_sightExtra.count,activity:_sightExtra.activity,habitat:_sightExtra.habitat};
+  const{error}=await sb.from('sightings').insert(row);
+  if(btn){btn.disabled=false;btn.textContent='✓ Submit sighting';}
+  if(error){toast('⚠ Could not save the sighting.');console.error(error);return}
+  await loadSightings();
+  closeModal('m-sighting');renderMemberView();
+  toast('🔬 Sighting logged — thank you for growing Uganda’s biodiversity record!');
+}
+function myVerifiedSightings(uid){return SIGHTINGS.filter(s=>s.member_id===uid&&s.verified).length;}
+function mySightings(uid){return SIGHTINGS.filter(s=>s.member_id===uid).length;}
+// ---- Map projection helpers (self-contained, no external tiles) ----
+function _projXY(lat,lng,W,H){const x=(lng-UG_BBOX.lngMin)/(UG_BBOX.lngMax-UG_BBOX.lngMin)*W;const y=(UG_BBOX.latMax-lat)/(UG_BBOX.latMax-UG_BBOX.latMin)*H;return{x,y};}
+function _invXY(x,y,W,H){const lng=UG_BBOX.lngMin+(x/W)*(UG_BBOX.lngMax-UG_BBOX.lngMin);const lat=UG_BBOX.latMax-(y/H)*(UG_BBOX.latMax-UG_BBOX.latMin);return{lat,lng};}
+function _haversineKm(a,b,c,d){const R=6371,r=Math.PI/180;const dLat=(c-a)*r,dLng=(d-b)*r;const s=Math.sin(dLat/2)**2+Math.cos(a*r)*Math.cos(c*r)*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(s));}
+const _spClass=n=>{n=(n||'').toLowerCase();if(/bird|crane|shoebill|stork|eagle|weaver|turaco/.test(n))return'b';if(/frog|toad|amphib|newt/.test(n))return'a';return'm';};
+let _mapCenter=null,_mapRadius=10;
+function openSightMap(){openModal('m-sightmap');requestAnimationFrame(()=>requestAnimationFrame(renderSightMap));}
+function sightMapRadius(v){_mapRadius=+v;const o=document.getElementById('sm-radlabel');if(o)o.textContent=v+' km';renderSightMap();}
+function sightMapClick(ev){
+  const box=document.getElementById('sm-canvas');if(!box)return;
+  const r=box.getBoundingClientRect();
+  const p=_invXY(ev.clientX-r.left,ev.clientY-r.top,r.width,r.height);
+  _mapCenter=p;renderSightMap();
+}
+function _sightsInRadius(){
+  if(!_mapCenter)return[];
+  return SIGHTINGS.filter(s=>s.lat!=null&&s.lng!=null&&_haversineKm(_mapCenter.lat,_mapCenter.lng,s.lat,s.lng)<=_mapRadius);
+}
+function renderSightMap(){
+  const box=document.getElementById('sm-canvas');if(!box)return;
+  const W=box.clientWidth||320,H=box.clientHeight||420;
+  const withGeo=SIGHTINGS.filter(s=>s.lat!=null&&s.lng!=null);
+  let html='';
+  withGeo.forEach(s=>{const p=_projXY(s.lat,s.lng,W,H);html+='<span class="sm-dot '+_spClass(s.species)+'" style="left:'+p.x+'px;top:'+p.y+'px" title="'+esc(s.species)+'"></span>';});
+  if(_mapCenter){
+    const c=_projXY(_mapCenter.lat,_mapCenter.lng,W,H);
+    // radius circle: convert km to px using lng scale at this lat
+    const kmPerDegLng=111.32*Math.cos(_mapCenter.lat*Math.PI/180);
+    const radDeg=_mapRadius/kmPerDegLng;const radPx=radDeg/(UG_BBOX.lngMax-UG_BBOX.lngMin)*W;
+    html+='<span class="sm-rad" style="left:'+c.x+'px;top:'+c.y+'px;width:'+(radPx*2)+'px;height:'+(radPx*2)+'px"></span>';
+    html+='<span class="sm-pin" style="left:'+c.x+'px;top:'+c.y+'px">📍</span>';
+  }
+  box.innerHTML=html;
+  const inR=_sightsInRadius();
+  const info=document.getElementById('sm-info');
+  if(info){
+    info.innerHTML=_mapCenter
+      ?'<b>'+inR.length+' sighting'+(inR.length===1?'':'s')+'</b> within '+_mapRadius+' km · <b>'+new Set(inR.map(s=>s.species)).size+'</b> species'
+      :'<b>'+withGeo.length+'</b> sightings mapped · tap the map to drop a survey pin';
+  }
+  const exp=document.getElementById('sm-export');
+  if(exp)exp.style.display=(currentUser&&currentUser.role==='admin'&&_mapCenter)?'block':'none';
+}
+function exportSightings(){
+  const rows=_mapCenter?_sightsInRadius():SIGHTINGS.filter(s=>s.lat!=null);
+  if(!rows.length){toast('No sightings in this area yet.');return}
+  const esc2=v=>{v=(v==null?'':String(v)).replace(/"/g,'""');return /[",\n]/.test(v)?'"'+v+'"':v;};
+  const hdr=['species','iucn_status','count','activity','habitat','lat','lng','observed_at','verified','logged_by','notes'];
+  const line=s=>[s.species,_speciesStatus(s.species),s.count_band,s.activity,s.habitat,s.lat,s.lng,s.observed_at,s.verified,s.member_name,s.notes].map(esc2).join(',');
+  const csv=[hdr.join(',')].concat(rows.map(line)).join('\n');
+  // Cover note that frames the pack as a legal INPUT, never an EIA itself
+  const nSpecies=new Set(rows.map(s=>s.species)).size, nVer=rows.filter(s=>s.verified).length;
+  const cover=[
+    '# UGANDA BIODIVERSITY FUND — Friends of Biodiversity',
+    '# BIODIVERSITY BASELINE DATA PACK (citizen-science)',
+    _mapCenter?('# Survey area: '+_mapRadius+' km radius around '+_mapCenter.lat.toFixed(4)+', '+_mapCenter.lng.toFixed(4)):'# Survey area: all mapped records',
+    '# Records: '+rows.length+'  |  Distinct species: '+nSpecies+'  |  Verified records: '+nVer,
+    '# Generated: '+new Date().toISOString().slice(0,10),
+    '#',
+    '# PURPOSE & LIMITS: This community-science dataset is provided to support the',
+    '# screening and baseline-study phases of an Environmental Impact Assessment under',
+    '# the EIA Regulations (No.13 of 1998) and the Wildlife Statute (No.14 of 1996, s.16).',
+    '# It does NOT constitute an EIA and does not replace a NEMA-approved practitioner.',
+    '# Records are observer-reported and admin-verified; use as indicative baseline',
+    '# evidence, aligned to NEMA EIA Annex 3 (Ecological Considerations).',
+    '#',''
+  ].join('\n');
+  const blob=new Blob([cover+csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ubf-baseline-data-pack-'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+  audit('Exported biodiversity baseline data pack',_mapCenter?(rows.length+' rows near '+_mapCenter.lat.toFixed(3)+','+_mapCenter.lng.toFixed(3)):(rows.length+' rows'));
+  toast('⬇ Baseline data pack exported ('+rows.length+' rows).');
+}
+// Conservation status comes from the gallery — never hardcoded
+function _speciesStatus(name){
+  const p=(PROTECT||[]).find(x=>(x.name||'').trim().toLowerCase()===(name||'').trim().toLowerCase());
+  return p&&p.status?p.status:'';
+}
+async function verifySighting(id,val){
+  await sb.from('sightings').update({verified:val}).eq('id',id);
+  audit(val?'Verified sighting':'Unverified sighting',id);
+  await loadSightings();renderSightingsAdmin();
+}
+async function delSighting(id){
+  if(!confirm('Delete this sighting permanently?'))return;
+  await sb.from('sightings').delete().eq('id',id);
+  audit('Deleted sighting',id);
+  await loadSightings();renderSightingsAdmin();
+}
+function renderSightingsAdmin(){
+  const el=document.getElementById('sightings-admin-list');if(!el)return;
+  const total=SIGHTINGS.length,ver=SIGHTINGS.filter(s=>s.verified).length,geo=SIGHTINGS.filter(s=>s.lat!=null).length;
+  const stat=document.getElementById('sightings-stat');
+  if(stat)stat.innerHTML='<b>'+total+'</b> logged · <b>'+ver+'</b> verified · <b>'+geo+'</b> mapped · <b>'+new Set(SIGHTINGS.map(s=>s.species)).size+'</b> species';
+  el.innerHTML=SIGHTINGS.length?SIGHTINGS.map(s=>
+    '<div class="pa-row">'+
+    (s.photo_url?'<span class="pa-thumb" style="background-image:url(\''+esc(s.photo_url.split('?')[0])+'\');background-size:cover"></span>':'<span class="pa-thumb">🐾</span>')+
+    '<div class="pa-info"><strong>'+esc(s.species)+(s.verified?' <span style="color:var(--canopy-lt)">✓ verified</span>':'')+'</strong><span>'+
+      (s.lat!=null?'📍 '+s.lat.toFixed(3)+', '+s.lng.toFixed(3):'no location')+' · '+esc(s.member_name||'')+' · '+String(s.observed_at||s.created_at||'').slice(0,10)+
+      (function(){const ex=[s.count_band?'🔢 '+esc(s.count_band):'',s.activity?'🌿 '+esc(s.activity):'',s.habitat?'🏞 '+esc(s.habitat):'',_speciesStatus(s.species)?'🛡 '+esc(_speciesStatus(s.species)):''].filter(Boolean);return ex.length?'<br>'+ex.join(' · '):'';})()+
+      (s.notes?'<br>'+esc(s.notes):'')+'</span></div>'+
+    '<button class="btn '+(s.verified?'btn-ghost':'btn-canopy')+' btn-sm" onclick="verifySighting(\''+s.id+'\','+(!s.verified)+')">'+(s.verified?'Unverify':'✓ Verify')+'</button>'+
+    '<button class="btn btn-danger btn-sm" onclick="delSighting(\''+s.id+'\')">Delete</button></div>'
+  ).join(''):'<p style="font-size:.85rem;color:var(--muted)">No sightings logged yet.</p>';
+}
+
 /* ═══ APP BOOTSTRAP — load everything from Supabase, then render ═══ */
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents(),loadSightings()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -1056,6 +1246,7 @@ function subscribeRealtime(){
   sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
   sb.channel('public:member_messages').on('postgres_changes',{event:'*',schema:'public',table:'member_messages'},async()=>{await loadMessages();updateChatBadge();renderChats();renderChatThread();}).subscribe();
   sb.channel('public:ads').on('postgres_changes',{event:'*',schema:'public',table:'ads'},async()=>{await loadAds();renderPosts();renderAdsAdmin();}).subscribe();
+  sb.channel('public:sightings').on('postgres_changes',{event:'*',schema:'public',table:'sightings'},async()=>{await loadSightings();renderSightingsAdmin();if(document.getElementById('m-sightmap').classList.contains('open'))renderSightMap();}).subscribe();
 }
 
 function updatePostCreateBtn(){
@@ -1847,6 +2038,16 @@ function renderMemberView(){
       '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
       '<button class="btn btn-ghost btn-sm" style="color:var(--rust);border-color:rgba(181,69,27,.45)" onclick="doLogout()">🚪 Sign Out</button>'+
     '</div>'+
+    // Citizen science — log sightings, view the map, earn the badge
+    (function(){const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);return ''+
+      '<div class="cs-panel">'+
+        '<div class="cs-head"><div><div class="cs-title">🔬 Citizen Science</div><div class="cs-sub">Log what you see in the wild. Every sighting grows Uganda’s open biodiversity record.</div></div>'+
+          '<div class="cs-count"><b>'+ms+'</b><span>logged</span></div></div>'+
+        '<div class="cs-actions"><button class="btn btn-canopy" onclick="openSighting()">🔍 Log a sighting</button>'+
+          '<button class="btn btn-ghost" onclick="openSightMap()">🗺 Sightings map</button></div>'+
+        '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
+        '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
+      '</div>';})()+
     // Discover / follow other members
     '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
     '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
@@ -2529,7 +2730,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();renderSightingsAdmin();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
