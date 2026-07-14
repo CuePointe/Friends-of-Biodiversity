@@ -622,6 +622,7 @@
           <button class="adm-nav-item" data-ap="ap-ads" onclick="showAdminPanel(this)">📣 Ad Campaigns</button>
           <button class="adm-nav-item" data-ap="ap-events" onclick="showAdminPanel(this)">📅 Events</button>
           <button class="adm-nav-item" data-ap="ap-campaigns" onclick="showAdminPanel(this)">🎯 Fundraisers</button>
+          <button class="adm-nav-item" data-ap="ap-sightings" onclick="showAdminPanel(this)">🔬 Sightings &amp; Data</button>
           <button class="adm-nav-item" data-ap="ap-audit" onclick="showAdminPanel(this)">🧾 Audit Log</button>
           <button class="adm-nav-item" data-ap="ap-guide" onclick="showAdminPanel(this)">📖 Admin Guide</button>
           <button class="adm-nav-item" data-ap="ap-account" onclick="showAdminPanel(this)">🔑 My Password</button>
@@ -825,6 +826,15 @@
     </div>
     <div class="adm-card" style="max-width:760px"><h4>Fundraisers</h4><div id="camps-admin-list"></div></div>
     <div class="adm-card" style="max-width:760px"><h4>Pending donations — confirm payments</h4><div id="donations-pending-list"></div></div>
+  </div>
+
+  <div id="ap-sightings" class="adm-panel">
+    <div class="adm-sec"><span>Citizen-Science Sightings &amp; EIA Data Pack</span></div>
+    <div class="adm-card" style="max-width:820px">
+      <p style="font-size:.88rem;color:var(--muted);line-height:1.6;margin-top:0">Members log wildlife sightings from the app. Verify the genuine ones — verified sightings count toward each member’s <b>Citizen Scientist</b> badge and make the dataset credible. Open the <b>🗺 Sightings map</b> (from any member profile) to draw a radius around a project site and export the <b>EIA data pack</b> (CSV).</p>
+      <div id="sightings-stat" style="font-size:.85rem;color:var(--canopy);background:rgba(45,106,79,.08);border-radius:10px;padding:.6rem .8rem;margin-bottom:1rem"></div>
+      <div id="sightings-admin-list"></div>
+    </div>
   </div>
 
   <div id="ap-audit" class="adm-panel">
@@ -1539,6 +1549,35 @@
     <button class="btn btn-gold btn-full" id="tier-save" onclick="saveTierChange()">Save tier change</button>
     <div class="mem-sec-title" style="margin-top:1.2rem;font-size:.85rem">Your tier history</div>
     <div id="tier-history-list" style="max-height:30vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- log a sighting -->
+<div class="overlay" id="m-sighting">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-sighting')">✕</button>
+    <h2>🔍 Log a sighting</h2>
+    <p class="msub">Snap a photo, pick the species, and we’ll auto-fill your location and time. One tap grows Uganda’s biodiversity record.</p>
+    <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="sight-photo" accept="image/*" capture="environment" onchange="sightPhotoPreview(this)" hidden/><span class="pd-thumb" id="sight-thumb">📷</span><b>Add a photo</b><span class="pd-hint">Tap to use your camera or gallery.</span></label>
+    <div class="mem-sec-title" style="font-size:.82rem;margin-bottom:.4rem">What did you see?</div>
+    <div id="sight-species" class="sp-picker"></div>
+    <div id="sight-meta" class="sight-meta"></div>
+    <div class="fg" style="margin-top:.8rem"><label>Notes (optional)</label><input id="sight-notes" placeholder="e.g. two adults near the river"/></div>
+    <button class="btn btn-gold btn-full" id="sight-submit" onclick="submitSighting()">✓ Submit sighting</button>
+  </div>
+</div>
+
+<!-- sightings map -->
+<div class="overlay" id="m-sightmap">
+  <div class="modal" style="max-width:460px">
+    <button class="modal-close" onclick="closeModal('m-sightmap')">✕</button>
+    <h2>🗺 Sightings map · Uganda</h2>
+    <p class="msub">Every logged sighting is a dot. Tap the map to drop a survey pin, set a radius, and see every species recorded there.</p>
+    <div id="sm-canvas" class="sm-canvas" onclick="sightMapClick(event)"></div>
+    <div class="sm-legend"><span><i class="d-b"></i>Birds</span><span><i class="d-m"></i>Mammals</span><span><i class="d-a"></i>Amphibians</span></div>
+    <div class="sm-controls"><label>Radius <b id="sm-radlabel">10 km</b></label><input type="range" min="1" max="50" value="10" oninput="sightMapRadius(this.value)"/></div>
+    <div id="sm-info" class="sm-info"></div>
+    <button class="btn btn-canopy btn-full" id="sm-export" style="display:none;margin-top:.6rem" onclick="exportSightings()">⬇ Export species list near pin · EIA data pack</button>
   </div>
 </div>
 
