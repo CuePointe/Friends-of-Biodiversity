@@ -750,9 +750,9 @@
         <select id="pf-tier"><option value="">Not linked — show in gallery only</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
       </div>
       <div class="fg"><label>Short story</label><textarea id="pf-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One line on why it matters."></textarea></div>
-      <div class="fg"><label>Image filename in your repo — the simplest way</label><input id="pf-imgurl" placeholder="e.g. gorilla.jpg  (drop the file in your GitHub repo, then type its exact name here)"/></div>
-      <p style="font-size:.78rem;color:var(--muted);margin:-.4rem 0 .8rem">Drop the photo into your repo like a slide, type its filename above, and Save — it shows instantly. You can also paste a full image URL. (The upload button below is optional.)</p>
-      <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*,video/*" onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>…or upload a photo / short video</b><span class="pd-hint">Optional — tap to choose a file from this device.</span></label>
+      <div class="fg"><label>Image filenames from your repo (up to 5, comma-separated)</label><input id="pf-imgurl" placeholder="e.g. gorilla1.jpg, gorilla2.jpg, gorilla3.jpg"/></div>
+      <p style="font-size:.78rem;color:var(--muted);margin:-.4rem 0 .8rem">Two or more images make the card a <b>sliding mini-slideshow</b> with arrows and dots. You can also paste full URLs.</p>
+      <label class="pd-drop pd-drop-wide" style="margin-bottom:.8rem"><input type="file" id="pf-img" accept="image/*,video/*" multiple onchange="pdPreview(this,'pf-thumb')" hidden/><span class="pd-thumb" id="pf-thumb">🖼</span><b>…or upload photos (up to 5) / one short video</b><span class="pd-hint">Select several images at once for a slideshow, or one video.</span></label>
       <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;color:var(--text);margin-bottom:1rem"><input type="checkbox" id="pf-active" checked/> Show on the public page</label>
       <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="pf-save" onclick="saveProtectItem()">Add to gallery</button><button class="btn btn-ghost" onclick="resetProtectForm()">Clear</button></div>
     </div>
@@ -801,6 +801,8 @@
       </div>
       <div class="fg"><label>Location</label><input id="ev-loc" placeholder="e.g. Nkuringo, Kisoro"/></div>
       <div class="fg"><label>Details (optional)</label><textarea id="ev-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="What members should know or bring."></textarea></div>
+      <label class="pd-drop pd-drop-wide" style="margin-bottom:.6rem"><input type="file" id="ev-media" accept="image/*,video/*" onchange="pdPreview(this,'ev-thumb')" hidden/><span class="pd-thumb" id="ev-thumb">🖼</span><b>Upload your poster or a short video</b><span class="pd-hint">Your Canva designs go here — the card becomes the poster.</span></label>
+      <div class="fg"><label>…or poster filename from your repo (optional)</label><input id="ev-poster-url" placeholder="e.g. eventposter1.jpg"/></div>
       <label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem;margin-bottom:1rem"><input type="checkbox" id="ev-active" checked/> Visible to members</label>
       <div style="display:flex;gap:.6rem"><button class="btn btn-gold" id="ev-save" onclick="saveEvent()">Publish event</button><button class="btn btn-ghost" onclick="resetEventForm()">Clear</button></div>
     </div>
@@ -1440,9 +1442,28 @@
 <!-- ═══ APP SHELL — compact app header + fixed bottom tabs (members) + compose FAB ═══ -->
 <div id="app-header">
   <span class="ah-logo">🌿</span><b class="ah-name">Friends of Biodiversity</b>
+  <button class="ah-ex" onclick="toggleExplore(true)" aria-label="Explore the website">🌍 Explore</button>
   <button class="ah-bell" onclick="openNotifications()" aria-label="Notifications">🔔<span id="ah-badge" style="display:none"></span></button>
   <button class="ah-av" id="ah-avatar" onclick="appNav('profile')" aria-label="My profile">👤</button>
 </div>
+
+<!-- Explore drawer: the full website, while staying signed in -->
+<div id="explore-drawer" onclick="if(event.target===this)toggleExplore(false)">
+  <div class="dr-panel">
+    <div class="dr-title">Visit the website — you stay signed in</div>
+    <div class="dr-grid">
+      <button class="dr-item" onclick="exploreGo('top')"><span>🏠</span>Homepage</button>
+      <button class="dr-item" onclick="exploreGo('protect')"><span>🦍</span>What you protect</button>
+      <button class="dr-item" onclick="exploreGo('payment')"><span>💳</span>How to Pay</button>
+      <button class="dr-item" onclick="exploreGo('greencard')"><span>🪪</span>Green Card tiers</button>
+      <button class="dr-item" onclick="exploreGo('impact')"><span>🌍</span>Our Footprint</button>
+      <button class="dr-item" onclick="exploreGo('wallfame')"><span>🏆</span>Wall of Fame</button>
+      <button class="dr-item" onclick="exploreGo('themes')"><span>🧭</span>Programmes</button>
+      <button class="dr-item" onclick="toggleExplore(false)"><span>↩</span>Back to app</button>
+    </div>
+  </div>
+</div>
+<button id="explore-back" onclick="exitExplore()">← Back to app</button>
 <button id="app-fab" onclick="openModal('m-create-post')" aria-label="Create a post">+</button>
 <nav id="app-tabbar" aria-label="Primary">
   <button class="app-tab" data-tab="home" onclick="appNav('home')"><span class="ic">🏠</span><span>Home</span></button>

@@ -332,12 +332,23 @@ function renderProtectGallery(){
   if(!items.length){wrap.innerHTML='<p class="protect-empty">Nothing added here yet — the admin can add species and places from the Conservation Gallery panel.</p>';return;}
   wrap.innerHTML=items.map(p=>{
     const isVid=p.media_type==='video'&&p.video_url;
-    const media=isVid
-      ?'<video src="'+esc(p.video_url)+'" muted loop playsinline autoplay preload="metadata"'+(p.image_url?' poster="'+esc(p.image_url)+'"':'')+'></video>'
-      :(p.image_url?'<img src="'+esc(p.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'');
-    const hasMedia=isVid||p.image_url;
+    let imgs=Array.isArray(p.images)&&p.images.length?p.images:(p.image_url?[p.image_url]:[]);
+    if(typeof p.images==='string'){try{const a=JSON.parse(p.images);if(Array.isArray(a)&&a.length)imgs=a;}catch(e){}}
+    let media='';let extra='';
+    if(isVid){
+      media='<video src="'+esc(p.video_url)+'" muted loop playsinline autoplay preload="metadata"'+(imgs[0]?' poster="'+esc(imgs[0])+'"':'')+'></video>';
+    }else if(imgs.length>1){
+      // mini-slideshow: stacked slides + arrows + dots, auto-advancing
+      media=imgs.map((u,i)=>'<img class="pg-s'+(i===0?' on':'')+'" src="'+esc(u)+'" alt="" onerror="this.remove()"/>').join('');
+      extra='<span class="pg-count">'+imgs.length+' photos</span>'+
+        '<div class="pg-arrows"><button type="button" onclick="pgNav(this,-1)">‹</button><button type="button" onclick="pgNav(this,1)">›</button></div>'+
+        '<div class="pg-dots">'+imgs.map((_,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('')+'</div>';
+    }else if(imgs[0]){
+      media='<img src="'+esc(imgs[0])+'" alt="" onerror="this.style.display=\'none\'"/>';
+    }
+    const hasMedia=isVid||imgs.length;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
-    return '<article class="pg-card"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+
+    return '<article class="pg-card"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
       '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
       (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
   }).join('');
@@ -354,6 +365,21 @@ function renderTierProtect(){
     slot.innerHTML='<span class="tp-lbl">🌿 You help protect</span>'+items.map(p=>'<span class="tp-item">'+esc(p.name)+'</span>').join('');
   });
 }
+/* Gallery slideshow controls */
+function _pgSet(card,idx){
+  const s=card.querySelectorAll('.pg-s');if(!s.length)return;
+  idx=((idx%s.length)+s.length)%s.length;
+  card.dataset.idx=idx;
+  s.forEach((el,i)=>el.classList.toggle('on',i===idx));
+  card.querySelectorAll('.pg-dots i').forEach((el,i)=>el.classList.toggle('on',i===idx));
+}
+function pgNav(btn,dir){
+  const card=btn.closest('.pg-card');if(!card)return;
+  card.dataset.auto='0';// user took control — stop auto-advance for this card
+  _pgSet(card,parseInt(card.dataset.idx||'0',10)+dir);
+}
+setInterval(()=>{document.querySelectorAll('.pg-card[data-auto="1"]').forEach(c=>{if(c.offsetParent)_pgSet(c,parseInt(c.dataset.idx||'0',10)+1)});},5200);
+
 /* Admin CRUD for the gallery */
 let _protectEditId=null;
 function fillProtectForm(p){
@@ -364,7 +390,7 @@ function fillProtectForm(p){
   if(g('pf-status'))g('pf-status').value=p.status||'';
   if(g('pf-blurb'))g('pf-blurb').value=p.blurb||'';
   if(g('pf-region'))g('pf-region').value=p.region||'';
-  if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(p.image_url||'');
+  if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(Array.isArray(p.images)&&p.images.length?p.images.join(', '):(p.image_url||''));
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
@@ -381,14 +407,22 @@ async function saveProtectItem(){
   let image_url=cur?(cur.image_url||null):null;
   let video_url=cur?(cur.video_url||null):null;
   let media_type=cur?(cur.media_type||'image'):'image';
-  const up=await _uploadPayAsset('pf-img','protect');
-  if(up){ if(up.type==='video'){video_url=up.url;media_type='video';} else {image_url=up.url;media_type='image';} }
-  else {
-    // Simplest path: a repo image filename (or pasted URL) typed by the admin
-    const typed=(document.getElementById('pf-imgurl')?document.getElementById('pf-imgurl').value.trim():'');
-    if(typed){image_url=typed;media_type='image';}
+  let images=cur&&Array.isArray(cur.images)?cur.images.slice():(image_url?[image_url]:[]);
+  // Up to 5 files at once — images build the slideshow; a video takes over the card
+  const inp=document.getElementById('pf-img');
+  const files=inp&&inp.files?Array.from(inp.files).slice(0,5):[];
+  for(const f of files){
+    const up=await _uploadFile(f,'protect');
+    if(!up)continue;
+    if(up.type==='video'){video_url=up.url;media_type='video';}
+    else{images.push(up.url);media_type='image';}
   }
-  const row={kind:document.getElementById('pf-kind').value,name,image_url,video_url,media_type,
+  // Typed repo filenames (comma-separated) replace the image list
+  const typed=(document.getElementById('pf-imgurl')?document.getElementById('pf-imgurl').value.trim():'');
+  if(typed&&!files.length){images=typed.split(',').map(s=>s.trim()).filter(Boolean).slice(0,5);media_type='image';}
+  images=images.slice(-5);
+  image_url=images[0]||image_url;
+  const row={kind:document.getElementById('pf-kind').value,name,image_url,video_url,media_type,images:images.length?images:null,
     status:(document.getElementById('pf-status').value||'').trim(),
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
@@ -702,32 +736,93 @@ async function approveRenewal(id){
   toast('✅ Renewal approved.');
 }
 
-/* ═══ CONTRIBUTION RECEIPT (PDF) ═══ */
-function downloadReceipt(){
+/* ═══ CONTRIBUTION RECEIPT (PDF) — logos, ED signature, FoB stamp, QR ═══ */
+function _loadAsset(srcs){
+  return new Promise(res=>{
+    if(!srcs||!srcs.length)return res(null);
+    const im=new Image();
+    const next=()=>_loadAsset(srcs.slice(1)).then(res);
+    im.onload=()=>{
+      if(im.naturalWidth<4||im.naturalHeight<4)return next();// skip empty/broken files
+      try{
+        const c=document.createElement('canvas');c.width=im.naturalWidth;c.height=im.naturalHeight;
+        c.getContext('2d').drawImage(im,0,0);
+        res({d:c.toDataURL('image/png'),w:im.naturalWidth,h:im.naturalHeight});
+      }catch(e){next();}
+    };
+    im.onerror=next;
+    im.src=srcs[0];
+  });
+}
+async function downloadReceipt(){
   if(!currentUser)return;
   const J=(window.jspdf||{}).jsPDF;
   if(!J){toast('⚠ PDF engine still loading — try again in a moment.');return}
+  toast('🧾 Preparing your receipt…');
+  const[fob,ubf,sig,stamp,qr]=await Promise.all([
+    _loadAsset(['fob-logo.png']),_loadAsset(['ubf-logo.png']),
+    _loadAsset(['edsignature.png','ed-signature.png']),
+    _loadAsset(['stamp.png','fobstamp.png']),
+    _loadAsset(['qrcode.png','qr-code.png'])
+  ]);
   const d=new J();const u=currentUser;const td=TIERS_DATA[u.tier]||{label:u.tier};
-  const line=(y)=>{d.setDrawColor(200,168,75);d.line(20,y,190,y)};
+  const fit=(a,maxW,maxH)=>{const r=Math.min(maxW/a.w,maxH/a.h);return{w:a.w*r,h:a.h*r};};
+  // Header band with both logos
   d.setFillColor(11,38,24);d.rect(0,0,210,34,'F');
-  d.setTextColor(228,201,122);d.setFont('helvetica','bold');d.setFontSize(16);
-  d.text('UGANDA BIODIVERSITY FUND',105,15,{align:'center'});
-  d.setFontSize(10);d.setTextColor(255,255,255);
-  d.text('Friends of Biodiversity — Contribution Receipt',105,24,{align:'center'});
-  d.setTextColor(30,30,30);d.setFontSize(11);d.setFont('helvetica','normal');
+  if(fob){const s=fit(fob,24,24);d.addImage(fob.d,'PNG',12,(34-s.h)/2,s.w,s.h);}
+  if(ubf){const s=fit(ubf,24,24);d.addImage(ubf.d,'PNG',210-12-s.w,(34-s.h)/2,s.w,s.h);}
+  d.setTextColor(228,201,122);d.setFont('helvetica','bold');d.setFontSize(15);
+  d.text('UGANDA BIODIVERSITY FUND',105,14,{align:'center'});
+  d.setFontSize(9);d.setTextColor(255,255,255);d.setFont('helvetica','normal');
+  d.text('Friends of Biodiversity · Green Card Programme',105,22,{align:'center'});
+  // Gold band
+  d.setFillColor(200,168,75);d.rect(0,34,210,9,'F');
+  d.setTextColor(11,38,24);d.setFont('helvetica','bold');d.setFontSize(9);
+  d.text('O F F I C I A L   C O N T R I B U T I O N   R E C E I P T',105,40,{align:'center'});
+  // Details
+  d.setTextColor(30,30,30);d.setFontSize(11);
   const rows=[['Receipt No','FOB-'+String(u.id||'').slice(0,8).toUpperCase()],
     ['Date issued',new Date().toLocaleDateString()],
     ['Member',u.name||''],['Member type',(u.type||'individual')+(u.org?' — '+u.org:'')],
-    ['Green Card tier',td.label||u.tier],['Membership year',String(u.year||'')],
-    ['Annual contribution','UGX '+(u.amount||0).toLocaleString()],
+    ['Green Card tier',(td.label||u.tier)+' · '+String(u.year||'')],
     ['Payment reference',u.payref||'—']];
-  let y=48;
-  rows.forEach(([k,v])=>{d.setFont('helvetica','bold');d.text(k,25,y);d.setFont('helvetica','normal');d.text(String(v),80,y);y+=9;});
-  line(y);y+=10;
-  d.setFontSize(10);d.setTextColor(90,90,90);
-  d.text('Thank you for standing with Uganda\'s forests, wetlands and wildlife.',25,y);y+=6;
-  d.text('Every shilling becomes measurable protection on the ground.',25,y);y+=10;
-  d.setFontSize(9);d.text('Uganda Biodiversity Fund · info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org',25,y);
+  let y=56;
+  rows.forEach(([k,v])=>{
+    d.setFont('helvetica','bold');d.text(k,25,y);
+    d.setFont('helvetica','normal');d.text(String(v),80,y);
+    d.setDrawColor(225,225,225);d.setLineDashPattern([1,1.5],0);d.line(25,y+2.5,185,y+2.5);d.setLineDashPattern([],0);
+    y+=10;});
+  // Amount highlight
+  d.setFillColor(248,243,228);d.setDrawColor(200,168,75);d.roundedRect(25,y,160,16,3,3,'FD');
+  d.setFont('helvetica','bold');d.setTextColor(11,38,24);d.setFontSize(11);
+  d.text('Annual contribution',31,y+10);
+  d.setFontSize(14);d.text('UGX '+(u.amount||0).toLocaleString(),179,y+10.5,{align:'right'});
+  y+=26;
+  d.setFont('helvetica','normal');d.setFontSize(9.5);d.setTextColor(100,100,100);
+  d.text('Thank you for standing with Uganda\'s forests, wetlands and wildlife.',25,y);
+  d.text('Every shilling becomes measurable protection on the ground.',25,y+5);
+  // Footer: signature · stamp · QR
+  const fy=y+42;
+  if(sig){const s=fit(sig,46,20);d.addImage(sig.d,'PNG',30+(46-s.w)/2,fy-s.h-1,s.w,s.h);}
+  else{d.setFont('times','italic');d.setFontSize(16);d.setTextColor(22,50,31);d.text('I. Amani',45,fy-3);}
+  d.setDrawColor(60,60,60);d.line(28,fy,80,fy);
+  d.setFont('helvetica','bold');d.setFontSize(8);d.setTextColor(60,60,60);
+  d.text('Executive Director',54,fy+5,{align:'center'});
+  d.setFont('helvetica','normal');d.text('Uganda Biodiversity Fund',54,fy+9.5,{align:'center'});
+  if(stamp){const s=fit(stamp,34,34);d.addImage(stamp.d,'PNG',105-s.w/2,fy-24,s.w,s.h);}
+  else{
+    d.setDrawColor(45,106,79);d.setLineWidth(.8);d.circle(105,fy-8,15);d.setLineWidth(.3);d.circle(105,fy-8,12.5);
+    d.setFontSize(6.5);d.setTextColor(45,106,79);d.setFont('helvetica','bold');
+    d.text('UGANDA BIODIVERSITY FUND',105,fy-10,{align:'center'});d.text('· OFFICIAL ·',105,fy-6,{align:'center'});
+    d.setLineWidth(.2);
+  }
+  if(qr){const s=fit(qr,26,26);d.addImage(qr.d,'PNG',155,fy-26,s.w,s.h);
+    d.setFontSize(7);d.setTextColor(100,100,100);d.setFont('helvetica','normal');
+    d.text('Scan to verify',168,fy+4,{align:'center'});}
+  // Contact strip
+  d.setFillColor(11,38,24);d.rect(0,282,210,15,'F');
+  d.setTextColor(220,220,220);d.setFontSize(8);
+  d.text('info@ugandabiodiversityfund.org  ·  www.ugandabiodiversityfund.org  ·  +256 (039) 3216445',105,291,{align:'center'});
   d.save('UBF-Receipt-'+(u.year||'')+'.pdf');
   toast('🧾 Receipt downloaded.');
 }
@@ -809,6 +904,36 @@ async function loadEvents(){
   EVENTS=e.data||[];RSVPS=r.data||[];
 }
 function upcomingEvents(){const t=new Date().toISOString().slice(0,10);return EVENTS.filter(ev=>ev.active!==false&&(!ev.event_date||ev.event_date>=t));}
+/* Sliding poster/video carousel — admin-designed posters auto-slide like ads */
+function eventCardHTML(ev){
+  const going=RSVPS.filter(r=>r.event_id===ev.id);
+  const mine=currentUser&&going.some(r=>r.member_id===currentUser.id);
+  const d=ev.event_date?new Date(ev.event_date+'T00:00:00'):null;
+  const media=(ev.media_type==='video'&&ev.video_url)
+    ?'<video src="'+esc(ev.video_url)+'" muted loop playsinline autoplay preload="metadata"'+(ev.poster_url?' poster="'+esc(ev.poster_url)+'"':'')+'></video>'
+    :(ev.poster_url?'<img src="'+esc(ev.poster_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'');
+  return '<div class="evc-card"'+(media?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+
+    (d?'<div class="evc-date"><span>'+d.toLocaleString('en',{month:'short'})+'</span><b>'+d.getDate()+'</b></div>':'')+
+    ((ev.media_type==='video'&&ev.video_url)?'<span class="evc-vid">🎬</span>':'')+
+    '<div class="evc-body"><b>'+esc(ev.title)+'</b><span>'+[ev.event_time,ev.location].filter(Boolean).map(esc).join(' · ')+(going.length?' · 🙌 '+going.length+' going':'')+'</span>'+
+    (currentUser?'<button class="evc-cta'+(mine?' on':'')+'" onclick="toggleRsvp(\''+ev.id+'\')">'+(mine?'✓ Going':'RSVP →')+'</button>':'')+
+    '</div></div>';
+}
+function eventsCarouselHTML(){
+  const evs=upcomingEvents();if(!evs.length)return '';
+  return '<div class="evc-wrap"><div class="evc-head"><b>📅 What’s coming up</b><span>swipe ›</span></div><div class="evc">'+evs.map(eventCardHTML).join('')+'</div></div>';
+}
+// Gentle auto-advance for every visible carousel
+setInterval(()=>{
+  document.querySelectorAll('.evc').forEach(t=>{
+    if(!t.offsetParent)return;
+    const w=t.firstElementChild?t.firstElementChild.offsetWidth+12:270;
+    const max=t.scrollWidth-t.clientWidth;
+    if(max<=4)return;
+    const next=t.scrollLeft+w>max-8?0:t.scrollLeft+w;
+    t.scrollTo({left:next,behavior:'smooth'});
+  });
+},4800);
 function eventRowHTML(ev){
   const going=RSVPS.filter(r=>r.event_id===ev.id);
   const mine=currentUser&&going.some(r=>r.member_id===currentUser.id);
@@ -820,23 +945,31 @@ function eventRowHTML(ev){
 async function toggleRsvp(eventId){
   if(!currentUser){openModal('m-login');return}
   _buzz();
+  const _redraw=()=>{renderMemberView();renderPosts();};
   const mine=RSVPS.find(r=>r.event_id===eventId&&r.member_id===currentUser.id);
-  if(mine){RSVPS=RSVPS.filter(r=>r!==mine);renderMemberView();await sb.from('event_rsvps').delete().eq('id',mine.id);}
-  else{const local={id:'tmp'+Date.now(),event_id:eventId,member_id:currentUser.id,member_name:currentUser.name};RSVPS.push(local);renderMemberView();
+  if(mine){RSVPS=RSVPS.filter(r=>r!==mine);_redraw();await sb.from('event_rsvps').delete().eq('id',mine.id);}
+  else{const local={id:'tmp'+Date.now(),event_id:eventId,member_id:currentUser.id,member_name:currentUser.name};RSVPS.push(local);_redraw();
     const{data,error}=await sb.from('event_rsvps').insert({event_id:eventId,member_id:currentUser.id,member_name:currentUser.name}).select().single();
-    if(error){RSVPS=RSVPS.filter(r=>r!==local);renderMemberView();toast('⚠ Could not RSVP.');}else{local.id=data.id;toast('🙌 See you there!');}}
+    if(error){RSVPS=RSVPS.filter(r=>r!==local);_redraw();toast('⚠ Could not RSVP.');}else{local.id=data.id;toast('🙌 See you there!');}}
 }
 let _evEditId=null;
-function resetEventForm(){_evEditId=null;['ev-title','ev-date','ev-time','ev-loc','ev-blurb'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('ev-active');if(a)a.checked=true;const b=document.getElementById('ev-save');if(b)b.textContent='Publish event';}
-function editEvent(id){const ev=EVENTS.find(x=>x.id===id);if(!ev)return;_evEditId=id;const g=i=>document.getElementById(i);g('ev-title').value=ev.title||'';g('ev-date').value=ev.event_date||'';g('ev-time').value=ev.event_time||'';g('ev-loc').value=ev.location||'';g('ev-blurb').value=ev.blurb||'';g('ev-active').checked=ev.active!==false;g('ev-save').textContent='Update event';}
+function resetEventForm(){_evEditId=null;['ev-title','ev-date','ev-time','ev-loc','ev-blurb','ev-poster-url'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const f=document.getElementById('ev-media');if(f)f.value='';const t=document.getElementById('ev-thumb');if(t)t.textContent='🖼';const a=document.getElementById('ev-active');if(a)a.checked=true;const b=document.getElementById('ev-save');if(b)b.textContent='Publish event';}
+function editEvent(id){const ev=EVENTS.find(x=>x.id===id);if(!ev)return;_evEditId=id;const g=i=>document.getElementById(i);g('ev-title').value=ev.title||'';g('ev-date').value=ev.event_date||'';g('ev-time').value=ev.event_time||'';g('ev-loc').value=ev.location||'';g('ev-blurb').value=ev.blurb||'';if(g('ev-poster-url'))g('ev-poster-url').value=(ev.media_type!=='video'&&ev.poster_url)?ev.poster_url:'';const t=g('ev-thumb');if(t)t.innerHTML=(ev.media_type==='video'&&ev.video_url)?'🎬':(ev.poster_url?'<img src="'+esc(ev.poster_url)+'" alt=""/>':'🖼');g('ev-active').checked=ev.active!==false;g('ev-save').textContent='Update event';}
 async function saveEvent(){
   const title=(document.getElementById('ev-title').value||'').trim();
   if(!title){toast('⚠ An event title is required.');return}
+  const cur=_evEditId?EVENTS.find(e=>e.id===_evEditId):null;
   const row={title,event_date:document.getElementById('ev-date').value||null,
     event_time:(document.getElementById('ev-time').value||'').trim()||null,
     location:(document.getElementById('ev-loc').value||'').trim()||null,
     blurb:(document.getElementById('ev-blurb').value||'').trim()||null,
-    active:document.getElementById('ev-active').checked};
+    active:document.getElementById('ev-active').checked,
+    poster_url:cur?(cur.poster_url||null):null,
+    video_url:cur?(cur.video_url||null):null,
+    media_type:cur?(cur.media_type||'image'):'image'};
+  const up=await _uploadPayAsset('ev-media','event');
+  if(up){if(up.type==='video'){row.video_url=up.url;row.media_type='video';}else{row.poster_url=up.url;row.media_type='image';}}
+  else{const typed=(document.getElementById('ev-poster-url')?document.getElementById('ev-poster-url').value.trim():'');if(typed){row.poster_url=typed;row.media_type='image';}}
   if(_evEditId)row.id=_evEditId;
   const{error}=await sb.from('events').upsert(row);
   if(error){toast('⚠ Could not save.');console.error(error);return}
@@ -1009,13 +1142,32 @@ function appNav(tab){
   document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   if(tab==='chats'){openChats();return}
   if(tab==='alerts'){openNotifications();return}
-  document.body.classList.remove('tab-home','tab-learn','tab-pay');
+  document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode');
+  {const b=document.getElementById('explore-back');if(b)b.style.display='none';}
   let screen=null;
   if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}
   else if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
   else if(tab==='profile'){showView('member');screen=document.getElementById('view-member');}
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
+}
+/* EXPLORE — members browse the full website while staying signed in */
+function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
+function exploreGo(sec){
+  toggleExplore(false);
+  document.body.classList.remove('tab-home','tab-learn','tab-pay');
+  document.body.classList.add('explore-mode');
+  showView('main');
+  const back=document.getElementById('explore-back');if(back)back.style.display='flex';
+  setTimeout(()=>{
+    if(sec==='top'){window.scrollTo({top:0,behavior:'smooth'});return}
+    const e=document.getElementById(sec);if(e)e.scrollIntoView({behavior:'smooth'});
+  },140);
+}
+function exitExplore(){
+  document.body.classList.remove('explore-mode');
+  const b=document.getElementById('explore-back');if(b)b.style.display='none';
+  appNav('home');
 }
 /* PWA install nudge */
 let _deferredInstall=null;
@@ -1701,7 +1853,7 @@ function renderMemberView(){
     '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
     '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
     // Events & fundraisers
-    (upcomingEvents().length?'<div class="mem-sec-title" style="margin-top:1.75rem">📅 Upcoming Events</div>'+upcomingEvents().map(eventRowHTML).join(''):'')+
+    eventsCarouselHTML()+
     (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.75rem">🎯 Fundraisers</div><div class="camp-grid">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
     // Announcements
     '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
@@ -2668,15 +2820,17 @@ async function addFinReport(){
 /* ═══ PAYMENT DETAILS — single row (id=1), admin-editable, drives public Payment section ═══ */
 function _pdVal(id){const el=document.getElementById(id);return el?el.value.trim():''}
 // Upload a logo/media asset to storage; timestamped path defeats CDN caching
-async function _uploadPayAsset(inputId,prefix){
-  const el=document.getElementById(inputId);
-  const file=el&&el.files&&el.files[0];
+async function _uploadFile(file,prefix){
   if(!file)return null;
   const ext=(file.name.split('.').pop()||'png').toLowerCase();
-  const path='payment/'+prefix+'-'+Date.now()+'.'+ext;
+  const path='payment/'+prefix+'-'+Date.now()+'-'+Math.floor(Math.random()*1e4)+'.'+ext;
   const {error}=await sb.storage.from('content-files').upload(path,file,{contentType:file.type});
-  if(error){console.error('pay asset upload',prefix,error);toast('⚠ Upload failed ('+prefix+'): '+(error.message||'storage error'));return null}
+  if(error){console.error('asset upload',prefix,error);toast('⚠ Upload failed ('+prefix+'): '+(error.message||'storage error'));return null}
   return {url:sb.storage.from('content-files').getPublicUrl(path).data.publicUrl,type:file.type.startsWith('video')?'video':'image'};
+}
+async function _uploadPayAsset(inputId,prefix){
+  const el=document.getElementById(inputId);
+  return _uploadFile(el&&el.files&&el.files[0],prefix);
 }
 async function savePaymentDetails(){
   const btn=document.getElementById('pd-save-btn');
@@ -3326,7 +3480,7 @@ function renderPosts(filter){
   const el=document.getElementById('posts-feed');if(!el)return;
   let items=POSTS.filter(p=>_showAll.posts||!_isArchived(p));
   items=_sortPosts(items);
-  const header=_postsHeader(items.length);
+  const header=_postsHeader(items.length)+eventsCarouselHTML();
   const starter=_postStarter();
   if(!items.length){
     el.innerHTML=header+starter+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
