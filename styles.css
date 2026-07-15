@@ -1233,3 +1233,12 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)
 .cc-foot-stats{font-size:.76rem;color:var(--muted)}
 .cc-open-lite{font-size:.76rem;color:var(--canopy-lt);font-weight:700}
 .cc-clickable:hover .cc-open-lite{color:var(--canopy)}
+
+/* search-first feed & library (declutter like LinkedIn/FB) */
+.feed-search{display:flex;align-items:center;gap:.5rem;flex:1 1 100%;margin-top:.6rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:99px;padding:.35rem .8rem}
+.feed-search span{opacity:.5;font-size:.85rem}
+.feed-search input{flex:1;border:none;outline:none;background:none;font-family:inherit;font-size:.85rem;color:var(--text)}
+.feed-morehint{text-align:center;font-size:.82rem;color:var(--muted);background:var(--mist,#f2f5f1);border-radius:12px;padding:.7rem .9rem;margin:.9rem 0 .3rem}
+.feed-morehint a{color:var(--canopy-lt);font-weight:700}
+.cc-browsehint{font-size:.82rem;color:var(--muted);background:var(--mist,#f2f5f1);border-radius:12px;padding:.7rem .9rem;margin-bottom:.4rem}
+.cc-browsehint b{color:var(--canopy)}

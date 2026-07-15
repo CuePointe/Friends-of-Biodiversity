@@ -831,8 +831,10 @@
   <div id="ap-sightings" class="adm-panel">
     <div class="adm-sec"><span>Citizen-Science Sightings &amp; EIA Data Pack</span></div>
     <div class="adm-card" style="max-width:820px">
-      <p style="font-size:.88rem;color:var(--muted);line-height:1.6;margin-top:0">Members log wildlife sightings from the app. Verify the genuine ones — verified sightings count toward each member’s <b>Citizen Scientist</b> badge and make the dataset credible. Open the <b>🗺 Sightings map</b> (from any member profile) to draw a radius around a project site and export the <b>Biodiversity Baseline Data Pack</b> (CSV). It is framed as a legal <i>input</i> to a NEMA-approved EIA (baseline &amp; screening phases) — never a replacement — and carries that disclaimer automatically.</p>
-      <div id="sightings-stat" style="font-size:.85rem;color:var(--canopy);background:rgba(45,106,79,.08);border-radius:10px;padding:.6rem .8rem;margin-bottom:1rem"></div>
+      <p style="font-size:.88rem;color:var(--muted);line-height:1.6;margin-top:0">Members log wildlife sightings from the app. Verify the genuine ones below — verified sightings count toward each member’s <b>Citizen Scientist</b> badge and make the dataset credible. Then open the map to draw a radius around a project site and export the <b>Biodiversity Baseline Data Pack</b> (CSV) — a legal <i>input</i> to a NEMA-approved EIA (baseline &amp; screening phases), never a replacement.</p>
+      <div id="sightings-stat" style="font-size:.85rem;color:var(--canopy);background:rgba(45,106,79,.08);border-radius:10px;padding:.6rem .8rem;margin-bottom:.9rem"></div>
+      <button class="btn btn-gold" style="margin-bottom:1.2rem" onclick="openSightMap()">🗺 Open Sightings Map &amp; Export Data Pack</button>
+      <h4 style="margin:.2rem 0 .7rem;font-size:.95rem;color:var(--canopy)">Verify sightings</h4>
       <div id="sightings-admin-list"></div>
     </div>
   </div>
