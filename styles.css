@@ -1242,3 +1242,10 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)
 .feed-morehint a{color:var(--canopy-lt);font-weight:700}
 .cc-browsehint{font-size:.82rem;color:var(--muted);background:var(--mist,#f2f5f1);border-radius:12px;padding:.7rem .9rem;margin-bottom:.4rem}
 .cc-browsehint b{color:var(--canopy)}
+
+/* inline players/readers — watch & read inside the app (no external link needed) */
+.embed-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:var(--r-sm,10px);overflow:hidden;background:#000;margin-bottom:.6rem}
+.embed-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.embed-wrap.embed-page{aspect-ratio:auto;height:60vh;background:#fff;border:1px solid var(--border)}
+.embed-fallback{display:inline-block;font-size:.78rem;color:var(--canopy-lt);font-weight:600;margin-bottom:1rem}
+.embed-fallback:hover{color:var(--canopy)}

@@ -1786,8 +1786,24 @@ function openContent(cid){
   renderContentModal(cid);
   openModal('m-content');
 }
-// re-render the open content modal in place (after a reaction/comment)
-function refreshContentModal(){if(_openContentId)renderContentModal(_openContentId);}
+// refresh ONLY the social block (reactions/comments) so a playing video is never interrupted
+function refreshContentModal(){
+  if(!_openContentId)return;
+  const item=CONTENT.find(c=>c.id===_openContentId);if(!item)return;
+  const el=document.getElementById('cc-social');
+  if(el)el.innerHTML=_contentSocialHTML(item);else renderContentModal(_openContentId);
+}
+// closing must stop any playing video/audio (clear the embed)
+function closeContentModal(){_openContentId=null;const b=document.getElementById('content-modal-body');if(b)b.innerHTML='';closeModal('m-content');}
+function _contentSocialHTML(item){
+  const bkd=LS.get('bookmarked',[]);const cid=item.id;
+  return _contentReactBar(item)+
+    '<div class="cc-actions" style="margin-bottom:.4rem">'+
+      '<button class="rbt'+(bkd.includes(cid)?' bkd':'')+'" onclick="toggleReact(\''+cid+'\',\'bookmark\',this)">🔖 '+(item.reactions.bookmarks||0)+' Save</button>'+
+      '<button class="rbt" onclick="shareItem(\''+cid+'\')">🔗 Share</button>'+
+    '</div>'+
+    _contentComments(item,false);
+}
 function _contentReactBar(c){
   const myReactions=LS.get('my_reactions',{});
   return '<div class="cc-reactbar" style="margin:.4rem 0 .2rem">'+REACTION_EMOJIS.map(r=>
@@ -1807,6 +1823,35 @@ function _contentComments(c,locked){
       :'<p style="font-size:.76rem;color:var(--muted);margin-top:.35rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment.</p>')+
   '</div>';
 }
+// Build an INLINE player/reader — members watch/read inside the app, not via a link.
+function _ytId(u){const m=(u||'').match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);return m?m[1]:'';}
+function _vimeoId(u){const m=(u||'').match(/vimeo\.com\/(?:video\/)?(\d+)/);return m?m[1]:'';}
+function _isImgUrl(u){return /\.(jpe?g|png|webp|gif|avif)(\?.*)?$/i.test(u||'');}
+function _isVidUrl(u){return /\.(mp4|webm|ogg|mov|m4v)(\?.*)?$/i.test(u||'');}
+function _isAudioUrl(u){return /\.(mp3|wav|m4a|aac|oga)(\?.*)?$/i.test(u||'');}
+function _contentMedia(item){
+  // 1) Admin-uploaded files play/read inline directly
+  if(item.mediaUrl&&item.mediaType==='video')return '<video controls playsinline preload="metadata" style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem;background:#000" src="'+esc(item.mediaUrl)+'"></video>';
+  if(item.mediaUrl&&item.mediaType==='audio')return '<audio controls preload="metadata" style="width:100%;margin-bottom:1rem" src="'+esc(item.mediaUrl)+'"></audio>';
+  if(item.mediaUrl&&(item.mediaType==='image'||_isImgUrl(item.mediaUrl)))return '<img src="'+esc(item.mediaUrl)+'" style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem" alt=""/>';
+  const url=item.url||'';
+  if(url.length>5){
+    // 2) YouTube / Vimeo → embedded player, right here
+    const yt=_ytId(url);
+    if(yt)return '<div class="embed-wrap"><iframe src="https://www.youtube-nocookie.com/embed/'+yt+'?rel=0" title="'+esc(item.title)+'" loading="lazy" allow="accelerometer;autoplay;clipboard-write;encrypted-media;gyroscope;picture-in-picture;web-share" allowfullscreen></iframe></div>';
+    const vim=_vimeoId(url);
+    if(vim)return '<div class="embed-wrap"><iframe src="https://player.vimeo.com/video/'+vim+'" title="'+esc(item.title)+'" loading="lazy" allow="autoplay;fullscreen;picture-in-picture" allowfullscreen></iframe></div>';
+    // 3) Direct media links → native players
+    if(_isVidUrl(url))return '<video controls playsinline preload="metadata" style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem;background:#000" src="'+esc(url)+'"></video>';
+    if(_isAudioUrl(url))return '<audio controls preload="metadata" style="width:100%;margin-bottom:1rem" src="'+esc(url)+'"></audio>';
+    if(_isImgUrl(url))return '<img src="'+esc(url)+'" style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem" alt=""/>';
+    // 4) Articles / blogs → read inline in a framed reader, with a fallback link
+    //    (some sites block embedding; the fallback always works)
+    return '<div class="embed-wrap embed-page"><iframe src="'+esc(url)+'" title="'+esc(item.title)+'" loading="lazy" referrerpolicy="no-referrer" sandbox="allow-scripts allow-same-origin allow-popups"></iframe></div>'+
+      '<a href="'+esc(url)+'" target="_blank" rel="noopener" class="embed-fallback">Trouble viewing? Open the original ↗</a>';
+  }
+  return '';
+}
 function renderContentModal(cid){
   const item=CONTENT.find(c=>c.id===cid);if(!item)return;
   const ur=uRank();const ar=ACCESS_RANK[item.access]||0;
@@ -1823,34 +1868,21 @@ function renderContentModal(cid){
   }
   const bc=TYPE_BADGE_CLS[item.type]||'badge-article';
   const typeLabel=item.type?item.type.charAt(0).toUpperCase()+item.type.slice(1):'';
-  let mediaBlock='';
-  if(item.mediaUrl&&item.mediaType==='video'){
-    mediaBlock='<video controls style="width:100%;border-radius:var(--r-sm);margin-bottom:1rem;background:#000" src="'+item.mediaUrl+'"></video>';
-  }else if(item.mediaUrl&&item.mediaType==='audio'){
-    mediaBlock='<audio controls style="width:100%;margin-bottom:1rem" src="'+item.mediaUrl+'"></audio>';
-  }else if(item.url&&item.url.length>5){
-    mediaBlock='<a href="'+item.url+'" target="_blank" rel="noopener" class="btn btn-canopy btn-full" style="margin-bottom:1rem">▶ Open External Link →</a>';
-  }
+  let mediaBlock=_contentMedia(item);
   let bodyBlock='';
   if(item.fullText&&item.fullText.length>0){
-    bodyBlock='<div style="font-size:.87rem;color:var(--text);line-height:1.8;max-height:340px;overflow-y:auto;padding:1rem;background:var(--mist);border-radius:var(--r-sm);margin-bottom:1rem;white-space:pre-line">'+item.fullText+'</div>';
+    bodyBlock='<div style="font-size:.87rem;color:var(--text);line-height:1.8;max-height:420px;overflow-y:auto;padding:1rem;background:var(--mist);border-radius:var(--r-sm);margin-bottom:1rem;white-space:pre-line">'+esc(item.fullText)+'</div>';
   }
   if(!mediaBlock&&!bodyBlock){
     mediaBlock='<div style="background:var(--mist);border-radius:var(--r-sm);padding:1.1rem;text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.7rem">Content will be available once the admin adds the file or text.</div>';
   }
-  const bkd=LS.get('bookmarked',[]);
   document.getElementById('content-modal-body').innerHTML=
     '<span class="cc-badge '+bc+'" style="display:inline-block;margin-bottom:.9rem">'+typeLabel+'</span>'+
     '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.45rem">'+esc(item.title)+'</h3>'+
     '<p style="font-size:.76rem;color:var(--muted);margin-bottom:.9rem">By '+esc(item.author)+' · '+esc(item.date)+' · '+esc(item.window)+'</p>'+
     mediaBlock+bodyBlock+
     (!bodyBlock?'<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1rem">'+esc(item.desc)+'</p>':'')+
-    _contentReactBar(item)+
-    '<div class="cc-actions" style="margin-bottom:.4rem">'+
-      '<button class="rbt'+(bkd.includes(cid)?' bkd':'')+'" onclick="toggleReact(\''+cid+'\',\'bookmark\',this)">🔖 '+(item.reactions.bookmarks||0)+' Save</button>'+
-      '<button class="rbt" onclick="shareItem(\''+cid+'\')">🔗 Share</button>'+
-    '</div>'+
-    _contentComments(item,false);
+    '<div id="cc-social">'+_contentSocialHTML(item)+'</div>';
 }
 function shareItem(cid){
   const item=CONTENT.find(c=>c.id===cid);if(!item)return;
