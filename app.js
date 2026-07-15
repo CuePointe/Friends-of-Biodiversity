@@ -1700,8 +1700,9 @@ function renderContent(){
         :(imgUrl
           ?`<img src="${imgUrl}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.classList.add('thumb-fallback');this.remove()"/>`
           :`<div class="cc-thumb-icon">${typeIconSvg(c.type)}</div>`));
-    return '<div class="content-card" id="card-'+c.id+'">'+
-      '<div class="cc-thumb '+thumbCls+(ytThumb||c.mediaUrl?' cc-has-media':'')+'" onclick="openContent(\''+c.id+'\')">'+thumbContent+
+    const totalReacts=REACTION_EMOJIS.reduce((s,r)=>s+(c.reactions[r.key]||0),0);
+    return '<div class="content-card cc-clickable" id="card-'+c.id+'" onclick="openContent(\''+c.id+'\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\')openContent(\''+c.id+'\')">'+
+      '<div class="cc-thumb '+thumbCls+(ytThumb||c.mediaUrl?' cc-has-media':'')+'">'+thumbContent+
       '<span class="cc-badge '+bc+'">'+typeLabel+'</span>'+
       (locked?'<div class="cc-lock"><span style="font-size:1.6rem">🔒</span><span>'+c.access.charAt(0).toUpperCase()+c.access.slice(1)+'+ Members</span></div>':'')+
       '</div>'+
@@ -1710,27 +1711,10 @@ function renderContent(){
         '<div class="cc-title">'+esc(c.title)+'</div>'+
         '<div class="cc-meta"><span>📅 '+esc(c.date)+'</span><span>👤 '+esc(c.author)+'</span>'+(c.theme?'<span>🏷 '+esc(c.theme)+'</span>':'')+'</div>'+
         '<p class="cc-desc">'+esc(c.desc)+'</p>'+
-        '<div class="cc-reactbar">'+REACTION_EMOJIS.map(r=>
-          '<button class="ebt'+(myReactions[c.id]===r.key?' picked':'')+'" onclick="toggleEmoji(\''+c.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' <span>'+(c.reactions[r.key]||0)+'</span></button>'
-        ).join('')+'</div>'+
-        '<div class="cc-actions">'+
-          '<button class="rbt'+(bkd.includes(c.id)?' bkd':'')+'" onclick="toggleReact(\''+c.id+'\',\'bookmark\',this)">🔖 '+(c.reactions.bookmarks||0)+' Save</button>'+
-          '<button class="rbt" onclick="shareItem(\''+c.id+'\')">🔗 Share</button>'+
-          '<button class="cc-open" onclick="openContent(\''+c.id+'\')">'+(locked?'🔒 Unlock':'▶ Open')+' →</button>'+
+        '<div class="cc-foot">'+
+          '<span class="cc-foot-stats">'+(totalReacts?'❤ '+totalReacts+' ':'')+'💬 '+c.comments.length+(bkd.includes(c.id)?' · 🔖':'')+'</span>'+
+          '<span class="cc-open-lite">'+(locked?'🔒 Unlock':'▶ Open')+' →</span>'+
         '</div>'+
-      '</div>'+
-      '<div class="comments-wrap">'+
-        '<h5>Comments ('+c.comments.length+')</h5>'+
-        (locked
-          ?'<p style="font-size:.76rem;color:var(--muted)"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in as a member</a> to read and post comments.</p>'
-          :'<div class="comment-list" id="cl-'+c.id+'">'+
-            (c.comments.length?c.comments.map(cm=>'<div class="comment-item"><span class="comment-author">'+cm.user+'</span><span class="comment-time">'+cm.time+'</span><br>'+cm.text+'</div>').join('')
-              :'<p style="font-size:.76rem;color:var(--muted)">No comments yet.</p>')+
-          '</div>'+
-          (currentUser
-            ?'<div class="comment-input-row"><input id="ci-'+c.id+'" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')postComment(\''+c.id+'\')"/><button class="btn btn-ghost btn-sm" onclick="postComment(\''+c.id+'\')">Post</button></div>'
-            :'<p style="font-size:.76rem;color:var(--muted);margin-top:.35rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment.</p>')
-        )+
       '</div>'+
     '</div>';
   }).join('');
@@ -1760,7 +1744,7 @@ async function toggleEmoji(id,key,btn){
   item.reactions=reactions;
   LS.set('my_reactions',myR);
   await sb.from('content').update({reactions}).eq('id',id);
-  renderContent();
+  renderContent();refreshContentModal();
 }
 async function toggleReact(id,type,btn){
   if(!currentUser){toast('Sign in to react.');return}
@@ -1775,6 +1759,7 @@ async function toggleReact(id,type,btn){
   btn.innerHTML=(type==='like'?'❤ ':'🔖 ')+reactions[field]+(type==='bookmark'?' Save':'');
   LS.set(key,arr);
   await sb.from('content').update({reactions}).eq('id',id);
+  renderContent();
 }
 async function postComment(cid){
   if(!currentUser){toast('Sign in to comment.');return}
@@ -1783,10 +1768,38 @@ async function postComment(cid){
   inp.value='';
   const {error}=await sb.from('comments').insert({content_id:cid,user_name:currentUser.name,text});
   if(error){toast('⚠ Could not post comment.');console.error(error);return}
-  await loadContent();renderContent();
+  await loadContent();renderContent();refreshContentModal();
   toast('Comment posted.');
 }
+let _openContentId=null;
 function openContent(cid){
+  const item=CONTENT.find(c=>c.id===cid);if(!item)return;
+  _openContentId=cid;
+  renderContentModal(cid);
+  openModal('m-content');
+}
+// re-render the open content modal in place (after a reaction/comment)
+function refreshContentModal(){if(_openContentId)renderContentModal(_openContentId);}
+function _contentReactBar(c){
+  const myReactions=LS.get('my_reactions',{});
+  return '<div class="cc-reactbar" style="margin:.4rem 0 .2rem">'+REACTION_EMOJIS.map(r=>
+    '<button class="ebt'+(myReactions[c.id]===r.key?' picked':'')+'" onclick="toggleEmoji(\''+c.id+'\',\''+r.key+'\',this)" title="'+r.label+'">'+r.emoji+' <span>'+(c.reactions[r.key]||0)+'</span></button>'
+  ).join('')+'</div>';
+}
+function _contentComments(c,locked){
+  if(locked)return '';
+  return '<div class="comments-wrap" style="margin-top:1rem">'+
+    '<h5>Comments ('+c.comments.length+')</h5>'+
+    '<div class="comment-list" id="cl-'+c.id+'">'+
+      (c.comments.length?c.comments.map(cm=>'<div class="comment-item"><span class="comment-author">'+esc(cm.user)+'</span><span class="comment-time">'+esc(cm.time)+'</span><br>'+esc(cm.text)+'</div>').join('')
+        :'<p style="font-size:.76rem;color:var(--muted)">No comments yet.</p>')+
+    '</div>'+
+    (currentUser
+      ?'<div class="comment-input-row"><input id="ci-'+c.id+'" placeholder="Add a comment..." onkeydown="if(event.key===\'Enter\')postComment(\''+c.id+'\')"/><button class="btn btn-ghost btn-sm" onclick="postComment(\''+c.id+'\')">Post</button></div>'
+      :'<p style="font-size:.76rem;color:var(--muted);margin-top:.35rem"><a href="#" onclick="openModal(\'m-login\');return false" style="color:var(--canopy-lt);font-weight:600">Sign in</a> to comment.</p>')+
+  '</div>';
+}
+function renderContentModal(cid){
   const item=CONTENT.find(c=>c.id===cid);if(!item)return;
   const ur=uRank();const ar=ACCESS_RANK[item.access]||0;
   if(ar>0&&ur<ar){
@@ -1817,14 +1830,19 @@ function openContent(cid){
   if(!mediaBlock&&!bodyBlock){
     mediaBlock='<div style="background:var(--mist);border-radius:var(--r-sm);padding:1.1rem;text-align:center;font-size:.82rem;color:var(--muted);margin-bottom:.7rem">Content will be available once the admin adds the file or text.</div>';
   }
+  const bkd=LS.get('bookmarked',[]);
   document.getElementById('content-modal-body').innerHTML=
     '<span class="cc-badge '+bc+'" style="display:inline-block;margin-bottom:.9rem">'+typeLabel+'</span>'+
-    '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.45rem">'+item.title+'</h3>'+
-    '<p style="font-size:.76rem;color:var(--muted);margin-bottom:.9rem">By '+item.author+' · '+item.date+' · '+item.window+'</p>'+
+    '<h3 style="font-family:var(--ff-d);font-size:1.2rem;color:var(--canopy);margin-bottom:.45rem">'+esc(item.title)+'</h3>'+
+    '<p style="font-size:.76rem;color:var(--muted);margin-bottom:.9rem">By '+esc(item.author)+' · '+esc(item.date)+' · '+esc(item.window)+'</p>'+
     mediaBlock+bodyBlock+
-    (!bodyBlock?'<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1.2rem">'+item.desc+'</p>':'')+
-    '<button class="btn btn-ghost btn-full btn-sm" onclick="shareItem(\''+cid+'\')">🔗 Share This Content</button>';
-  openModal('m-content');
+    (!bodyBlock?'<p style="font-size:.87rem;color:var(--text);line-height:1.72;margin-bottom:1rem">'+esc(item.desc)+'</p>':'')+
+    _contentReactBar(item)+
+    '<div class="cc-actions" style="margin-bottom:.4rem">'+
+      '<button class="rbt'+(bkd.includes(cid)?' bkd':'')+'" onclick="toggleReact(\''+cid+'\',\'bookmark\',this)">🔖 '+(item.reactions.bookmarks||0)+' Save</button>'+
+      '<button class="rbt" onclick="shareItem(\''+cid+'\')">🔗 Share</button>'+
+    '</div>'+
+    _contentComments(item,false);
 }
 function shareItem(cid){
   const item=CONTENT.find(c=>c.id===cid);if(!item)return;

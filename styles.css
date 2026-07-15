@@ -1225,3 +1225,11 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)
 .sp-pill{font-size:.74rem;border:1px solid var(--border,rgba(0,0,0,.12));border-radius:99px;padding:.32rem .7rem;background:#f6f8f4;color:#40483f;cursor:pointer;font-family:inherit;transition:.15s}
 .sp-pill:hover{border-color:var(--canopy-lt,#2D6A4F)}
 .sp-pill.on{background:var(--canopy,#0B2618);color:#fff;border-color:var(--canopy,#0B2618)}
+
+/* compact clickable content-library card (opens in modal, like posts) */
+.cc-clickable{cursor:pointer}
+.cc-clickable:focus-visible{outline:2px solid var(--canopy-lt);outline-offset:2px}
+.cc-foot{display:flex;align-items:center;justify-content:space-between;border-top:1px solid var(--border);padding-top:.7rem;margin-top:.2rem}
+.cc-foot-stats{font-size:.76rem;color:var(--muted)}
+.cc-open-lite{font-size:.76rem;color:var(--canopy-lt);font-weight:700}
+.cc-clickable:hover .cc-open-lite{color:var(--canopy)}
