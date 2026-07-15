@@ -1671,12 +1671,20 @@ function renderContent(){
   let items=CONTENT;
   if(activeFilter!=='all')items=items.filter(c=>c.type===activeFilter);
   if(contentSearchQuery)items=items.filter(c=>(c.title||'').toLowerCase().includes(contentSearchQuery)||(c.desc||'').toLowerCase().includes(contentSearchQuery)||(c.author||'').toLowerCase().includes(contentSearchQuery)||(c.window||'').toLowerCase().includes(contentSearchQuery));
+  // Search / category first (like LinkedIn/FB): the default view stays clean —
+  // only the newest few show until the member picks a category or searches.
+  const browsing=(activeFilter==='all'&&!contentSearchQuery);
+  let hint='';
+  if(browsing&&items.length>3){
+    hint='<div class="cc-browsehint" style="grid-column:1/-1"><b>Latest additions</b> — pick a category above or search to explore the full library ('+CONTENT.length+' resources).</div>';
+    items=items.slice(0,3);
+  }
   if(!items.length){
-    const msg=contentSearchQuery?'No resources match "'+esc(contentSearchQuery)+'". Try a different search term.':'No content published yet. Admins can upload videos, documentaries, podcasts, interviews, articles and research via the Admin panel.';
+    const msg=contentSearchQuery?'No resources match "'+esc(contentSearchQuery)+'". Try a different search term.':(activeFilter!=='all'?'No '+activeFilter+' resources yet.':'No content published yet. Admins can upload videos, documentaries, podcasts, interviews, articles and research via the Admin panel.');
     grid.innerHTML='<p style="color:var(--muted);font-size:.9rem;padding:1.5rem 0;grid-column:1/-1">'+msg+'</p>';return;
   }
   const bkd=LS.get('bookmarked',[]);const myReactions=LS.get('my_reactions',{});
-  grid.innerHTML=items.map(c=>{
+  grid.innerHTML=hint+items.map(c=>{
     const ar=ACCESS_RANK[c.access]||0;
     const locked=ar>0&&ur<ar;
     const bc=TYPE_BADGE_CLS[c.type]||'badge-article';
@@ -3556,6 +3564,9 @@ function _appGreeting(){
   const g=h<12?'Good morning':h<17?'Good afternoon':'Good evening';
   return '<div class="app-greet">'+g+',<b>'+esc(currentUser.name.split(' ')[0])+' 🌿</b></div>';
 }
+let _postSearch='';
+function setPostSearch(v){_postSearch=(v||'').trim().toLowerCase();renderPosts();
+  const i=document.getElementById('post-search');if(i&&document.activeElement!==i)i.value=v||'';}
 function _postsHeader(count){
   const opt={new:'🕐 Newest',top:'🔥 Top',discussed:'💬 Most discussed'};
   return _appGreeting()+'<div class="feed-head">'+
@@ -3566,6 +3577,7 @@ function _postsHeader(count){
       '</select>'+
       '<div class="feed-seg"><button class="'+(_postView==='digest'?'on':'')+'" onclick="setPostView(\'digest\')">☰ Digest</button><button class="'+(_postView==='feed'?'on':'')+'" onclick="setPostView(\'feed\')">▦ Feed</button></div>'+
     '</div>'+
+    '<div class="feed-search"><span>🔍</span><input id="post-search" type="search" placeholder="Search all posts…" value="'+esc(_postSearch)+'" oninput="setPostSearch(this.value)" autocomplete="off"/></div>'+
   '</div>';
 }
 function _postStarter(){
@@ -3697,12 +3709,27 @@ async function togglePin(id){
 function renderPosts(filter){
   currentPostFilter=filter||currentPostFilter;
   const el=document.getElementById('posts-feed');if(!el)return;
-  let items=POSTS.filter(p=>_showAll.posts||!_isArchived(p));
-  items=_sortPosts(items);
-  const header=_postsHeader(items.length)+eventsCarouselHTML();
-  const starter=_postStarter();
+  // Search reaches EVERY post (incl. older/archived); the clean default feed shows
+  // only recent posts so the timeline never clutters — older ones surface via search.
+  const RECENT_CAP=12;
+  let items,moreHidden=0,searching=!!_postSearch;
+  if(searching){
+    const q=_postSearch;
+    items=POSTS.filter(p=>((p.title||'')+' '+(p.body||'')+' '+(p.author_name||'')).toLowerCase().includes(q));
+    items=_sortPosts(items);
+  }else{
+    let fresh=POSTS.filter(p=>!_isArchived(p));
+    fresh=_sortPosts(fresh);
+    if(!_showAll.posts&&fresh.length>RECENT_CAP){moreHidden=fresh.length-RECENT_CAP;items=fresh.slice(0,RECENT_CAP);}
+    else items=fresh;
+  }
+  const header=_postsHeader(items.length)+(searching?'':eventsCarouselHTML());
+  const starter=searching?'':_postStarter();
   if(!items.length){
-    el.innerHTML=header+starter+'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    const empty=searching
+      ?'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🔍</div><h4>No posts match “'+esc(_postSearch)+'”</h4><p>Try a different word or clear the search.</p></div>'
+      :'<div class="post-empty"><div style="font-size:2.5rem;margin-bottom:.75rem">🌿</div><h4>No posts yet</h4><p>Be the first to share a conservation story or community update.</p></div>';
+    el.innerHTML=header+starter+empty;
     refreshOpenPostModal();return;
   }
   // Weave in live ad campaigns as Sponsored cards (after the 2nd item, then every 5)
@@ -3716,7 +3743,12 @@ function renderPosts(filter){
   const body=_postView==='feed'
     ? pieces.join('')
     : '<div class="digest-list">'+pieces.join('')+'</div>';
-  el.innerHTML=header+starter+body+_postsArchiveToggle();
+  const footer=searching
+    ? '<div class="feed-morehint">Showing all matches for “'+esc(_postSearch)+'”. <a href="#" onclick="setPostSearch(\'\');return false">Clear search</a></div>'
+    : (moreHidden>0
+        ? '<div class="feed-morehint">🔍 <b>'+moreHidden+'</b> older post'+(moreHidden!==1?'s':'')+' kept out of the way — search above to find any of them.</div>'
+        : _postsArchiveToggle());
+  el.innerHTML=header+starter+body+footer;
   refreshOpenPostModal();
 }
 
