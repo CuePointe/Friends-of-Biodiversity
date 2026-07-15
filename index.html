@@ -768,13 +768,15 @@
     <div class="adm-sec"><span>Ad Campaigns — in-app marketing</span></div>
     <div class="adm-card" id="ad-form-card" style="max-width:760px">
       <h4 id="ad-form-title">Create a campaign</h4>
-      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Your ad appears inside the members' community feed as a “Sponsored” card, only between its start and end dates. Update or stop it anytime.</p>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:1rem">Run image or video ads across the app. Choose where they show — inside the community feed, in a side rail beside the screen (desktop), or as a banner below the content. Ads only run between their start and end dates; update or stop anytime.</p>
       <div class="fg"><label>Title</label><input id="ad-title" placeholder="e.g. Join our Bwindi tree-planting weekend"/></div>
       <div class="fg"><label>Message</label><textarea id="ad-body" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One or two lines of campaign copy."></textarea></div>
+      <label class="pd-drop pd-drop-wide" style="margin-bottom:.6rem"><input type="file" id="ad-media" accept="image/*,video/*" onchange="pdPreview(this,'ad-thumb')" hidden/><span class="pd-thumb" id="ad-thumb">🖼</span><b>Upload an image or short video</b><span class="pd-hint">The creative that runs in your chosen slot. Video autoplays muted, like social platforms.</span></label>
       <div class="pd-row2">
-        <div class="fg"><label>Image (repo filename or URL, optional)</label><input id="ad-img" placeholder="e.g. campaign1.jpg"/></div>
-        <div class="fg"><label>Link (where the button goes)</label><input id="ad-link" placeholder="e.g. https://… or #payment"/></div>
+        <div class="fg"><label>…or image filename/URL from repo (optional)</label><input id="ad-img" placeholder="e.g. campaign1.jpg"/></div>
+        <div class="fg"><label>Where it runs</label><select id="ad-placement"><option value="feed">📰 In the community feed</option><option value="rail">📐 Side rail (beside screen, desktop)</option><option value="banner">🪧 Banner (below the content)</option><option value="all">🌐 Everywhere</option></select></div>
       </div>
+      <div class="fg"><label>Link (where the button goes)</label><input id="ad-link" placeholder="e.g. https://… or #payment"/></div>
       <div class="pd-row2">
         <div class="fg"><label>Button label</label><input id="ad-cta" placeholder="e.g. Sign up →"/></div>
         <div class="fg"><label>&nbsp;</label><label style="display:flex;gap:.5rem;align-items:center;font-size:.85rem"><input type="checkbox" id="ad-active" checked/> Campaign is on</label></div>
@@ -872,16 +874,36 @@
         <p>Each card = one species or place (name, IUCN status, story, region, photo <i>or</i> short video, optional Green Card tier link — linked items show as “You help protect …” on that tier). Untick <i>Show on the public page</i> to hide a card without deleting it.</p>
       </details>
 
-      <details class="guide-sec"><summary>📣 Ad Campaigns</summary>
-        <p>Create a card with title, message, image, link and button label, then set <b>start and end dates</b> — it runs only inside that window and appears as a “Sponsored · UBF” card in the members' feed. The list shows each campaign's status (Scheduled / ● Live / Ended) plus 👁 views and 🖱 clicks.</p>
+      <details class="guide-sec"><summary>📣 Ad Campaigns — image or video, three placements</summary>
+        <ol>
+          <li>Give the campaign a title, message, link and button label, then <b>upload an image or a short video</b> (video autoplays muted, like social feeds). You can also type a repo image filename instead.</li>
+          <li>Choose <b>where it runs</b>: 📰 <i>in the community feed</i>, 📐 <i>side rail</i> (beside the screen on desktop), 🪧 <i>banner</i> (below the content), or 🌐 <i>everywhere</i>.</li>
+          <li>Set <b>start and end dates</b> — it only runs inside that window. The list shows each campaign's status (Scheduled / ● Live / Ended), its slot, media type, plus 👁 views and 🖱 clicks.</li>
+        </ol>
       </details>
 
       <details class="guide-sec"><summary>📅 Events & 🎯 Fundraisers</summary>
         <p><b>Events</b>: publish with date, time and location; members RSVP and you see live counts. <b>Fundraisers</b>: set a goal; donations arrive as <i>pending</i> — press <b>✓ Confirm</b> once the payment is verified and the progress bar grows automatically.</p>
       </details>
 
-      <details class="guide-sec"><summary>📚 Content, 📢 Announcements, 📄 Reports</summary>
-        <p>Upload Learning Exchange resources, post announcements (optionally emailed), publish financial reports. Items older than 21 days auto-archive out of the main feeds — nothing is deleted; use <i>View archived</i> or the Archive/Unarchive buttons.</p>
+      <details class="guide-sec"><summary>📚 Content Library — plays &amp; reads inside the app</summary>
+        <ol>
+          <li>Members see <b>compact cards</b>; tapping one opens the resource in a pop-up. The library stays clean — only the newest few show until a member picks a category or searches.</li>
+          <li><b>To make content play in-app:</b> paste a <b>YouTube or Vimeo link</b> (it embeds a player), or <b>upload a video/audio file</b> directly (native player). For an article, paste the blog link (opens in an in-app reader) or put the text in the <b>full-text</b> field for the cleanest reading. No one is sent out to an external link.</li>
+          <li>Reactions and comments live inside the pop-up; a playing video is never interrupted when someone reacts or comments.</li>
+        </ol>
+      </details>
+
+      <details class="guide-sec"><summary>🔬 Sightings &amp; Data — the citizen-science product</summary>
+        <ol>
+          <li>Members log wildlife sightings (photo + species + auto GPS/date, plus optional count, activity and habitat). Open <b>Admin → 🔬 Sightings &amp; Data</b> and press <b>✓ Verify</b> on the genuine ones — verified records power members' <b>Citizen Scientist</b> badge and keep the dataset credible.</li>
+          <li>Press <b>🗺 Open Sightings Map &amp; Export Data Pack</b>. On the map, <b>tap the project site</b> to drop a pin, set the radius, then <b>⬇ Export</b> — a CSV downloads (species, IUCN status, count, activity, habitat, coordinates, date, verified, observer).</li>
+          <li>The pack carries a built-in disclaimer: it is a legal <b>input</b> to a NEMA-approved EIA (baseline &amp; screening phases), <b>never a replacement</b>. Every export is recorded in the Audit Log.</li>
+        </ol>
+      </details>
+
+      <details class="guide-sec"><summary>📢 Announcements &amp; 📄 Reports</summary>
+        <p>Post announcements (optionally emailed) and publish financial reports. Items older than 21 days auto-archive out of the main feeds — nothing is deleted; use <i>View archived</i> or the Archive/Unarchive buttons.</p>
       </details>
 
       <details class="guide-sec"><summary>🧾 Audit Log & 🔑 Password</summary>

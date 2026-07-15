@@ -634,12 +634,45 @@ function activeAds(){
 const _adSeen=new Set();
 function _adView(id){if(_adSeen.has(id))return;_adSeen.add(id);sb.rpc('ad_hit',{aid:id,kind:'view'}).then(()=>{},()=>{});}
 function adClick(id){sb.rpc('ad_hit',{aid:id,kind:'click'}).then(()=>{},()=>{});}
+// Ads can run in three slots (like major platforms): in-feed, a side rail beside
+// the screen (desktop), and a banner below the screen. 'all' shows in every slot.
+function adsFor(slot){return activeAds().filter(a=>{const p=a.placement||'feed';return p===slot||p==='all';});}
+function _adMedia(a,cls){
+  if(a.media_type==='video'&&a.video_url)
+    return '<video class="'+cls+'" src="'+esc(a.video_url)+'" muted loop playsinline autoplay preload="metadata"'+(a.image_url?' poster="'+esc(a.image_url)+'"':'')+'></video>';
+  return a.image_url?'<img class="'+cls+'" src="'+esc(a.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
+}
+function _adCta(a){return a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\')" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';}
+function _adHasMedia(a){return !!((a.media_type==='video'&&a.video_url)||a.image_url);}
 function adCardHTML(a){
   _adView(a.id);
-  const img=a.image_url?'<img class="ad-img" src="'+esc(a.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
-  const cta=a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\')" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';
-  return '<div class="ad-card"><span class="ad-tag">Sponsored · UBF</span>'+img+
-    '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+cta+'</div></div>';
+  return '<div class="ad-card'+(_adHasMedia(a)?'':' ad-nomedia')+'"><span class="ad-tag">Sponsored · UBF</span>'+_adMedia(a,'ad-img')+
+    '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCta(a)+'</div></div>';
+}
+function railAdHTML(a){
+  _adView(a.id);
+  return '<div class="ad-rail-card'+(_adHasMedia(a)?'':' ad-nomedia')+'"><span class="ad-tag">Sponsored</span>'+_adMedia(a,'ad-rail-media')+
+    '<div class="ad-rail-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCta(a)+'</div></div>';
+}
+function bannerAdHTML(a){
+  _adView(a.id);
+  return '<div class="ad-banner-card">'+_adMedia(a,'ad-banner-media')+
+    '<div class="ad-banner-body"><span class="ad-tag">Sponsored · UBF</span><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+'</div>'+
+    (a.link_url?'<div class="ad-banner-cta">'+_adCta(a)+'</div>':'')+'</div>';
+}
+function bannerStripHTML(){
+  const ads=adsFor('banner');if(!ads.length)return '';
+  return '<div class="ad-banner-strip">'+ads.slice(0,2).map(bannerAdHTML).join('')+'</div>';
+}
+// Side rail — floats beside the content on desktop; hidden on phones by CSS
+function renderAdRail(){
+  let rail=document.getElementById('ad-rail');
+  const show=currentUser&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  const ads=adsFor('rail');
+  if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
+  if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
+  rail.style.display='';
+  rail.innerHTML='<div class="ad-rail-head">Sponsored</div>'+ads.slice(0,3).map(railAdHTML).join('');
 }
 function _adStatus(a){
   const t=new Date().toISOString().slice(0,10);
@@ -649,13 +682,15 @@ function _adStatus(a){
   return['● Live','#2D6A4F'];
 }
 let _adEditId=null;
-function resetAdForm(){_adEditId=null;['ad-title','ad-body','ad-img','ad-link','ad-cta','ad-start','ad-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('ad-active');if(a)a.checked=true;const t=document.getElementById('ad-form-title');if(t)t.textContent='Create a campaign';const b=document.getElementById('ad-save');if(b)b.textContent='Launch campaign';}
+function resetAdForm(){_adEditId=null;['ad-title','ad-body','ad-img','ad-link','ad-cta','ad-start','ad-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const f=document.getElementById('ad-media');if(f)f.value='';const th=document.getElementById('ad-thumb');if(th)th.textContent='🖼';const pl=document.getElementById('ad-placement');if(pl)pl.value='feed';const a=document.getElementById('ad-active');if(a)a.checked=true;const t=document.getElementById('ad-form-title');if(t)t.textContent='Create a campaign';const b=document.getElementById('ad-save');if(b)b.textContent='Launch campaign';}
 function editAd(id){
   const a=ADS.find(x=>x.id===id);if(!a)return;_adEditId=id;
   const g=i=>document.getElementById(i);
   g('ad-title').value=a.title||'';g('ad-body').value=a.body||'';g('ad-img').value=a.image_url||'';
   g('ad-link').value=a.link_url||'';g('ad-cta').value=a.cta||'';
   g('ad-start').value=a.starts_at||'';g('ad-end').value=a.ends_at||'';
+  if(g('ad-placement'))g('ad-placement').value=a.placement||'feed';
+  const th=g('ad-thumb');if(th)th.innerHTML=(a.media_type==='video'&&a.video_url)?'🎬':(a.image_url?'<img src="'+esc(a.image_url)+'" alt=""/>':'🖼');
   g('ad-active').checked=a.active!==false;
   g('ad-form-title').textContent='Editing: '+(a.title||'');g('ad-save').textContent='Update campaign';
   const c=document.getElementById('ad-form-card');if(c)c.scrollIntoView({behavior:'smooth',block:'center'});
@@ -663,19 +698,26 @@ function editAd(id){
 async function saveAd(){
   const title=(document.getElementById('ad-title').value||'').trim();
   if(!title){toast('⚠ A campaign title is required.');return}
+  const cur=_adEditId?ADS.find(x=>x.id===_adEditId):null;
   const row={title,body:(document.getElementById('ad-body').value||'').trim(),
     image_url:(document.getElementById('ad-img').value||'').trim()||null,
     link_url:(document.getElementById('ad-link').value||'').trim()||null,
     cta:(document.getElementById('ad-cta').value||'').trim()||null,
     starts_at:document.getElementById('ad-start').value||null,
     ends_at:document.getElementById('ad-end').value||null,
+    placement:(document.getElementById('ad-placement')?document.getElementById('ad-placement').value:'feed')||'feed',
+    video_url:cur?(cur.video_url||null):null,
+    media_type:cur?(cur.media_type||null):null,
     active:document.getElementById('ad-active').checked};
-  if(_adEditId)row.id=_adEditId;
   const btn=document.getElementById('ad-save');if(btn){btn.disabled=true;btn.textContent='Saving…'}
+  // Optional media upload (image or video) — becomes the ad creative
+  const up=await _uploadPayAsset('ad-media','ad');
+  if(up){if(up.type==='video'){row.video_url=up.url;row.media_type='video';}else{row.image_url=up.url;row.media_type='image';}}
+  if(_adEditId)row.id=_adEditId;
   const{error}=await sb.from('ads').upsert(row);
   if(btn){btn.disabled=false;btn.textContent=_adEditId?'Update campaign':'Launch campaign'}
   if(error){toast('⚠ Could not save the campaign.');console.error(error);return}
-  await loadAds();renderAdsAdmin();renderPosts();resetAdForm();
+  await loadAds();renderAdsAdmin();renderPosts();renderAdRail();resetAdForm();
   audit('Saved ad campaign',title);toast('✅ Campaign saved.');
 }
 async function delAd(id){
@@ -689,8 +731,10 @@ function renderAdsAdmin(){
   const el=document.getElementById('ads-admin-list');if(!el)return;
   el.innerHTML=ADS.length?ADS.map(a=>{
     const[st,col]=_adStatus(a);
-    return '<div class="pa-row"><span class="pa-thumb">📣</span>'+
-      '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+' · 👁 '+(a.impressions||0)+' views · 🖱 '+(a.clicks||0)+' clicks</span></div>'+
+    const slot={feed:'📰 Feed',rail:'📐 Side rail',banner:'🪧 Banner',all:'🌐 Everywhere'}[a.placement||'feed'];
+    const media=(a.media_type==='video'&&a.video_url)?'🎬 video':(a.image_url?'🖼 image':'📝 text');
+    return '<div class="pa-row"><span class="pa-thumb">'+((a.media_type==='video'&&a.video_url)?'🎬':'📣')+'</span>'+
+      '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+slot+' · '+media+' · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+' · 👁 '+(a.impressions||0)+' views · 🖱 '+(a.clicks||0)+' clicks</span></div>'+
       '<button class="btn btn-ghost btn-sm" onclick="editAd(\''+a.id+'\')">Edit</button>'+
       '<button class="btn btn-danger btn-sm" onclick="delAd(\''+a.id+'\')">Delete</button></div>';
   }).join(''):'<p style="font-size:.85rem;color:var(--muted)">No campaigns yet — create your first above.</p>';
@@ -1341,6 +1385,7 @@ function appNav(tab){
   else if(tab==='profile'){showView('member');screen=document.getElementById('view-member');}
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
+  renderAdRail();
 }
 /* EXPLORE — members browse the full website while staying signed in */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
@@ -2111,7 +2156,8 @@ function renderMemberView(){
     '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
     '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
     '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
-    // Events & fundraisers
+    // Sponsored banner (below content) + Events & fundraisers
+    bannerStripHTML()+
     eventsCarouselHTML()+
     (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.75rem">🎯 Fundraisers</div><div class="camp-grid">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
     // Announcements
@@ -2148,6 +2194,7 @@ function renderMemberView(){
     '</div>';
   populateMembersDirectory();
   updateNotifBadge();
+  renderAdRail();
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
@@ -3765,7 +3812,7 @@ function renderPosts(filter){
     refreshOpenPostModal();return;
   }
   // Weave in live ad campaigns as Sponsored cards (after the 2nd item, then every 5)
-  const ads=activeAds();
+  const ads=adsFor('feed');
   const pieces=items.map(_postView==='feed'?postCardHTML:postDigestRowHTML);
   if(ads.length){
     let ai=0;
@@ -3780,8 +3827,9 @@ function renderPosts(filter){
     : (moreHidden>0
         ? '<div class="feed-morehint">🔍 <b>'+moreHidden+'</b> older post'+(moreHidden!==1?'s':'')+' kept out of the way — search above to find any of them.</div>'
         : _postsArchiveToggle());
-  el.innerHTML=header+starter+body+footer;
+  el.innerHTML=header+starter+(searching?'':bannerStripHTML())+body+footer;
   refreshOpenPostModal();
+  renderAdRail();
 }
 
 function escHtml(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
