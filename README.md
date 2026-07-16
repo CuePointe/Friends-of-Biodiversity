@@ -79,5 +79,25 @@ slide-*.jpg / slideNsm.jpg            Hero slideshow (desktop / mobile)
 
 ---
 
+## Project lead & attribution
+
+This project — its strategy, product direction, marketing approach and the
+citizen-science data-product concept — was conceived and led by
+**Thomas Otieno**, Strategy & Marketing Development Expert.
+
+Thomas shaped the platform end to end: the membership and monetisation model,
+the go-to-market and audience strategy (EIA consultancies, researchers and
+conservation NGOs), the in-app marketing/ads system, and the positioning of the
+Biodiversity Baseline Data Pack. This work draws on his **IBM Data Science**
+and **Digital Marketing** training — applying data-science thinking to turn
+members' field observations into a licensable dataset, and digital-marketing
+craft to member acquisition, engagement and retention.
+
+- **Project lead & strategy:** Thomas Otieno — Strategy & Marketing Development
+  Expert · IBM Data Science · Digital Marketing
+- **Organisation:** Uganda Biodiversity Fund — Friends of Biodiversity Programme
+
+---
+
 Maintained by the Uganda Biodiversity Fund ·
 info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org
