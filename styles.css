@@ -1310,3 +1310,28 @@ video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;backgrou
 .ad-pop-timer i{display:block;height:100%;width:100%;background:var(--gold);transform-origin:left;animation:adpopbar 11s linear forwards}
 @keyframes adpopbar{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @media(prefers-reduced-motion:reduce){.ad-pop-card{transition:opacity .3s}.ad-pop-timer i{animation:none}}
+
+/* ═══ LIVING ADS — motion on every placement + whole-card click-through ═══ */
+.ad-click{cursor:pointer;transition:transform .2s ease,box-shadow .2s ease}
+.ad-click:hover{transform:translateY(-2px)}
+.ad-card.ad-click:hover,.ad-rail-card.ad-click:hover,.ad-banner-card.ad-click:hover{box-shadow:0 18px 38px -16px rgba(0,0,0,.55)}
+.ad-click:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+/* slow Ken Burns zoom on ad media (all placements) */
+.ad-card,.ad-rail-card,.ad-banner-card,.ad-pop-card{overflow:hidden}
+.ad-img,.ad-rail-media,.ad-banner-media,.ad-pop-media{will-change:transform;animation:ad-kenburns 22s ease-in-out infinite alternate}
+@keyframes ad-kenburns{from{transform:scale(1)}to{transform:scale(1.09)}}
+/* premium light-sweep across the card, periodically */
+.ad-card,.ad-rail-card,.ad-banner-card{position:relative}
+.ad-card::after,.ad-rail-card::after,.ad-banner-card::after{content:"";position:absolute;top:0;left:-70%;width:45%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.16),transparent);transform:skewX(-18deg);pointer-events:none;z-index:3;animation:ad-shine 7s ease-in-out infinite}
+@keyframes ad-shine{0%,72%{left:-70%}88%{left:130%}100%{left:130%}}
+/* CTA breathes to pull the eye */
+.ad-cta{display:inline-block;animation:ad-cta-pulse 2.6s ease-in-out infinite}
+@keyframes ad-cta-pulse{0%,100%{box-shadow:0 0 0 0 rgba(200,168,75,0);transform:translateY(0)}50%{box-shadow:0 0 0 5px rgba(200,168,75,.16);transform:translateY(-1px)}}
+.ad-pop-cta{display:inline-block;background:linear-gradient(135deg,var(--gold),var(--gold-lt));color:var(--canopy);font-weight:800;border-radius:12px;padding:.72rem 1.25rem;font-size:.94rem;box-shadow:0 10px 24px -6px rgba(200,168,75,.55);animation:ad-cta-pulse 2.6s ease-in-out infinite}
+/* content sits above the sweep */
+.ad-body,.ad-rail-body,.ad-banner-body,.ad-banner-cta,.ad-tag{position:relative;z-index:4}
+@media(prefers-reduced-motion:reduce){
+  .ad-img,.ad-rail-media,.ad-banner-media,.ad-pop-media{animation:none}
+  .ad-card::after,.ad-rail-card::after,.ad-banner-card::after{animation:none;display:none}
+  .ad-cta,.ad-pop-cta{animation:none}
+}

@@ -643,22 +643,40 @@ function _adMedia(a,cls){
   return a.image_url?'<img class="'+cls+'" src="'+esc(a.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'';
 }
 function _adCta(a){return a.link_url?'<a class="ad-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\')" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more →')+'</a>':'';}
+// Visual CTA button — the WHOLE card is clickable, so this is a styled label (not a nested link)
+function _adCtaBtn(a){return '<span class="ad-cta">'+esc(a.cta||'Learn more')+' →</span>';}
+// Click-through: tap anywhere on an ad → payment (default) or the campaign's link
+function adOpen(id){
+  const a=(ADS||[]).find(x=>x.id===id);if(!a)return;
+  adClick(id);_buzz&&_buzz();
+  const u=(a.link_url||'#payment').trim();
+  if(u.charAt(0)==='#'){
+    const sec=u.slice(1).toLowerCase();
+    if(sec==='payment'||sec==='pay'||sec==='pay-now'){goToPayment();return;}
+    const e=document.getElementById(u.slice(1));
+    if(e){e.scrollIntoView({behavior:'smooth'});}else{goToPayment();}
+  }else{
+    window.open(u,'_blank','noopener');
+  }
+}
+// standard clickable-root attributes for any ad card
+function _adClickAttrs(a){return ' data-adid="'+esc(a.id)+'" role="button" tabindex="0" onclick="adOpen(\''+a.id+'\')" onkeydown="if(event.key===\'Enter\')adOpen(\''+a.id+'\')"';}
 function _adHasMedia(a){return !!((a.media_type==='video'&&a.video_url)||a.image_url);}
 function adCardHTML(a){
   _adView(a.id);
-  return '<div class="ad-card'+(_adHasMedia(a)?'':' ad-nomedia')+'"><span class="ad-tag">Sponsored · UBF</span>'+_adMedia(a,'ad-img')+
-    '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCta(a)+'</div></div>';
+  return '<div class="ad-card ad-click'+(_adHasMedia(a)?'':' ad-nomedia')+'"'+_adClickAttrs(a)+'><span class="ad-tag">Sponsored · UBF</span>'+_adMedia(a,'ad-img')+
+    '<div class="ad-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCtaBtn(a)+'</div></div>';
 }
 function railAdHTML(a){
   _adView(a.id);
-  return '<div class="ad-rail-card'+(_adHasMedia(a)?'':' ad-nomedia')+'" data-adid="'+esc(a.id)+'"><span class="ad-tag">Sponsored</span>'+_adMedia(a,'ad-rail-media')+
-    '<div class="ad-rail-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCta(a)+'</div></div>';
+  return '<div class="ad-rail-card ad-click'+(_adHasMedia(a)?'':' ad-nomedia')+'"'+_adClickAttrs(a)+'><span class="ad-tag">Sponsored</span>'+_adMedia(a,'ad-rail-media')+
+    '<div class="ad-rail-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCtaBtn(a)+'</div></div>';
 }
 function bannerAdHTML(a){
   _adView(a.id);
-  return '<div class="ad-banner-card" data-adid="'+esc(a.id)+'">'+_adMedia(a,'ad-banner-media')+
+  return '<div class="ad-banner-card ad-click"'+_adClickAttrs(a)+'>'+_adMedia(a,'ad-banner-media')+
     '<div class="ad-banner-body"><span class="ad-tag">Sponsored · UBF</span><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+'</div>'+
-    (a.link_url?'<div class="ad-banner-cta">'+_adCta(a)+'</div>':'')+'</div>';
+    '<div class="ad-banner-cta">'+_adCtaBtn(a)+'</div></div>';
 }
 function bannerStripHTML(){
   const ads=adsFor('banner');if(!ads.length)return '';
@@ -699,15 +717,14 @@ setInterval(()=>{
 let _popupTimer=null,_popupShown=false,_popupActive=null;
 function popupAdHTML(a){
   const media=_adHasMedia(a)?_adMedia(a,'ad-pop-media'):'';
-  const cta=a.link_url?'<a class="ad-pop-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\');dismissAdPopup()" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more')+' →</a>':'';
-  return '<div class="ad-pop-card'+(media?'':' ad-pop-nomedia')+'" data-adid="'+esc(a.id)+'">'+
-    '<button class="ad-pop-x" onclick="dismissAdPopup(true)" aria-label="Close">✕</button>'+
+  return '<div class="ad-pop-card ad-click'+(media?'':' ad-pop-nomedia')+'" data-adid="'+esc(a.id)+'" role="button" tabindex="0" onclick="adOpen(\''+a.id+'\');dismissAdPopup()">'+
+    '<button class="ad-pop-x" onclick="event.stopPropagation();dismissAdPopup(true)" aria-label="Close">✕</button>'+
     media+
     '<div class="ad-pop-body">'+
       '<span class="ad-pop-tag">Sponsored</span>'+
       '<b class="ad-pop-title">'+esc(a.title||'')+'</b>'+
       (a.body?'<p class="ad-pop-text">'+esc(a.body)+'</p>':'')+
-      cta+
+      '<span class="ad-pop-cta">'+esc(a.cta||'Learn more')+' →</span>'+
     '</div>'+
     '<div class="ad-pop-timer"><i></i></div>'+
   '</div>';
