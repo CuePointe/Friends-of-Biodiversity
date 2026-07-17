@@ -374,8 +374,9 @@ function openProtect(id){
     '<div class="dtl-body">'+
       strip+
       (p.blurb?'<p class="dtl-blurb">'+esc(p.blurb)+'</p>':'')+
+      '<p class="dtl-give-note">💚 “Help protect” makes a <b>donation</b> to this cause, paid through UBF’s official channels (MTN, Airtel or Stanbic).</p>'+
       '<div class="dtl-cta-row">'+
-        '<button class="btn btn-gold" onclick="closeModal(\'m-detail\');goToPayment()">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
+        '<button class="btn btn-gold" onclick="donateForProtect(\''+p.id+'\')">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
         '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
       '</div>'+
     '</div>';
@@ -439,6 +440,8 @@ function fillProtectForm(p){
   if(g('pf-region'))g('pf-region').value=p.region||'';
   if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(Array.isArray(p.images)&&p.images.length?p.images.join(', '):(p.image_url||''));
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
+  const cs=g('pf-cause');
+  if(cs)cs.innerHTML='<option value="">— Donations go to the default cause —</option>'+(CAMPAIGNS||[]).filter(c=>c.active!==false).map(c=>'<option value="'+c.id+'"'+(p.cause_campaign_id===c.id?' selected':'')+'>'+esc(c.title)+'</option>').join('');
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
   if(g('pf-save'))g('pf-save').textContent=p.id?'Update':'Add to gallery';
@@ -474,6 +477,7 @@ async function saveProtectItem(){
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
     tier:document.getElementById('pf-tier').value||null,
+    cause_campaign_id:(document.getElementById('pf-cause')?document.getElementById('pf-cause').value||null:null),
     active:document.getElementById('pf-active').checked};
   if(_protectEditId)row.id=_protectEditId;
   const {error}=await sb.from('protect_gallery').upsert(row);
@@ -1054,7 +1058,15 @@ function setDonateCause(cid){
   const c=CAMPAIGNS.find(x=>x.id===cid);
   const card=document.getElementById('donate-cause-card');if(card)card.innerHTML=_causeCardHTML(c);
 }
-function openDonate(cid){
+let _donateSource=null;
+// From an IUCN gallery card → a donation to protect that species/place, via official channels
+function donateForProtect(id){
+  const p=(PROTECT||[]).find(x=>x.id===id);if(!p)return;
+  closeModal('m-detail');
+  openDonate(p.cause_campaign_id||null,'Protect: '+(p.name||''));
+}
+function openDonate(cid,source){
+  _donateSource=source||null;
   const active=CAMPAIGNS.filter(c=>c.active!==false);
   // Always tie a donation to a specific cause: default to the first live cause
   if(!cid&&active.length)cid=active[0].id;
@@ -1079,7 +1091,7 @@ async function submitDonation(){
   const payref=(document.getElementById('donate-payref').value||'').trim();
   const donor=(document.getElementById('donate-name').value||'').trim()||'Anonymous friend';
   if(!amount){toast('⚠ Enter an amount.');return}
-  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref});
+  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref,source:_donateSource});
   if(error){toast('⚠ Could not record the donation.');console.error(error);return}
   closeModal('m-donate');
   toast('💚 Thank you, '+esc(donor.split(' ')[0])+'! It counts once payment is confirmed.');
@@ -1746,6 +1758,30 @@ function updateNav(){
 }
 
 /* ═══ ENROLL ═══ */
+/* Green Card tier — rich clickable detail (same treatment as the gallery) */
+function openTierDetail(t){
+  const td=TIERS_DATA[t];if(!td)return;_buzz&&_buzz();
+  const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+  const perks=card?[...card.querySelectorAll('.tier-perks li')].map(li=>li.textContent):[];
+  const mt=(document.getElementById('ef-type')&&document.getElementById('ef-type').value)||'individual';
+  const price=(typeof TIER_RANGES!=='undefined'&&TIER_RANGES[t])?(TIER_RANGES[t][mt]||TIER_RANGES[t].individual):'';
+  const isMember=currentUser&&currentUser.role==='member';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero tier-hero t-'+t+'">'+
+      '<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🪪 Green Card Tier</span><h2>'+td.emoji+' '+esc(td.label)+'</h2>'+
+      (price?'<span class="dtl-region">'+esc(price)+'</span>':'')+'</div></div>'+
+    '<div class="dtl-body">'+
+      '<div class="tier-detail-perks">'+perks.map(p=>'<div class="tdp"><span>✓</span>'+esc(p)+'</div>').join('')+'</div>'+
+      '<div class="dtl-cta-row">'+
+        (isMember
+          ?'<button class="btn btn-gold" onclick="closeModal(\'m-detail\');openTierModal()">⇅ Switch to '+esc(td.label)+'</button>'
+          :'<button class="btn btn-gold" onclick="closeModal(\'m-detail\');selectTier(\''+t+'\')">Choose '+esc(td.label)+' →</button>')+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
+}
 function selectTier(t){
   selectedTier_=t;
   document.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
@@ -2315,15 +2351,18 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="downloadReceipt()">🧾 Receipt</button></div>'+
     '</div>'+
     // Actions
+    // Actions — primary up front, the rest tucked into a tidy menu (LinkedIn-style)
     '<div class="mem-action-row">'+
       '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
-      '<button class="btn btn-gold btn-sm" onclick="openTierModal()">⇅ Change Tier</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="appNav(\'learn\')">📚 Learn</button>'+
-      '<button class="btn btn-ghost btn-sm" style="position:relative" onclick="openNotifications()">🔔 Updates<span id="notif-badge" class="notif-badge"></span></button>'+
-      '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
-      '<button class="btn btn-ghost btn-sm" style="color:var(--rust);border-color:rgba(181,69,27,.45)" onclick="doLogout()">🚪 Sign Out</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability</button>'+
+      '<div class="mem-more"><button class="btn btn-ghost btn-sm" onclick="this.parentNode.classList.toggle(\'open\')">⋯ More</button>'+
+        '<div class="mem-more-menu">'+
+          '<button onclick="openTierModal()">⇅ Change Tier</button>'+
+          '<button onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
+          '<button onclick="doLogout()" style="color:var(--rust)">🚪 Sign Out</button>'+
+        '</div>'+
+      '</div>'+
     '</div>'+
     // Citizen science — log sightings, view the map, earn the badge
     (function(){const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);return ''+
@@ -2341,14 +2380,15 @@ function renderMemberView(){
       '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
       '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
       '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+      // Fundraisers live in the side rail too, so the middle stays a clean feed
+      (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
     '</aside>'+
     '<div class="mem-main">'+
-    // Sponsored banner (below content) + Events & fundraisers
+    // A clean central feed: sponsored banner, events, then the latest from UBF
     bannerStripHTML()+
     eventsCarouselHTML()+
-    (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.75rem">🎯 Fundraisers</div><div class="camp-grid">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
     // Announcements
-    '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
+    '<div class="mem-sec-title" style="margin-top:1.25rem">Latest from UBF</div>'+
     (ANNOUNCES.length
       ?ANNOUNCES.slice(0,5).map(a=>
         '<div class="ann-editorial" id="ann-'+a.id+'">'+

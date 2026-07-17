@@ -1406,3 +1406,28 @@ video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;backgrou
 @media(max-width:899px){
   .mem-aside{margin-top:1.75rem}
 }
+
+/* ═══ Green Card tier detail modal ═══ */
+.tier-hero{height:150px}
+.tier-hero.t-student{background:linear-gradient(140deg,#1f5136,#2D6A4F)}
+.tier-hero.t-silver{background:linear-gradient(140deg,#5b6b70,#8a9ba0)}
+.tier-hero.t-gold{background:linear-gradient(140deg,#8a6d1f,#C8A84B)}
+.tier-hero.t-platinum{background:linear-gradient(140deg,#3a4a55,#7d8ea0)}
+.tier-hero.t-diamond{background:linear-gradient(140deg,#123c4a,#2E7D9A)}
+.tier-detail-perks{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.1rem}
+.tdp{display:flex;gap:.6rem;align-items:flex-start;font-size:.9rem;line-height:1.45;color:var(--text,#1b241d)}
+.tdp span{flex:none;width:20px;height:20px;border-radius:50%;background:rgba(45,106,79,.14);color:var(--canopy-lt);display:grid;place-items:center;font-size:.7rem;font-weight:800;margin-top:1px}
+.dtl-give-note{font-size:.8rem;color:var(--muted);background:rgba(45,106,79,.08);border-radius:10px;padding:.6rem .75rem;margin:0 0 .9rem;line-height:1.5}
+.dtl-give-note b{color:var(--canopy)}
+.donate-channels{font-size:.78rem;color:var(--muted);line-height:1.55;margin:.2rem 0 1rem}
+.donate-channels a{color:var(--canopy-lt);font-weight:700}
+
+/* ═══ Profile declutter — tidy "More" menu + rail fundraisers ═══ */
+.mem-more{position:relative;display:inline-block}
+.mem-more-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:20;background:var(--white,#fff);border:1px solid var(--border);border-radius:12px;box-shadow:0 16px 40px -16px rgba(0,0,0,.35);padding:.35rem;min-width:170px;display:none}
+.mem-more.open .mem-more-menu{display:block}
+.mem-more-menu button{display:block;width:100%;text-align:left;background:none;border:none;padding:.55rem .7rem;border-radius:8px;font-size:.85rem;font-family:inherit;cursor:pointer;color:var(--text,#1b241d)}
+.mem-more-menu button:hover{background:var(--mist,#f2f5f1)}
+.camp-grid-rail{display:flex;flex-direction:column;gap:.7rem}
+.camp-grid-rail .camp-card{margin:0}
+@media(min-width:900px){.camp-grid-rail .camp-img{height:96px}}

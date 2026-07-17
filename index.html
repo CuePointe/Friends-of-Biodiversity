@@ -259,35 +259,35 @@
     <h2 class="sec-title reveal">Select Your <em>Membership Tier</em></h2>
     <p class="sec-body reveal">Annual contributions in Uganda Shillings (UGX). Select a tier to unlock your perks and complete enrollment.</p>
     <div class="tier-grid">
-      <div class="tier-card reveal" data-tier="student" onclick="selectTier('student')">
+      <div class="tier-card reveal" data-tier="student" onclick="openTierDetail('student')">
         <div class="tier-badge" style="background:rgba(45,106,79,.12)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2D6A4F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-3.3 2.6-5.5 6.5-5.5C18.5 11 15.9 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/><path d="M12 13c0-3.3-2.6-5.5-6.5-5.5C5.5 11 8.1 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/></svg></div>
         <div class="tier-name" style="color:var(--canopy-lt)">Student</div>
         <div class="tier-range">Individual: <strong>In-kind / Youth Project</strong><br>Registration: <strong>Free</strong></div>
         <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship &amp; leadership development package</li></ul>
         <button class="tier-btn" style="background:rgba(45,106,79,.15);color:var(--canopy)">Select Student</button>
       </div>
-      <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
+      <div class="tier-card reveal" data-tier="silver" onclick="openTierDetail('silver')">
         <div class="tier-badge" style="background:rgba(144,144,144,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#8a8a8a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.5c0-8 6-13 13-13 0 8-6 13-13 13z" fill="#9a9a9a" fill-opacity=".2"/><path d="M5.5 18.5C9.5 14.5 13.5 10.5 17.5 8.5"/></svg></div>
         <div class="tier-name">Silver</div>
         <div class="tier-range">Individual: <strong>500K–1M UGX</strong><br>Institution: <strong>2M–5M UGX</strong></div>
         <ul class="tier-perks"><li>Eco-friendly welcome kit &amp; certificates</li><li>Contribution &amp; accountability dashboard</li><li>Learning Exchange library access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li></ul>
         <button class="tier-btn">Select Silver</button>
       </div>
-      <div class="tier-card reveal" data-tier="gold" onclick="selectTier('gold')">
+      <div class="tier-card reveal" data-tier="gold" onclick="openTierDetail('gold')">
         <div class="tier-badge" style="background:rgba(200,168,75,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#B8901F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#C8A84B" fill-opacity=".22"><ellipse cx="12" cy="6.5" rx="2.3" ry="3.3"/><ellipse cx="12" cy="17.5" rx="2.3" ry="3.3"/><ellipse cx="6.5" cy="12" rx="3.3" ry="2.3"/><ellipse cx="17.5" cy="12" rx="3.3" ry="2.3"/></g><circle cx="12" cy="12" r="2.4" fill="#C8A84B"/></svg></div>
         <div class="tier-name">Gold</div>
         <div class="tier-range">Individual: <strong>1.5M–2M UGX</strong><br>Institution: <strong>6M–10M UGX</strong></div>
         <ul class="tier-perks"><li>All Silver benefits</li><li>Visibility in conservation projects</li><li>Exclusive networking events</li><li>Priority event invitations</li><li>Quarterly impact report</li></ul>
         <button class="tier-btn">Select Gold</button>
       </div>
-      <div class="tier-card reveal" data-tier="platinum" onclick="selectTier('platinum')">
+      <div class="tier-card reveal" data-tier="platinum" onclick="openTierDetail('platinum')">
         <div class="tier-badge" style="background:rgba(91,196,191,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1A7A76" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M12 3 6.5 11h11z" fill="#5BC4BF" fill-opacity=".2"/><path d="M12 8 7.5 15.5h9z" fill="#5BC4BF" fill-opacity=".2"/></svg></div>
         <div class="tier-name">Platinum</div>
         <div class="tier-range">Individual: <strong>2.5M–4.5M UGX</strong><br>Institution: <strong>20M–40M UGX</strong></div>
         <ul class="tier-perks"><li>All Gold benefits</li><li>Co-branding on project materials</li><li>Strategic partnership access</li><li>Named in annual report</li><li>Private ED briefing</li></ul>
         <button class="tier-btn">Select Platinum</button>
       </div>
-      <div class="tier-card reveal" data-tier="diamond" onclick="selectTier('diamond')">
+      <div class="tier-card reveal" data-tier="diamond" onclick="openTierDetail('diamond')">
         <div class="tier-badge" style="background:rgba(126,184,201,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2E7D9A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="#7EB8C9" fill-opacity=".2"/><path d="M3.5 12h17M12 3.5c2.6 2.6 2.6 14.4 0 17M12 3.5c-2.6 2.6-2.6 14.4 0 17"/></svg></div>
         <div class="tier-name">Diamond</div>
         <div class="tier-range">Individual: <strong>5M+ UGX</strong><br>Institution: <strong>50M+ UGX</strong></div>
@@ -768,6 +768,10 @@
       </div>
       <div class="fg"><label>Link to a Green Card tier (optional)</label>
         <select id="pf-tier"><option value="">Not linked — show in gallery only</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
+      </div>
+      <div class="fg"><label>Link to a fundraising cause (optional)</label>
+        <select id="pf-cause"><option value="">— Donations go to the default cause —</option></select>
+        <span style="font-size:.75rem;color:var(--muted)">When a visitor taps “Help protect” on this card, their donation goes to this cause.</span>
       </div>
       <div class="fg"><label>Short story</label><textarea id="pf-blurb" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="One line on why it matters."></textarea></div>
       <div class="fg"><label>Image filenames from your repo (up to 5, comma-separated)</label><input id="pf-imgurl" placeholder="e.g. gorilla1.jpg, gorilla2.jpg, gorilla3.jpg"/></div>
@@ -1584,6 +1588,7 @@
     <div class="fg"><label>Your name</label><input id="donate-name" placeholder="Jane Akello (or 'Anonymous')"/></div>
     <div class="fg"><label>Amount (UGX)</label><input id="donate-amount" type="number" placeholder="e.g. 50000"/></div>
     <div class="fg"><label>Payment reference</label><input id="donate-payref" placeholder="e.g. MTN Ref #12345"/></div>
+    <p class="donate-channels">💳 Pay via our official channels — <b>MTN</b>, <b>Airtel</b> or <b>Stanbic Bank</b> — then log your reference here. <a href="#" onclick="closeModal('m-donate');goToPayment();return false">See How to Pay →</a></p>
     <button class="btn btn-gold btn-full" onclick="submitDonation()">Log my donation</button>
   </div>
 </div>
