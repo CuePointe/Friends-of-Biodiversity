@@ -651,18 +651,20 @@ function adCardHTML(a){
 }
 function railAdHTML(a){
   _adView(a.id);
-  return '<div class="ad-rail-card'+(_adHasMedia(a)?'':' ad-nomedia')+'"><span class="ad-tag">Sponsored</span>'+_adMedia(a,'ad-rail-media')+
+  return '<div class="ad-rail-card'+(_adHasMedia(a)?'':' ad-nomedia')+'" data-adid="'+esc(a.id)+'"><span class="ad-tag">Sponsored</span>'+_adMedia(a,'ad-rail-media')+
     '<div class="ad-rail-body"><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+_adCta(a)+'</div></div>';
 }
 function bannerAdHTML(a){
   _adView(a.id);
-  return '<div class="ad-banner-card">'+_adMedia(a,'ad-banner-media')+
+  return '<div class="ad-banner-card" data-adid="'+esc(a.id)+'">'+_adMedia(a,'ad-banner-media')+
     '<div class="ad-banner-body"><span class="ad-tag">Sponsored · UBF</span><b>'+esc(a.title||'')+'</b>'+(a.body?'<p>'+esc(a.body)+'</p>':'')+'</div>'+
     (a.link_url?'<div class="ad-banner-cta">'+_adCta(a)+'</div>':'')+'</div>';
 }
 function bannerStripHTML(){
   const ads=adsFor('banner');if(!ads.length)return '';
-  return '<div class="ad-banner-strip">'+ads.slice(0,2).map(bannerAdHTML).join('')+'</div>';
+  // Auto-rotating banner — slides between campaigns to keep drawing the eye
+  return '<div class="ad-banner-strip ad-rotator">'+ads.map((a,i)=>'<div class="ad-slide'+(i===0?' on':'')+'">'+bannerAdHTML(a)+'</div>').join('')+
+    (ads.length>1?'<div class="ad-dots">'+ads.map((a,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('')+'</div>':'')+'</div>';
 }
 // Side rail — floats beside the content on desktop; hidden on phones by CSS
 function renderAdRail(){
@@ -672,7 +674,75 @@ function renderAdRail(){
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
   if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
   rail.style.display='';
-  rail.innerHTML='<div class="ad-rail-head">Sponsored</div>'+ads.slice(0,3).map(railAdHTML).join('');
+  rail.innerHTML='<div class="ad-rail-head">Sponsored</div><div class="ad-rotator">'+
+    ads.map((a,i)=>'<div class="ad-slide'+(i===0?' on':'')+'">'+railAdHTML(a)+'</div>').join('')+'</div>';
+}
+// One gentle ticker crossfades every visible ad rotator (banner + rail)
+setInterval(()=>{
+  document.querySelectorAll('.ad-rotator').forEach(rot=>{
+    if(!rot.offsetParent)return;
+    const slides=[...rot.querySelectorAll(':scope > .ad-slide')];
+    if(slides.length<2)return;
+    let i=slides.findIndex(s=>s.classList.contains('on'));if(i<0)i=0;
+    const n=(i+1)%slides.length;
+    slides[i].classList.remove('on');slides[n].classList.add('on');
+    const dots=rot.querySelectorAll('.ad-dots i');
+    if(dots.length){dots.forEach(d=>d.classList.remove('on'));if(dots[n])dots[n].classList.add('on');}
+    // count the newly-surfaced ad as seen
+    const vid=slides[n].querySelector('[data-adid]');if(vid)_adView(vid.getAttribute('data-adid'));
+  });
+},5500);
+
+/* ═══ TIMED POP-UP INTERSTITIAL — slides up to grab attention, then bows out ═══
+   Frequency-capped so it never nags: at most once per session, and not again
+   for the same campaign within 8 hours. */
+let _popupTimer=null,_popupShown=false,_popupActive=null;
+function popupAdHTML(a){
+  const media=_adHasMedia(a)?_adMedia(a,'ad-pop-media'):'';
+  const cta=a.link_url?'<a class="ad-pop-cta" href="'+esc(a.link_url)+'" onclick="adClick(\''+a.id+'\');dismissAdPopup()" '+(String(a.link_url).startsWith('#')?'':'target="_blank" rel="noopener"')+'>'+esc(a.cta||'Learn more')+' →</a>':'';
+  return '<div class="ad-pop-card'+(media?'':' ad-pop-nomedia')+'" data-adid="'+esc(a.id)+'">'+
+    '<button class="ad-pop-x" onclick="dismissAdPopup(true)" aria-label="Close">✕</button>'+
+    media+
+    '<div class="ad-pop-body">'+
+      '<span class="ad-pop-tag">Sponsored</span>'+
+      '<b class="ad-pop-title">'+esc(a.title||'')+'</b>'+
+      (a.body?'<p class="ad-pop-text">'+esc(a.body)+'</p>':'')+
+      cta+
+    '</div>'+
+    '<div class="ad-pop-timer"><i></i></div>'+
+  '</div>';
+}
+function maybeShowAdPopup(){
+  if(_popupShown||!currentUser)return;
+  if(!(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')))return;
+  const ads=adsFor('popup');if(!ads.length)return;
+  // pick the first eligible ad whose 8-hour cap has passed
+  const now=Date.now();
+  const a=ads.find(x=>{const t=+localStorage.getItem('adpop_'+x.id)||0;return now-t>8*3600*1000;});
+  if(!a)return;
+  clearTimeout(_popupTimer);
+  _popupTimer=setTimeout(()=>showAdPopup(a),6500); // let the page settle first
+}
+function showAdPopup(a){
+  if(_popupShown)return;
+  // don't interrupt if a modal is open
+  if(document.querySelector('.overlay.open')){_popupTimer=setTimeout(()=>showAdPopup(a),4000);return;}
+  _popupShown=true;_popupActive=a;
+  let host=document.getElementById('ad-popup');
+  if(!host){host=document.createElement('div');host.id='ad-popup';document.body.appendChild(host);}
+  host.innerHTML=popupAdHTML(a);
+  host.style.display='block';
+  _adView(a.id);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add('show')));
+  // auto-dismiss after the timer bar runs out
+  clearTimeout(host._auto);host._auto=setTimeout(()=>dismissAdPopup(),11000);
+}
+function dismissAdPopup(userClosed){
+  const host=document.getElementById('ad-popup');if(!host)return;
+  clearTimeout(host._auto);
+  host.classList.remove('show');
+  if(_popupActive)localStorage.setItem('adpop_'+_popupActive.id,String(Date.now()));
+  setTimeout(()=>{host.style.display='none';host.innerHTML='';},450);
 }
 function _adStatus(a){
   const t=new Date().toISOString().slice(0,10);
@@ -731,7 +801,7 @@ function renderAdsAdmin(){
   const el=document.getElementById('ads-admin-list');if(!el)return;
   el.innerHTML=ADS.length?ADS.map(a=>{
     const[st,col]=_adStatus(a);
-    const slot={feed:'📰 Feed',rail:'📐 Side rail',banner:'🪧 Banner',all:'🌐 Everywhere'}[a.placement||'feed'];
+    const slot={feed:'📰 Feed',rail:'📐 Side rail',banner:'🪧 Banner',popup:'🎬 Pop-up',all:'🌐 Everywhere'}[a.placement||'feed'];
     const media=(a.media_type==='video'&&a.video_url)?'🎬 video':(a.image_url?'🖼 image':'📝 text');
     return '<div class="pa-row"><span class="pa-thumb">'+((a.media_type==='video'&&a.video_url)?'🎬':'📣')+'</span>'+
       '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+slot+' · '+media+' · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+' · 👁 '+(a.impressions||0)+' views · 🖱 '+(a.clicks||0)+' clicks</span></div>'+
@@ -3830,6 +3900,7 @@ function renderPosts(filter){
   el.innerHTML=header+starter+(searching?'':bannerStripHTML())+body+footer;
   refreshOpenPostModal();
   renderAdRail();
+  maybeShowAdPopup();
 }
 
 function escHtml(t){return(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
