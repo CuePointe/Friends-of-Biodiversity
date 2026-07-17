@@ -530,6 +530,19 @@
 
 <!-- FOOTER -->
 <footer>
+  <!-- Emotional call-to-action band -->
+  <div class="footer-cta">
+    <div class="footer-cta-inner">
+      <span class="footer-cta-kicker">🌍 The wild is counting on us</span>
+      <h3>Every gorilla, crane and wetland has a name here — and a future you help write.</h3>
+      <p>Join thousands of Ugandans and friends abroad standing between our biodiversity and the threats it faces. It starts with one card.</p>
+      <div class="footer-cta-btns">
+        <a href="#greencard" class="btn btn-gold">🪪 Become a Friend</a>
+        <a href="#payment" class="btn btn-ghost-light">💚 Give to a cause</a>
+      </div>
+    </div>
+  </div>
+
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
@@ -538,10 +551,16 @@
           <div class="footer-logo-divider"></div>
           <img src="fob-logo.png" alt="Friends of Biodiversity"/>
         </div>
-        <p>Protecting Uganda's rich biological heritage across multiple landscapes — Albertine Rift, West Nile, Karamoja, and Central Uganda — demonstrating care for Uganda's biodiversity.</p>
+        <p>We protect Uganda's living heritage across the <b>Albertine Rift</b>, <b>West Nile</b>, <b>Karamoja</b> and <b>Central Uganda</b> — forests, wetlands and the wildlife that call them home. This is care for biodiversity you can see, measure and be part of.</p>
+        <div class="footer-social">
+          <a href="mailto:info@ugandabiodiversityfund.org" aria-label="Email" title="Email">✉</a>
+          <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener" aria-label="Website" title="Website">🌐</a>
+          <a href="tel:+256393216445" aria-label="Call" title="Call">📞</a>
+          <a href="#" onclick="openSubscribePopup();return false" aria-label="Subscribe" title="Subscribe">🔔</a>
+        </div>
       </div>
       <div class="footer-col">
-        <h5>Programme</h5>
+        <h5>Explore</h5>
         <a href="#themes">Strategic Framework</a>
         <a href="#greencard">Green Card Tiers</a>
         <a href="#learn">Learning Exchange</a>
@@ -549,16 +568,16 @@
         <a href="#wallfame">Wall of Fame</a>
       </div>
       <div class="footer-col">
-        <h5>Contact</h5>
-        <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>
-        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">ugandabiodiversityfund.org</a>
-        <a href="tel:+256393216445">+256 (039) 3216445</a>
-        <a href="tel:+256200916445">+256 (200) 916 445</a>
-        <a href="#" onclick="openSubscribePopup();return false">🌿 Subscribe for Updates</a>
+        <h5>Reach us</h5>
+        <a href="mailto:info@ugandabiodiversityfund.org">✉ info@ugandabiodiversityfund.org</a>
+        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">🌐 ugandabiodiversityfund.org</a>
+        <a href="tel:+256393216445">📞 +256 (039) 3216445</a>
+        <a href="tel:+256200916445">📞 +256 (200) 916 445</a>
+        <a href="#" onclick="openSubscribePopup();return false" class="footer-sub">🌿 Subscribe for updates</a>
       </div>
     </div>
     <div class="footer-btm">
-      <p>© 2026 Uganda Biodiversity Fund. All rights reserved.</p>
+      <p>© 2026 Uganda Biodiversity Fund · Made with 💚 in Uganda for Uganda's wild.</p>
       <div class="footer-logo-strip">
         <img src="ubf-logo.png" alt="UBF" style="height:30px;width:30px"/>
         <div class="footer-logo-divider" style="height:22px"></div>
@@ -1235,6 +1254,14 @@
   </div>
 </div>
 
+<!-- SHARED DETAIL MODAL — species/places gallery + Wall of Fame champions -->
+<div class="overlay" id="m-detail">
+  <div class="modal" style="max-width:560px;padding:0;overflow:hidden">
+    <button class="modal-close" onclick="closeModal('m-detail')" style="z-index:5">✕</button>
+    <div id="detail-body"></div>
+  </div>
+</div>
+
 <!-- CERTIFICATE MODAL -->
 <div class="overlay" id="m-cert">
   <div class="modal cert-modal">
@@ -1550,8 +1577,10 @@
 <div class="overlay" id="m-donate">
   <div class="modal" style="max-width:460px">
     <button class="modal-close" onclick="closeModal('m-donate')">✕</button>
-    <h2>💚 Donate</h2>
-    <p class="msub">Supporting: <strong id="donate-camp-label"></strong>. Pay via any official channel, then log it here.</p>
+    <h2>💚 Donate to a cause</h2>
+    <p class="msub">Every donation goes to a <strong>specific conservation cause</strong> — you choose it below, pay via any official channel, then log it here.</p>
+    <div id="donate-cause-card" class="donate-cause"></div>
+    <div class="fg" id="donate-cause-pick" style="display:none"></div>
     <div class="fg"><label>Your name</label><input id="donate-name" placeholder="Jane Akello (or 'Anonymous')"/></div>
     <div class="fg"><label>Amount (UGX)</label><input id="donate-amount" type="number" placeholder="e.g. 50000"/></div>
     <div class="fg"><label>Payment reference</label><input id="donate-payref" placeholder="e.g. MTN Ref #12345"/></div>

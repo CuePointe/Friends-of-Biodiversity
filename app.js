@@ -341,18 +341,65 @@ function renderProtectGallery(){
       // mini-slideshow: stacked slides + arrows + dots, auto-advancing
       media=imgs.map((u,i)=>'<img class="pg-s'+(i===0?' on':'')+'" src="'+esc(u)+'" alt="" onerror="this.remove()"/>').join('');
       extra='<span class="pg-count">'+imgs.length+' photos</span>'+
-        '<div class="pg-arrows"><button type="button" onclick="pgNav(this,-1)">‹</button><button type="button" onclick="pgNav(this,1)">›</button></div>'+
+        '<div class="pg-arrows"><button type="button" onclick="event.stopPropagation();pgNav(this,-1)">‹</button><button type="button" onclick="event.stopPropagation();pgNav(this,1)">›</button></div>'+
         '<div class="pg-dots">'+imgs.map((_,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('')+'</div>';
     }else if(imgs[0]){
       media='<img src="'+esc(imgs[0])+'" alt="" onerror="this.style.display=\'none\'"/>';
     }
     const hasMedia=isVid||imgs.length;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
-    return '<article class="pg-card"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
+    return '<article class="pg-card pg-click"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+' data-pid="'+esc(p.id)+'" role="button" tabindex="0" onclick="openProtect(\''+p.id+'\')" onkeydown="if(event.key===\'Enter\')openProtect(\''+p.id+'\')"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
       '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
-      (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
+      (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'<span class="pg-more">Tap to learn more →</span></div></article>';
   }).join('');
   renderTierProtect();
+}
+/* Rich detail view for an endangered species / threatened place */
+function openProtect(id){
+  const p=(PROTECT||[]).find(x=>x.id===id);if(!p)return;_buzz&&_buzz();
+  let imgs=Array.isArray(p.images)&&p.images.length?p.images:(p.image_url?[p.image_url]:[]);
+  if(typeof p.images==='string'){try{const a=JSON.parse(p.images);if(Array.isArray(a)&&a.length)imgs=a;}catch(e){}}
+  const isVid=p.media_type==='video'&&p.video_url;
+  const media=isVid
+    ?'<video src="'+esc(p.video_url)+'" controls playsinline autoplay muted loop'+(imgs[0]?' poster="'+esc(imgs[0])+'"':'')+' class="dtl-media"></video>'
+    :(imgs[0]?'<img src="'+esc(imgs[0])+'" alt="" class="dtl-media"/>':'<div class="dtl-media dtl-media-empty">🌿</div>');
+  const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
+  const kindLabel=p.kind==='place'?'Threatened place':'Endangered species';
+  // extra photos strip
+  const strip=imgs.length>1?'<div class="dtl-strip">'+imgs.slice(0,6).map(u=>'<img src="'+esc(u)+'" alt="" onerror="this.remove()"/>').join('')+'</div>':'';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero">'+media+'<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">'+kindLabel+'</span><h2>'+esc(p.name||'')+'</h2>'+
+      (p.region?'<span class="dtl-region">📍 '+esc(p.region)+'</span>':'')+'</div>'+badge+'</div>'+
+    '<div class="dtl-body">'+
+      strip+
+      (p.blurb?'<p class="dtl-blurb">'+esc(p.blurb)+'</p>':'')+
+      '<div class="dtl-cta-row">'+
+        '<button class="btn btn-gold" onclick="closeModal(\'m-detail\');goToPayment()">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
+}
+/* Clicking a Wall of Fame champion → their member profile, or a champion detail */
+function openFame(idx){
+  const m=FAME[idx];if(!m)return;_buzz&&_buzz();
+  // Try to open the real member profile first
+  const match=(MEMBERS||[]).find(x=>m.member_id&&x.id===m.member_id) ||
+              (MEMBERS||[]).find(x=>(x.name||'').trim().toLowerCase()===(m.name||'').trim().toLowerCase());
+  if(match){viewMemberProfile(match.id);return;}
+  const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
+  const initials=(m.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="" class="dtl-media"/>':'<div class="dtl-media dtl-media-empty">'+initials+'</div>')+
+      '<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🏆 Wall of Fame · '+esc(m.year||'')+'</span><h2>'+esc(m.name||'')+'</h2>'+
+      '<span class="dtl-region">'+(td.emoji||'')+' '+esc(td.label||'')+' champion</span></div></div>'+
+    '<div class="dtl-body">'+
+      (m.caption?'<p class="dtl-blurb">'+esc(m.caption)+'</p>':'')+
+      '<div class="dtl-cta-row"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+    '</div>';
+  openModal('m-detail');
 }
 /* Show tier-linked species/places on the membership tier cards */
 function renderTierProtect(){
@@ -729,37 +776,59 @@ function popupAdHTML(a){
     '<div class="ad-pop-timer"><i></i></div>'+
   '</div>';
 }
-function maybeShowAdPopup(){
-  if(_popupShown||!currentUser)return;
-  if(!(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')))return;
-  const ads=adsFor('popup');if(!ads.length)return;
-  // pick the first eligible ad whose 8-hour cap has passed
-  const now=Date.now();
-  const a=ads.find(x=>{const t=+localStorage.getItem('adpop_'+x.id)||0;return now-t>8*3600*1000;});
-  if(!a)return;
-  clearTimeout(_popupTimer);
-  _popupTimer=setTimeout(()=>showAdPopup(a),6500); // let the page settle first
+/* Recurring rhythm: pop up → stay a few seconds → slide away → wait → reappear,
+   rotating through the pop-up campaigns. Runs only while a member is on the
+   Home/Learn feed; closing (✕) pauses it briefly so it never feels aggressive. */
+const AD_POP_SHOW=7000;   // visible for 7s
+const AD_POP_GAP=6000;    // hidden for 6s, then returns
+const AD_POP_FIRST=4000;  // let the page settle before the first appearance
+let _popCycleTimer=null,_popHideTimer=null,_popIdx=0,_popPausedUntil=0;
+function _adPopEligible(){
+  return currentUser && (_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')) && adsFor('popup').length>0;
+}
+function maybeShowAdPopup(){ startAdPopupCycle(); }
+function startAdPopupCycle(){
+  if(_popCycleTimer)return;              // already running
+  if(!_adPopEligible())return;
+  _popCycleTimer=setTimeout(_adPopTick,AD_POP_FIRST);
+}
+function stopAdPopupCycle(){
+  clearTimeout(_popCycleTimer);clearTimeout(_popHideTimer);_popCycleTimer=null;
+  hideAdPopup();
+}
+function _adPopTick(){
+  _popCycleTimer=null;
+  if(!_adPopEligible()){return;}                                   // left the feed → stop
+  if(Date.now()<_popPausedUntil){ _popCycleTimer=setTimeout(_adPopTick,2500);return; } // user paused it
+  if(document.querySelector('.overlay.open')){ _popCycleTimer=setTimeout(_adPopTick,3000);return; } // don't cover a dialog
+  const ads=adsFor('popup');
+  if(!ads.length){return;}
+  const a=ads[_popIdx%ads.length];_popIdx++;
+  showAdPopup(a);
+  _popHideTimer=setTimeout(hideAdPopup,AD_POP_SHOW);               // hide after a few seconds
+  _popCycleTimer=setTimeout(_adPopTick,AD_POP_SHOW+AD_POP_GAP);    // …then reappear
 }
 function showAdPopup(a){
-  if(_popupShown)return;
-  // don't interrupt if a modal is open
-  if(document.querySelector('.overlay.open')){_popupTimer=setTimeout(()=>showAdPopup(a),4000);return;}
-  _popupShown=true;_popupActive=a;
+  if(document.querySelector('.overlay.open'))return;
+  _popupActive=a;
   let host=document.getElementById('ad-popup');
   if(!host){host=document.createElement('div');host.id='ad-popup';document.body.appendChild(host);}
   host.innerHTML=popupAdHTML(a);
   host.style.display='block';
   _adView(a.id);
+  // keep the timer bar in sync with how long it stays up
+  const bar=host.querySelector('.ad-pop-timer i');if(bar)bar.style.animationDuration=(AD_POP_SHOW/1000)+'s';
   requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add('show')));
-  // auto-dismiss after the timer bar runs out
-  clearTimeout(host._auto);host._auto=setTimeout(()=>dismissAdPopup(),11000);
 }
-function dismissAdPopup(userClosed){
+function hideAdPopup(){
   const host=document.getElementById('ad-popup');if(!host)return;
-  clearTimeout(host._auto);
   host.classList.remove('show');
-  if(_popupActive)localStorage.setItem('adpop_'+_popupActive.id,String(Date.now()));
-  setTimeout(()=>{host.style.display='none';host.innerHTML='';},450);
+  setTimeout(()=>{if(host&&!host.classList.contains('show'))host.style.display='none';},500);
+}
+// ✕ = pause the rhythm for a minute, then it resumes on its own
+function dismissAdPopup(userClosed){
+  hideAdPopup();
+  if(userClosed)_popPausedUntil=Date.now()+60000;
 }
 function _adStatus(a){
   const t=new Date().toISOString().slice(0,10);
@@ -970,10 +1039,37 @@ function campaignCardHTML(c){
     '<button class="btn btn-gold btn-sm" onclick="openDonate(\''+c.id+'\')">💚 Donate</button></div></div>';
 }
 let _donateCampaign=null;
-function openDonate(cid){
+function _causeCardHTML(c){
+  if(!c)return '<div class="dc-inner"><span class="dc-tag">Your cause</span><b>UBF Conservation Fund</b><p>Your gift protects Uganda’s forests, wetlands and wildlife where the need is greatest right now.</p></div>';
+  const pct=c.goal>0?Math.min(100,Math.round((c.raised||0)*100/c.goal)):0;
+  return '<div class="dc-inner">'+
+    (c.image_url?'<img class="dc-img" src="'+esc(c.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'')+
+    '<div class="dc-txt"><span class="dc-tag">You’re supporting</span><b>'+esc(c.title)+'</b>'+
+    (c.blurb?'<p>'+esc(c.blurb)+'</p>':'')+
+    (c.goal?'<div class="camp-bar"><span style="width:'+pct+'%"></span></div><div class="dc-nums">UGX '+((c.raised||0).toLocaleString())+' of '+c.goal.toLocaleString()+' ('+pct+'%)</div>':'')+
+    '</div></div>';
+}
+function setDonateCause(cid){
   _donateCampaign=cid||null;
   const c=CAMPAIGNS.find(x=>x.id===cid);
-  const t=document.getElementById('donate-camp-label');if(t)t.textContent=c?c.title:'General conservation fund';
+  const card=document.getElementById('donate-cause-card');if(card)card.innerHTML=_causeCardHTML(c);
+}
+function openDonate(cid){
+  const active=CAMPAIGNS.filter(c=>c.active!==false);
+  // Always tie a donation to a specific cause: default to the first live cause
+  if(!cid&&active.length)cid=active[0].id;
+  _donateCampaign=cid||null;
+  const c=CAMPAIGNS.find(x=>x.id===cid);
+  const card=document.getElementById('donate-cause-card');if(card)card.innerHTML=_causeCardHTML(c);
+  // If several causes are live, let the donor pick which one
+  const pick=document.getElementById('donate-cause-pick');
+  if(pick){
+    if(active.length>1){
+      pick.style.display='';
+      pick.innerHTML='<label>Choose your cause</label><select onchange="setDonateCause(this.value)">'+
+        active.map(x=>'<option value="'+x.id+'"'+(x.id===cid?' selected':'')+'>'+esc(x.title)+'</option>').join('')+'</select>';
+    }else pick.style.display='none';
+  }
   ['donate-amount','donate-payref','donate-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const nm=document.getElementById('donate-name');if(nm&&currentUser)nm.value=currentUser.name;
   openModal('m-donate');
@@ -1473,6 +1569,7 @@ function appNav(tab){
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
   renderAdRail();
+  if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
 }
 /* EXPLORE — members browse the full website while staying signed in */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
@@ -2082,10 +2179,10 @@ function renderFame(){
     el.innerHTML='<div class="fame-empty"><h4>Our Champions Will Appear Here</h4><p>Conservation champions will be featured here with photos and stories.</p></div>';
     return;
   }
-  el.innerHTML=FAME.map(m=>{
+  el.innerHTML=FAME.map((m,idx)=>{
     const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
     const initials=m.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-    return '<div class="fame-card">'+
+    return '<div class="fame-card fame-click" role="button" tabindex="0" onclick="openFame('+idx+')" onkeydown="if(event.key===\'Enter\')openFame('+idx+')">'+
       (m.photo
         ?'<img src="'+m.photo+'" alt="'+m.name+'" style="width:100%;height:200px;object-fit:cover"/>'
         :'<div class="fame-img-placeholder"><div class="fame-initials">'+initials+'</div></div>')+
@@ -2093,7 +2190,7 @@ function renderFame(){
         '<div class="fame-name">'+esc(m.name)+'</div>'+
         '<div class="fame-tier">'+td.emoji+' '+esc(td.label)+'</div>'+
         (m.caption?'<div class="fame-caption">'+esc(m.caption)+'</div>':'')+
-        '<div class="fame-year">'+m.year+'</div>'+
+        '<div class="fame-year">'+m.year+' <span class="fame-view">View →</span></div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -2238,11 +2335,14 @@ function renderMemberView(){
         '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
         '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
       '</div>';})()+
-    // Discover / follow other members
-    '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
-    '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
-    '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
-    '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+    // Two-column split: main feed + a side rail for Discover (declutters the middle)
+    '<div class="mem-split"><aside class="mem-aside">'+
+      '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
+      '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
+      '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
+      '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+    '</aside>'+
+    '<div class="mem-main">'+
     // Sponsored banner (below content) + Events & fundraisers
     bannerStripHTML()+
     eventsCarouselHTML()+
@@ -2278,7 +2378,8 @@ function renderMemberView(){
     '<div class="leave-row">'+
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
-    '</div>';
+    '</div>'+
+    '</div></div>'; // close .mem-main and .mem-split
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
