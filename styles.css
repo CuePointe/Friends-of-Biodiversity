@@ -1394,17 +1394,23 @@ video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;backgrou
 .footer-col a:hover::before{opacity:1;left:-4px}
 .footer-sub{color:var(--gold-lt,#E4C97A) !important;font-weight:700}
 
-/* ═══ MEMBER PROFILE — two-column split so the middle isn't cluttered ═══ */
+/* ═══ MEMBER PROFILE — Discover docked as a distinct far side shell (LinkedIn/FB) ═══ */
 .mem-split{display:block}
 .mem-main{min-width:0}
-@media(min-width:900px){
-  .mem-split{display:grid;grid-template-columns:1fr 300px;gap:1.8rem;align-items:start}
-  .mem-aside{order:2;position:sticky;top:80px;background:var(--white,#fff);border:1px solid var(--border);border-radius:16px;padding:1.1rem 1.15rem;box-shadow:0 8px 24px -18px rgba(0,0,0,.3)}
-  .mem-main{order:1}
-  .mem-aside .members-dir{max-height:52vh;overflow-y:auto}
+/* On desktop the whole profile widens so the rail can sit clearly off to the side */
+@media(min-width:1040px){
+  .mem-body{max-width:1120px}
+  .mem-split{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:2.6rem;align-items:start}
+  .mem-main{order:1;min-width:0}
+  /* the side shell: its own sticky panel, set well apart from the middle feed */
+  .mem-aside{order:2;position:sticky;top:84px;align-self:start;
+    background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;
+    padding:1.15rem 1.2rem;box-shadow:0 14px 40px -22px rgba(0,0,0,.4)}
+  .mem-aside .members-dir{max-height:48vh;overflow-y:auto}
 }
-@media(max-width:899px){
-  .mem-aside{margin-top:1.75rem}
+/* Below desktop, the side shell simply drops to its own full-width card under the feed */
+@media(max-width:1039px){
+  .mem-aside{margin-top:1.75rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;padding:1.15rem 1.2rem;box-shadow:0 10px 30px -20px rgba(0,0,0,.35)}
 }
 
 /* ═══ Green Card tier detail modal ═══ */
