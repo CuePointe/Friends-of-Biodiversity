@@ -259,35 +259,35 @@
     <h2 class="sec-title reveal">Select Your <em>Membership Tier</em></h2>
     <p class="sec-body reveal">Annual contributions in Uganda Shillings (UGX). Select a tier to unlock your perks and complete enrollment.</p>
     <div class="tier-grid">
-      <div class="tier-card reveal" data-tier="student" onclick="openTierDetail('student')">
+      <div class="tier-card reveal" data-tier="student" onclick="selectTier('student')">
         <div class="tier-badge" style="background:rgba(45,106,79,.12)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2D6A4F" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21v-8"/><path d="M12 13c0-3.3 2.6-5.5 6.5-5.5C18.5 11 15.9 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/><path d="M12 13c0-3.3-2.6-5.5-6.5-5.5C5.5 11 8.1 13 12 13z" fill="#2D6A4F" fill-opacity=".16"/></svg></div>
         <div class="tier-name" style="color:var(--canopy-lt)">Student</div>
         <div class="tier-range">Individual: <strong>In-kind / Youth Project</strong><br>Registration: <strong>Free</strong></div>
         <ul class="tier-perks"><li>Youth project &amp; volunteer work registration</li><li>In-kind contributions recognised</li><li>Full Learning Exchange access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li><li>Professional mentorship &amp; leadership development package</li></ul>
         <button class="tier-btn" style="background:rgba(45,106,79,.15);color:var(--canopy)">Select Student</button>
       </div>
-      <div class="tier-card reveal" data-tier="silver" onclick="openTierDetail('silver')">
+      <div class="tier-card reveal" data-tier="silver" onclick="selectTier('silver')">
         <div class="tier-badge" style="background:rgba(144,144,144,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#8a8a8a" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 18.5c0-8 6-13 13-13 0 8-6 13-13 13z" fill="#9a9a9a" fill-opacity=".2"/><path d="M5.5 18.5C9.5 14.5 13.5 10.5 17.5 8.5"/></svg></div>
         <div class="tier-name">Silver</div>
         <div class="tier-range">Individual: <strong>500K–1M UGX</strong><br>Institution: <strong>2M–5M UGX</strong></div>
         <ul class="tier-perks"><li>Eco-friendly welcome kit &amp; certificates</li><li>Contribution &amp; accountability dashboard</li><li>Learning Exchange library access</li><li>Wall of Fame listing</li><li>Digital membership certificate</li></ul>
         <button class="tier-btn">Select Silver</button>
       </div>
-      <div class="tier-card reveal" data-tier="gold" onclick="openTierDetail('gold')">
+      <div class="tier-card reveal" data-tier="gold" onclick="selectTier('gold')">
         <div class="tier-badge" style="background:rgba(200,168,75,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#B8901F" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><g fill="#C8A84B" fill-opacity=".22"><ellipse cx="12" cy="6.5" rx="2.3" ry="3.3"/><ellipse cx="12" cy="17.5" rx="2.3" ry="3.3"/><ellipse cx="6.5" cy="12" rx="3.3" ry="2.3"/><ellipse cx="17.5" cy="12" rx="3.3" ry="2.3"/></g><circle cx="12" cy="12" r="2.4" fill="#C8A84B"/></svg></div>
         <div class="tier-name">Gold</div>
         <div class="tier-range">Individual: <strong>1.5M–2M UGX</strong><br>Institution: <strong>6M–10M UGX</strong></div>
         <ul class="tier-perks"><li>All Silver benefits</li><li>Visibility in conservation projects</li><li>Exclusive networking events</li><li>Priority event invitations</li><li>Quarterly impact report</li></ul>
         <button class="tier-btn">Select Gold</button>
       </div>
-      <div class="tier-card reveal" data-tier="platinum" onclick="openTierDetail('platinum')">
+      <div class="tier-card reveal" data-tier="platinum" onclick="selectTier('platinum')">
         <div class="tier-badge" style="background:rgba(91,196,191,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#1A7A76" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M12 3 6.5 11h11z" fill="#5BC4BF" fill-opacity=".2"/><path d="M12 8 7.5 15.5h9z" fill="#5BC4BF" fill-opacity=".2"/></svg></div>
         <div class="tier-name">Platinum</div>
         <div class="tier-range">Individual: <strong>2.5M–4.5M UGX</strong><br>Institution: <strong>20M–40M UGX</strong></div>
         <ul class="tier-perks"><li>All Gold benefits</li><li>Co-branding on project materials</li><li>Strategic partnership access</li><li>Named in annual report</li><li>Private ED briefing</li></ul>
         <button class="tier-btn">Select Platinum</button>
       </div>
-      <div class="tier-card reveal" data-tier="diamond" onclick="openTierDetail('diamond')">
+      <div class="tier-card reveal" data-tier="diamond" onclick="selectTier('diamond')">
         <div class="tier-badge" style="background:rgba(126,184,201,.14)"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="#2E7D9A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8.5" fill="#7EB8C9" fill-opacity=".2"/><path d="M3.5 12h17M12 3.5c2.6 2.6 2.6 14.4 0 17M12 3.5c-2.6 2.6-2.6 14.4 0 17"/></svg></div>
         <div class="tier-name">Diamond</div>
         <div class="tier-range">Individual: <strong>5M+ UGX</strong><br>Institution: <strong>50M+ UGX</strong></div>
@@ -530,19 +530,6 @@
 
 <!-- FOOTER -->
 <footer>
-  <!-- Emotional call-to-action band -->
-  <div class="footer-cta">
-    <div class="footer-cta-inner">
-      <span class="footer-cta-kicker">🌍 The wild is counting on us</span>
-      <h3>Every gorilla, crane and wetland has a name here — and a future you help write.</h3>
-      <p>Join thousands of Ugandans and friends abroad standing between our biodiversity and the threats it faces. It starts with one card.</p>
-      <div class="footer-cta-btns">
-        <a href="#greencard" class="btn btn-gold">🪪 Become a Friend</a>
-        <a href="#payment" class="btn btn-ghost-light">💚 Give to a cause</a>
-      </div>
-    </div>
-  </div>
-
   <div class="footer-inner">
     <div class="footer-top">
       <div class="footer-brand">
@@ -551,16 +538,10 @@
           <div class="footer-logo-divider"></div>
           <img src="fob-logo.png" alt="Friends of Biodiversity"/>
         </div>
-        <p>We protect Uganda's living heritage across the <b>Albertine Rift</b>, <b>West Nile</b>, <b>Karamoja</b> and <b>Central Uganda</b> — forests, wetlands and the wildlife that call them home. This is care for biodiversity you can see, measure and be part of.</p>
-        <div class="footer-social">
-          <a href="mailto:info@ugandabiodiversityfund.org" aria-label="Email" title="Email">✉</a>
-          <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener" aria-label="Website" title="Website">🌐</a>
-          <a href="tel:+256393216445" aria-label="Call" title="Call">📞</a>
-          <a href="#" onclick="openSubscribePopup();return false" aria-label="Subscribe" title="Subscribe">🔔</a>
-        </div>
+        <p>Protecting Uganda's rich biological heritage across multiple landscapes — Albertine Rift, West Nile, Karamoja, and Central Uganda — demonstrating care for Uganda's biodiversity.</p>
       </div>
       <div class="footer-col">
-        <h5>Explore</h5>
+        <h5>Programme</h5>
         <a href="#themes">Strategic Framework</a>
         <a href="#greencard">Green Card Tiers</a>
         <a href="#learn">Learning Exchange</a>
@@ -568,16 +549,16 @@
         <a href="#wallfame">Wall of Fame</a>
       </div>
       <div class="footer-col">
-        <h5>Reach us</h5>
-        <a href="mailto:info@ugandabiodiversityfund.org">✉ info@ugandabiodiversityfund.org</a>
-        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">🌐 ugandabiodiversityfund.org</a>
-        <a href="tel:+256393216445">📞 +256 (039) 3216445</a>
-        <a href="tel:+256200916445">📞 +256 (200) 916 445</a>
-        <a href="#" onclick="openSubscribePopup();return false" class="footer-sub">🌿 Subscribe for updates</a>
+        <h5>Contact</h5>
+        <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>
+        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">ugandabiodiversityfund.org</a>
+        <a href="tel:+256393216445">+256 (039) 3216445</a>
+        <a href="tel:+256200916445">+256 (200) 916 445</a>
+        <a href="#" onclick="openSubscribePopup();return false">🌿 Subscribe for Updates</a>
       </div>
     </div>
     <div class="footer-btm">
-      <p>© 2026 Uganda Biodiversity Fund · Made with 💚 in Uganda for Uganda's wild.</p>
+      <p>© 2026 Uganda Biodiversity Fund. All rights reserved.</p>
       <div class="footer-logo-strip">
         <img src="ubf-logo.png" alt="UBF" style="height:30px;width:30px"/>
         <div class="footer-logo-divider" style="height:22px"></div>

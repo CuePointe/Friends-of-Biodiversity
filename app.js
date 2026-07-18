@@ -738,7 +738,8 @@ function bannerStripHTML(){
 // Side rail — floats beside the content on desktop; hidden on phones by CSS
 function renderAdRail(){
   let rail=document.getElementById('ad-rail');
-  const show=currentUser&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  // Members only — never in the admin console
+  const show=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
   const ads=adsFor('rail');
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
   if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
@@ -788,7 +789,8 @@ const AD_POP_GAP=6000;    // hidden for 6s, then returns
 const AD_POP_FIRST=4000;  // let the page settle before the first appearance
 let _popCycleTimer=null,_popHideTimer=null,_popIdx=0,_popPausedUntil=0;
 function _adPopEligible(){
-  return currentUser && (_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')) && adsFor('popup').length>0;
+  // Members only — the admin console must never get member-facing pop-ups
+  return currentUser && currentUser.role==='member' && (_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')) && adsFor('popup').length>0;
 }
 function maybeShowAdPopup(){ startAdPopupCycle(); }
 function startAdPopupCycle(){
@@ -2340,6 +2342,16 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
+    '<div class="mem-split">'+
+    // LEFT rail (LinkedIn-style): Discover + Fundraisers, level with the buttons
+    '<aside class="mem-aside">'+
+      '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
+      '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
+      '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
+      '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+      (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
+    '</aside>'+
+    '<div class="mem-main">'+
     renewBannerHTML(u)+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
@@ -2374,46 +2386,13 @@ function renderMemberView(){
         '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
         '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
       '</div>';})()+
-    // Two-column split: main feed + a side rail for Discover (declutters the middle)
-    '<div class="mem-split"><aside class="mem-aside">'+
-      '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
-      '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
-      '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
-      '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
-      // Fundraisers live in the side rail too, so the middle stays a clean feed
-      (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
-    '</aside>'+
-    '<div class="mem-main">'+
-    // A clean central feed: sponsored banner, events, then the latest from UBF
+    // Central feed continues: sponsored banner, events, then updates
     bannerStripHTML()+
     eventsCarouselHTML()+
-    // Announcements
-    '<div class="mem-sec-title" style="margin-top:1.25rem">Latest from UBF</div>'+
-    (ANNOUNCES.length
-      ?ANNOUNCES.slice(0,5).map(a=>
-        '<div class="ann-editorial" id="ann-'+a.id+'">'+
-          '<div class="ann-ed-type">'+esc(a.type)+'</div>'+
-          '<div class="ann-ed-title">'+esc(a.title)+'</div>'+
-          (a.body?'<p class="ann-ed-body">'+esc(a.body)+'</p>':'')+
-          '<div class="ann-ed-date">'+esc(a.date)+'</div>'+
-        '</div>'
-      ).join('')
-      :'<div class="empty-state"><span>📢</span><p>No announcements yet.</p></div>')+
-    // Financial Reports
-    '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div>'+
-    (FIN_REPORTS.length
-      ?FIN_REPORTS.map(r=>
-        '<div class="report-row" id="rep-'+r.id+'">'+
-          '<div class="report-icon">📄</div>'+
-          '<div class="report-body">'+
-            '<div class="report-title">'+r.title+'</div>'+
-            '<div class="report-meta">'+r.period+' &nbsp;·&nbsp; '+r.date+'</div>'+
-            (r.summary?'<p class="report-sum">'+r.summary+'</p>':'')+
-          '</div>'+
-          (r.url&&r.url!=='#'?'<a href="'+r.url+'" target="_blank" class="report-dl">⬇ Download</a>':'')+
-        '</div>'
-      ).join('')
-      :'<div class="empty-state"><span>📊</span><p>No reports published yet.</p></div>')+
+    // Announcements — clickable, scrollable, latest on top
+    announcementsListHTML()+
+    // Financial Reports — clickable, scrollable, latest on top
+    reportsListHTML()+
     // Leave
     '<div class="leave-row">'+
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
@@ -2423,6 +2402,59 @@ function renderMemberView(){
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
+}
+
+/* ═══ Announcements & Financial Reports — clickable, scrollable, latest on top ═══ */
+function announcementsListHTML(){
+  if(!ANNOUNCES.length)return '<div class="mem-sec-title" style="margin-top:1.25rem">Latest from UBF</div><div class="empty-state"><span>📢</span><p>No announcements yet.</p></div>';
+  return '<div class="feed-head-row"><div class="mem-sec-title" style="margin:1.25rem 0 .2rem">📢 Latest from UBF</div><span class="feed-count">'+ANNOUNCES.length+'</span></div>'+
+    '<div class="upd-list">'+ANNOUNCES.map((a,i)=>
+      '<div class="upd-row" role="button" tabindex="0" onclick="openAnnounce(\''+a.id+'\')" onkeydown="if(event.key===\'Enter\')openAnnounce(\''+a.id+'\')">'+
+        '<span class="upd-ic">📣</span>'+
+        '<div class="upd-mid"><div class="upd-t">'+esc(a.title)+(i<2?' <span class="upd-new">New</span>':'')+'</div>'+
+          '<div class="upd-d">'+esc((a.body||a.type||'').slice(0,80))+(((a.body||'').length>80)?'…':'')+' · '+esc(a.date||'')+'</div></div>'+
+        '<span class="upd-chev">›</span>'+
+      '</div>'
+    ).join('')+'</div>';
+}
+function reportsListHTML(){
+  if(!FIN_REPORTS.length)return '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div><div class="empty-state"><span>📊</span><p>No reports published yet.</p></div>';
+  return '<div class="feed-head-row"><div class="mem-sec-title" style="margin:2rem 0 .2rem">📄 Financial Reports</div><span class="feed-count">'+FIN_REPORTS.length+'</span></div>'+
+    '<div class="upd-list">'+FIN_REPORTS.map((r,i)=>
+      '<div class="upd-row" role="button" tabindex="0" onclick="openReport(\''+r.id+'\')" onkeydown="if(event.key===\'Enter\')openReport(\''+r.id+'\')">'+
+        '<span class="upd-ic">📄</span>'+
+        '<div class="upd-mid"><div class="upd-t">'+esc(r.title)+(i===0?' <span class="upd-new">New</span>':'')+'</div>'+
+          '<div class="upd-d">'+esc([r.period,r.date].filter(Boolean).join(' · '))+(r.summary?' · '+esc(r.summary.slice(0,50)):'')+'</div></div>'+
+        '<span class="upd-chev">'+((r.url&&r.url!=='#')?'⬇':'›')+'</span>'+
+      '</div>'
+    ).join('')+'</div>';
+}
+function openAnnounce(id){
+  const a=(ANNOUNCES||[]).find(x=>x.id===id);if(!a)return;_buzz&&_buzz();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:120px;background:linear-gradient(135deg,#153d28,#2D6A4F)"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">📢 '+esc(a.type||'Announcement')+'</span><h2>'+esc(a.title)+'</h2>'+
+      (a.date?'<span class="dtl-region">'+esc(a.date)+'</span>':'')+'</div></div>'+
+    '<div class="dtl-body">'+
+      (a.body?'<p class="dtl-blurb">'+esc(a.body)+'</p>':'<p class="dtl-blurb" style="color:var(--muted)">No further details.</p>')+
+      '<div class="dtl-cta-row"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+    '</div>';
+  openModal('m-detail');
+}
+function openReport(id){
+  const r=(FIN_REPORTS||[]).find(x=>x.id===id);if(!r)return;_buzz&&_buzz();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:120px;background:linear-gradient(135deg,#1a2e3a,#2E7D9A)"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">📄 Financial Report</span><h2>'+esc(r.title)+'</h2>'+
+      '<span class="dtl-region">'+esc([r.period,r.date].filter(Boolean).join(' · '))+'</span></div></div>'+
+    '<div class="dtl-body">'+
+      (r.summary?'<p class="dtl-blurb">'+esc(r.summary)+'</p>':'')+
+      '<div class="dtl-cta-row">'+
+        ((r.url&&r.url!=='#')?'<a class="btn btn-gold" href="'+esc(r.url)+'" target="_blank" rel="noopener">⬇ Open / Download</a>':'<span style="font-size:.85rem;color:var(--muted)">The document will be available once uploaded.</span>')+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */

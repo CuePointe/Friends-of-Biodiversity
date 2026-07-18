@@ -996,18 +996,19 @@ input:checked+.tgsl:before{transform:translateX(16px)}
 .ep-body button{padding:.58rem .95rem;font-size:.8rem}
 
 /* FOOTER */
-footer{background:var(--canopy);border-top:1px solid rgba(200,168,75,.18);padding:3rem 1.5rem 1.5rem}
+/* Footer — light, cohesive (green/gold as accents, not a heavy fill) */
+footer{background:linear-gradient(180deg,#f5f7f1 0%,#eef1e9 100%);border-top:3px solid var(--gold);padding:3rem 1.5rem 1.5rem;color:#2c3a30}
 .footer-inner{max-width:1200px;margin:0 auto}
-.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(255,255,255,.07)}
-.footer-brand p{font-size:.83rem;color:rgba(255,255,255,.5);line-height:1.7;margin-top:.88rem;max-width:280px}
+.footer-top{display:grid;grid-template-columns:2fr 1fr 1fr;gap:3rem;padding-bottom:1.85rem;border-bottom:1px solid rgba(11,38,24,.1)}
+.footer-brand p{font-size:.83rem;color:#5c6b5f;line-height:1.7;margin-top:.88rem;max-width:300px}
 .footer-logo-strip{display:flex;align-items:center;gap:.75rem}
-.footer-logo-strip img{height:48px;width:48px;object-fit:contain;border-radius:50%;background:#fff}
-.footer-logo-divider{width:1px;height:32px;background:rgba(200,168,75,.3)}
-.footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold-lt);margin-bottom:.88rem}
-.footer-col a{display:block;font-size:.82rem;color:rgba(255,255,255,.5);margin-bottom:.42rem;transition:color var(--tr)}
-.footer-col a:hover{color:var(--white)}
+.footer-logo-strip img{height:48px;width:48px;object-fit:contain;border-radius:50%;background:#fff;box-shadow:0 2px 8px -3px rgba(0,0,0,.2)}
+.footer-logo-divider{width:1px;height:32px;background:rgba(11,38,24,.15)}
+.footer-col h5{font-size:.71rem;letter-spacing:.1em;text-transform:uppercase;color:var(--canopy);font-weight:800;margin-bottom:.88rem}
+.footer-col a{display:block;font-size:.82rem;color:#5c6b5f;margin-bottom:.42rem;transition:color var(--tr),padding var(--tr);text-decoration:none;position:relative}
+.footer-col a:hover{color:var(--canopy)}
 .footer-btm{padding-top:1.2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.72rem}
-.footer-btm p{font-size:.73rem;color:rgba(255,255,255,.3)}
+.footer-btm p{font-size:.73rem;color:#7a8a7d}
 
 /* TOAST */
 .toast{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%) translateY(18px);background:var(--canopy);color:var(--white);border:1px solid var(--gold);border-radius:var(--r-sm);padding:.78rem 1.15rem;font-size:.84rem;z-index:600;opacity:0;transition:opacity var(--tr),transform var(--tr);pointer-events:none;white-space:nowrap;max-width:90vw}
@@ -1390,28 +1391,42 @@ video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;backgrou
 .footer-social a:hover{background:var(--gold);color:var(--canopy);transform:translateY(-3px);border-color:var(--gold)}
 .footer-col a{position:relative;transition:color .2s,padding .2s}
 .footer-col a::before{content:"›";position:absolute;left:-14px;opacity:0;transition:.2s;color:var(--gold-lt,#E4C97A)}
-.footer-col a:hover{padding-left:6px;color:#fff}
+.footer-col a:hover{padding-left:6px;color:var(--canopy)}
 .footer-col a:hover::before{opacity:1;left:-4px}
 .footer-sub{color:var(--gold-lt,#E4C97A) !important;font-weight:700}
 
 /* ═══ MEMBER PROFILE — Discover docked as a distinct far side shell (LinkedIn/FB) ═══ */
 .mem-split{display:block}
 .mem-main{min-width:0}
-/* On desktop the whole profile widens so the rail can sit clearly off to the side */
+/* Desktop: Discover is a LEFT rail (LinkedIn), top-aligned with the buttons */
 @media(min-width:1040px){
-  .mem-body{max-width:1120px}
-  .mem-split{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:2.6rem;align-items:start}
-  .mem-main{order:1;min-width:0}
-  /* the side shell: its own sticky panel, set well apart from the middle feed */
-  .mem-aside{order:2;position:sticky;top:84px;align-self:start;
+  .mem-body{max-width:1160px}
+  .mem-split{display:grid;grid-template-columns:320px minmax(0,1fr);gap:2.4rem;align-items:start}
+  .mem-aside{order:1;position:sticky;top:84px;align-self:start;
     background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;
-    padding:1.15rem 1.2rem;box-shadow:0 14px 40px -22px rgba(0,0,0,.4)}
-  .mem-aside .members-dir{max-height:48vh;overflow-y:auto}
+    padding:1.15rem 1.2rem;box-shadow:0 14px 40px -22px rgba(0,0,0,.35)}
+  .mem-main{order:2;min-width:0}
+  .mem-aside .members-dir{max-height:46vh;overflow-y:auto}
 }
-/* Below desktop, the side shell simply drops to its own full-width card under the feed */
+/* Below desktop, the left rail drops to its own full-width card above the feed */
 @media(max-width:1039px){
-  .mem-aside{margin-top:1.75rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;padding:1.15rem 1.2rem;box-shadow:0 10px 30px -20px rgba(0,0,0,.35)}
+  .mem-aside{margin-bottom:1.5rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;padding:1.15rem 1.2rem;box-shadow:0 10px 30px -20px rgba(0,0,0,.3)}
 }
+
+/* Clickable, scrollable Announcements & Financial Reports (latest on top) */
+.feed-head-row{display:flex;align-items:center;justify-content:space-between}
+.feed-count{font-size:.72rem;font-weight:800;color:var(--canopy-lt);background:rgba(45,106,79,.1);border-radius:99px;padding:.1rem .5rem;margin-top:1rem}
+.upd-list{max-height:290px;overflow-y:auto;border:1px solid var(--border);border-radius:14px;background:var(--white,#fff);margin-top:.5rem}
+.upd-row{display:flex;align-items:center;gap:.75rem;padding:.75rem .85rem;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.upd-row:last-child{border-bottom:none}
+.upd-row:hover{background:var(--mist,#f2f5f1)}
+.upd-row:focus-visible{outline:2px solid var(--gold);outline-offset:-2px}
+.upd-ic{width:36px;height:36px;border-radius:10px;flex:none;display:grid;place-items:center;font-size:1.05rem;background:rgba(45,106,79,.1)}
+.upd-mid{flex:1;min-width:0}
+.upd-t{font-size:.88rem;font-weight:700;color:var(--canopy);display:flex;align-items:center;gap:.4rem}
+.upd-d{font-size:.74rem;color:var(--muted);margin-top:.1rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.upd-new{font-size:.55rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--rust);color:#fff;border-radius:4px;padding:.05rem .3rem}
+.upd-chev{color:#b7c0b7;font-size:1.1rem;flex:none}
 
 /* ═══ Green Card tier detail modal ═══ */
 .tier-hero{height:150px}
