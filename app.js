@@ -341,18 +341,66 @@ function renderProtectGallery(){
       // mini-slideshow: stacked slides + arrows + dots, auto-advancing
       media=imgs.map((u,i)=>'<img class="pg-s'+(i===0?' on':'')+'" src="'+esc(u)+'" alt="" onerror="this.remove()"/>').join('');
       extra='<span class="pg-count">'+imgs.length+' photos</span>'+
-        '<div class="pg-arrows"><button type="button" onclick="pgNav(this,-1)">‹</button><button type="button" onclick="pgNav(this,1)">›</button></div>'+
+        '<div class="pg-arrows"><button type="button" onclick="event.stopPropagation();pgNav(this,-1)">‹</button><button type="button" onclick="event.stopPropagation();pgNav(this,1)">›</button></div>'+
         '<div class="pg-dots">'+imgs.map((_,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('')+'</div>';
     }else if(imgs[0]){
       media='<img src="'+esc(imgs[0])+'" alt="" onerror="this.style.display=\'none\'"/>';
     }
     const hasMedia=isVid||imgs.length;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
-    return '<article class="pg-card"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
+    return '<article class="pg-card pg-click"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+' data-pid="'+esc(p.id)+'" role="button" tabindex="0" onclick="openProtect(\''+p.id+'\')" onkeydown="if(event.key===\'Enter\')openProtect(\''+p.id+'\')"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
       '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
-      (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'</div></article>';
+      (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'<span class="pg-more">Tap to learn more →</span></div></article>';
   }).join('');
   renderTierProtect();
+}
+/* Rich detail view for an endangered species / threatened place */
+function openProtect(id){
+  const p=(PROTECT||[]).find(x=>x.id===id);if(!p)return;_buzz&&_buzz();
+  let imgs=Array.isArray(p.images)&&p.images.length?p.images:(p.image_url?[p.image_url]:[]);
+  if(typeof p.images==='string'){try{const a=JSON.parse(p.images);if(Array.isArray(a)&&a.length)imgs=a;}catch(e){}}
+  const isVid=p.media_type==='video'&&p.video_url;
+  const media=isVid
+    ?'<video src="'+esc(p.video_url)+'" controls playsinline autoplay muted loop'+(imgs[0]?' poster="'+esc(imgs[0])+'"':'')+' class="dtl-media"></video>'
+    :(imgs[0]?'<img src="'+esc(imgs[0])+'" alt="" class="dtl-media"/>':'<div class="dtl-media dtl-media-empty">🌿</div>');
+  const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
+  const kindLabel=p.kind==='place'?'Threatened place':'Endangered species';
+  // extra photos strip
+  const strip=imgs.length>1?'<div class="dtl-strip">'+imgs.slice(0,6).map(u=>'<img src="'+esc(u)+'" alt="" onerror="this.remove()"/>').join('')+'</div>':'';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero">'+media+'<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">'+kindLabel+'</span><h2>'+esc(p.name||'')+'</h2>'+
+      (p.region?'<span class="dtl-region">📍 '+esc(p.region)+'</span>':'')+'</div>'+badge+'</div>'+
+    '<div class="dtl-body">'+
+      strip+
+      (p.blurb?'<p class="dtl-blurb">'+esc(p.blurb)+'</p>':'')+
+      '<p class="dtl-give-note">💚 “Help protect” makes a <b>donation</b> to this cause, paid through UBF’s official channels (MTN, Airtel or Stanbic).</p>'+
+      '<div class="dtl-cta-row">'+
+        '<button class="btn btn-gold" onclick="donateForProtect(\''+p.id+'\')">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
+}
+/* Clicking a Wall of Fame champion → their member profile, or a champion detail */
+function openFame(idx){
+  const m=FAME[idx];if(!m)return;_buzz&&_buzz();
+  // Try to open the real member profile first
+  const match=(MEMBERS||[]).find(x=>m.member_id&&x.id===m.member_id) ||
+              (MEMBERS||[]).find(x=>(x.name||'').trim().toLowerCase()===(m.name||'').trim().toLowerCase());
+  if(match){viewMemberProfile(match.id);return;}
+  const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
+  const initials=(m.name||'?').split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero">'+(m.photo?'<img src="'+esc(m.photo)+'" alt="" class="dtl-media"/>':'<div class="dtl-media dtl-media-empty">'+initials+'</div>')+
+      '<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🏆 Wall of Fame · '+esc(m.year||'')+'</span><h2>'+esc(m.name||'')+'</h2>'+
+      '<span class="dtl-region">'+(td.emoji||'')+' '+esc(td.label||'')+' champion</span></div></div>'+
+    '<div class="dtl-body">'+
+      (m.caption?'<p class="dtl-blurb">'+esc(m.caption)+'</p>':'')+
+      '<div class="dtl-cta-row"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+    '</div>';
+  openModal('m-detail');
 }
 /* Show tier-linked species/places on the membership tier cards */
 function renderTierProtect(){
@@ -392,6 +440,8 @@ function fillProtectForm(p){
   if(g('pf-region'))g('pf-region').value=p.region||'';
   if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(Array.isArray(p.images)&&p.images.length?p.images.join(', '):(p.image_url||''));
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
+  const cs=g('pf-cause');
+  if(cs)cs.innerHTML='<option value="">— Donations go to the default cause —</option>'+(CAMPAIGNS||[]).filter(c=>c.active!==false).map(c=>'<option value="'+c.id+'"'+(p.cause_campaign_id===c.id?' selected':'')+'>'+esc(c.title)+'</option>').join('');
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
   if(g('pf-title'))g('pf-title').textContent=p.id?('Editing: '+(p.name||'')):'Add a species or place';
   if(g('pf-save'))g('pf-save').textContent=p.id?'Update':'Add to gallery';
@@ -427,6 +477,7 @@ async function saveProtectItem(){
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
     tier:document.getElementById('pf-tier').value||null,
+    cause_campaign_id:(document.getElementById('pf-cause')?document.getElementById('pf-cause').value||null:null),
     active:document.getElementById('pf-active').checked};
   if(_protectEditId)row.id=_protectEditId;
   const {error}=await sb.from('protect_gallery').upsert(row);
@@ -687,7 +738,8 @@ function bannerStripHTML(){
 // Side rail — floats beside the content on desktop; hidden on phones by CSS
 function renderAdRail(){
   let rail=document.getElementById('ad-rail');
-  const show=currentUser&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  // Members only — never in the admin console
+  const show=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
   const ads=adsFor('rail');
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
   if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
@@ -729,37 +781,60 @@ function popupAdHTML(a){
     '<div class="ad-pop-timer"><i></i></div>'+
   '</div>';
 }
-function maybeShowAdPopup(){
-  if(_popupShown||!currentUser)return;
-  if(!(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')))return;
-  const ads=adsFor('popup');if(!ads.length)return;
-  // pick the first eligible ad whose 8-hour cap has passed
-  const now=Date.now();
-  const a=ads.find(x=>{const t=+localStorage.getItem('adpop_'+x.id)||0;return now-t>8*3600*1000;});
-  if(!a)return;
-  clearTimeout(_popupTimer);
-  _popupTimer=setTimeout(()=>showAdPopup(a),6500); // let the page settle first
+/* Recurring rhythm: pop up → stay a few seconds → slide away → wait → reappear,
+   rotating through the pop-up campaigns. Runs only while a member is on the
+   Home/Learn feed; closing (✕) pauses it briefly so it never feels aggressive. */
+const AD_POP_SHOW=7000;   // visible for 7s
+const AD_POP_GAP=6000;    // hidden for 6s, then returns
+const AD_POP_FIRST=4000;  // let the page settle before the first appearance
+let _popCycleTimer=null,_popHideTimer=null,_popIdx=0,_popPausedUntil=0;
+function _adPopEligible(){
+  // Members only — the admin console must never get member-facing pop-ups
+  return currentUser && currentUser.role==='member' && (_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode')) && adsFor('popup').length>0;
+}
+function maybeShowAdPopup(){ startAdPopupCycle(); }
+function startAdPopupCycle(){
+  if(_popCycleTimer)return;              // already running
+  if(!_adPopEligible())return;
+  _popCycleTimer=setTimeout(_adPopTick,AD_POP_FIRST);
+}
+function stopAdPopupCycle(){
+  clearTimeout(_popCycleTimer);clearTimeout(_popHideTimer);_popCycleTimer=null;
+  hideAdPopup();
+}
+function _adPopTick(){
+  _popCycleTimer=null;
+  if(!_adPopEligible()){return;}                                   // left the feed → stop
+  if(Date.now()<_popPausedUntil){ _popCycleTimer=setTimeout(_adPopTick,2500);return; } // user paused it
+  if(document.querySelector('.overlay.open')){ _popCycleTimer=setTimeout(_adPopTick,3000);return; } // don't cover a dialog
+  const ads=adsFor('popup');
+  if(!ads.length){return;}
+  const a=ads[_popIdx%ads.length];_popIdx++;
+  showAdPopup(a);
+  _popHideTimer=setTimeout(hideAdPopup,AD_POP_SHOW);               // hide after a few seconds
+  _popCycleTimer=setTimeout(_adPopTick,AD_POP_SHOW+AD_POP_GAP);    // …then reappear
 }
 function showAdPopup(a){
-  if(_popupShown)return;
-  // don't interrupt if a modal is open
-  if(document.querySelector('.overlay.open')){_popupTimer=setTimeout(()=>showAdPopup(a),4000);return;}
-  _popupShown=true;_popupActive=a;
+  if(document.querySelector('.overlay.open'))return;
+  _popupActive=a;
   let host=document.getElementById('ad-popup');
   if(!host){host=document.createElement('div');host.id='ad-popup';document.body.appendChild(host);}
   host.innerHTML=popupAdHTML(a);
   host.style.display='block';
   _adView(a.id);
+  // keep the timer bar in sync with how long it stays up
+  const bar=host.querySelector('.ad-pop-timer i');if(bar)bar.style.animationDuration=(AD_POP_SHOW/1000)+'s';
   requestAnimationFrame(()=>requestAnimationFrame(()=>host.classList.add('show')));
-  // auto-dismiss after the timer bar runs out
-  clearTimeout(host._auto);host._auto=setTimeout(()=>dismissAdPopup(),11000);
 }
-function dismissAdPopup(userClosed){
+function hideAdPopup(){
   const host=document.getElementById('ad-popup');if(!host)return;
-  clearTimeout(host._auto);
   host.classList.remove('show');
-  if(_popupActive)localStorage.setItem('adpop_'+_popupActive.id,String(Date.now()));
-  setTimeout(()=>{host.style.display='none';host.innerHTML='';},450);
+  setTimeout(()=>{if(host&&!host.classList.contains('show'))host.style.display='none';},500);
+}
+// ✕ = pause the rhythm for a minute, then it resumes on its own
+function dismissAdPopup(userClosed){
+  hideAdPopup();
+  if(userClosed)_popPausedUntil=Date.now()+60000;
 }
 function _adStatus(a){
   const t=new Date().toISOString().slice(0,10);
@@ -970,10 +1045,45 @@ function campaignCardHTML(c){
     '<button class="btn btn-gold btn-sm" onclick="openDonate(\''+c.id+'\')">💚 Donate</button></div></div>';
 }
 let _donateCampaign=null;
-function openDonate(cid){
+function _causeCardHTML(c){
+  if(!c)return '<div class="dc-inner"><span class="dc-tag">Your cause</span><b>UBF Conservation Fund</b><p>Your gift protects Uganda’s forests, wetlands and wildlife where the need is greatest right now.</p></div>';
+  const pct=c.goal>0?Math.min(100,Math.round((c.raised||0)*100/c.goal)):0;
+  return '<div class="dc-inner">'+
+    (c.image_url?'<img class="dc-img" src="'+esc(c.image_url)+'" alt="" onerror="this.style.display=\'none\'"/>':'')+
+    '<div class="dc-txt"><span class="dc-tag">You’re supporting</span><b>'+esc(c.title)+'</b>'+
+    (c.blurb?'<p>'+esc(c.blurb)+'</p>':'')+
+    (c.goal?'<div class="camp-bar"><span style="width:'+pct+'%"></span></div><div class="dc-nums">UGX '+((c.raised||0).toLocaleString())+' of '+c.goal.toLocaleString()+' ('+pct+'%)</div>':'')+
+    '</div></div>';
+}
+function setDonateCause(cid){
   _donateCampaign=cid||null;
   const c=CAMPAIGNS.find(x=>x.id===cid);
-  const t=document.getElementById('donate-camp-label');if(t)t.textContent=c?c.title:'General conservation fund';
+  const card=document.getElementById('donate-cause-card');if(card)card.innerHTML=_causeCardHTML(c);
+}
+let _donateSource=null;
+// From an IUCN gallery card → a donation to protect that species/place, via official channels
+function donateForProtect(id){
+  const p=(PROTECT||[]).find(x=>x.id===id);if(!p)return;
+  closeModal('m-detail');
+  openDonate(p.cause_campaign_id||null,'Protect: '+(p.name||''));
+}
+function openDonate(cid,source){
+  _donateSource=source||null;
+  const active=CAMPAIGNS.filter(c=>c.active!==false);
+  // Always tie a donation to a specific cause: default to the first live cause
+  if(!cid&&active.length)cid=active[0].id;
+  _donateCampaign=cid||null;
+  const c=CAMPAIGNS.find(x=>x.id===cid);
+  const card=document.getElementById('donate-cause-card');if(card)card.innerHTML=_causeCardHTML(c);
+  // If several causes are live, let the donor pick which one
+  const pick=document.getElementById('donate-cause-pick');
+  if(pick){
+    if(active.length>1){
+      pick.style.display='';
+      pick.innerHTML='<label>Choose your cause</label><select onchange="setDonateCause(this.value)">'+
+        active.map(x=>'<option value="'+x.id+'"'+(x.id===cid?' selected':'')+'>'+esc(x.title)+'</option>').join('')+'</select>';
+    }else pick.style.display='none';
+  }
   ['donate-amount','donate-payref','donate-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const nm=document.getElementById('donate-name');if(nm&&currentUser)nm.value=currentUser.name;
   openModal('m-donate');
@@ -983,7 +1093,7 @@ async function submitDonation(){
   const payref=(document.getElementById('donate-payref').value||'').trim();
   const donor=(document.getElementById('donate-name').value||'').trim()||'Anonymous friend';
   if(!amount){toast('⚠ Enter an amount.');return}
-  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref});
+  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref,source:_donateSource});
   if(error){toast('⚠ Could not record the donation.');console.error(error);return}
   closeModal('m-donate');
   toast('💚 Thank you, '+esc(donor.split(' ')[0])+'! It counts once payment is confirmed.');
@@ -1473,6 +1583,7 @@ function appNav(tab){
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
   renderAdRail();
+  if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
 }
 /* EXPLORE — members browse the full website while staying signed in */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
@@ -1649,6 +1760,30 @@ function updateNav(){
 }
 
 /* ═══ ENROLL ═══ */
+/* Green Card tier — rich clickable detail (same treatment as the gallery) */
+function openTierDetail(t){
+  const td=TIERS_DATA[t];if(!td)return;_buzz&&_buzz();
+  const card=document.querySelector('.tier-card[data-tier="'+t+'"]');
+  const perks=card?[...card.querySelectorAll('.tier-perks li')].map(li=>li.textContent):[];
+  const mt=(document.getElementById('ef-type')&&document.getElementById('ef-type').value)||'individual';
+  const price=(typeof TIER_RANGES!=='undefined'&&TIER_RANGES[t])?(TIER_RANGES[t][mt]||TIER_RANGES[t].individual):'';
+  const isMember=currentUser&&currentUser.role==='member';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero tier-hero t-'+t+'">'+
+      '<div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🪪 Green Card Tier</span><h2>'+td.emoji+' '+esc(td.label)+'</h2>'+
+      (price?'<span class="dtl-region">'+esc(price)+'</span>':'')+'</div></div>'+
+    '<div class="dtl-body">'+
+      '<div class="tier-detail-perks">'+perks.map(p=>'<div class="tdp"><span>✓</span>'+esc(p)+'</div>').join('')+'</div>'+
+      '<div class="dtl-cta-row">'+
+        (isMember
+          ?'<button class="btn btn-gold" onclick="closeModal(\'m-detail\');openTierModal()">⇅ Switch to '+esc(td.label)+'</button>'
+          :'<button class="btn btn-gold" onclick="closeModal(\'m-detail\');selectTier(\''+t+'\')">Choose '+esc(td.label)+' →</button>')+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
+}
 function selectTier(t){
   selectedTier_=t;
   document.querySelectorAll('.tier-card').forEach(c=>c.classList.remove('sel'));
@@ -2082,10 +2217,10 @@ function renderFame(){
     el.innerHTML='<div class="fame-empty"><h4>Our Champions Will Appear Here</h4><p>Conservation champions will be featured here with photos and stories.</p></div>';
     return;
   }
-  el.innerHTML=FAME.map(m=>{
+  el.innerHTML=FAME.map((m,idx)=>{
     const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
     const initials=m.name.split(' ').slice(0,2).map(w=>w[0]||'').join('').toUpperCase();
-    return '<div class="fame-card">'+
+    return '<div class="fame-card fame-click" role="button" tabindex="0" onclick="openFame('+idx+')" onkeydown="if(event.key===\'Enter\')openFame('+idx+')">'+
       (m.photo
         ?'<img src="'+m.photo+'" alt="'+m.name+'" style="width:100%;height:200px;object-fit:cover"/>'
         :'<div class="fame-img-placeholder"><div class="fame-initials">'+initials+'</div></div>')+
@@ -2093,7 +2228,7 @@ function renderFame(){
         '<div class="fame-name">'+esc(m.name)+'</div>'+
         '<div class="fame-tier">'+td.emoji+' '+esc(td.label)+'</div>'+
         (m.caption?'<div class="fame-caption">'+esc(m.caption)+'</div>':'')+
-        '<div class="fame-year">'+m.year+'</div>'+
+        '<div class="fame-year">'+m.year+' <span class="fame-view">View →</span></div>'+
       '</div>'+
     '</div>';
   }).join('');
@@ -2207,6 +2342,16 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
   document.getElementById('mem-body').innerHTML=
+    '<div class="mem-split">'+
+    // LEFT rail (LinkedIn-style): Discover + Fundraisers, level with the buttons
+    '<aside class="mem-aside">'+
+      '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
+      '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
+      '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
+      '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
+      (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
+    '</aside>'+
+    '<div class="mem-main">'+
     renewBannerHTML(u)+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
@@ -2218,15 +2363,18 @@ function renderMemberView(){
       '<button class="btn btn-ghost btn-sm" onclick="downloadReceipt()">🧾 Receipt</button></div>'+
     '</div>'+
     // Actions
+    // Actions — primary up front, the rest tucked into a tidy menu (LinkedIn-style)
     '<div class="mem-action-row">'+
       '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
-      '<button class="btn btn-gold btn-sm" onclick="openTierModal()">⇅ Change Tier</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
-      '<button class="btn btn-ghost btn-sm" onclick="appNav(\'learn\')">📚 Learn</button>'+
-      '<button class="btn btn-ghost btn-sm" style="position:relative" onclick="openNotifications()">🔔 Updates<span id="notif-badge" class="notif-badge"></span></button>'+
-      '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability Dashboard</button>'+
-      '<button class="btn btn-ghost btn-sm" style="color:var(--rust);border-color:rgba(181,69,27,.45)" onclick="doLogout()">🚪 Sign Out</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
+      '<button class="btn btn-gold btn-sm" onclick="openDashboardModal()">📊 Accountability</button>'+
+      '<div class="mem-more"><button class="btn btn-ghost btn-sm" onclick="this.parentNode.classList.toggle(\'open\')">⋯ More</button>'+
+        '<div class="mem-more-menu">'+
+          '<button onclick="openTierModal()">⇅ Change Tier</button>'+
+          '<button onclick="openModal(\'m-change-pass\')">🔑 Password</button>'+
+          '<button onclick="doLogout()" style="color:var(--rust)">🚪 Sign Out</button>'+
+        '</div>'+
+      '</div>'+
     '</div>'+
     // Citizen science — log sightings, view the map, earn the badge
     (function(){const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);return ''+
@@ -2238,50 +2386,75 @@ function renderMemberView(){
         '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
         '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
       '</div>';})()+
-    // Discover / follow other members
-    '<div class="mem-sec-title" style="margin-top:1.75rem">Discover Members</div>'+
-    '<p style="font-size:.82rem;color:var(--muted);margin:-.35rem 0 .9rem;line-height:1.55">Search for a member or institution by name, then follow them. Tap any result to view their full profile.</p>'+
-    '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members or institutions…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
-    '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
-    // Sponsored banner (below content) + Events & fundraisers
+    // Central feed continues: sponsored banner, events, then updates
     bannerStripHTML()+
     eventsCarouselHTML()+
-    (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.75rem">🎯 Fundraisers</div><div class="camp-grid">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
-    // Announcements
-    '<div class="mem-sec-title" style="margin-top:1.75rem">Latest from UBF</div>'+
-    (ANNOUNCES.length
-      ?ANNOUNCES.slice(0,5).map(a=>
-        '<div class="ann-editorial" id="ann-'+a.id+'">'+
-          '<div class="ann-ed-type">'+esc(a.type)+'</div>'+
-          '<div class="ann-ed-title">'+esc(a.title)+'</div>'+
-          (a.body?'<p class="ann-ed-body">'+esc(a.body)+'</p>':'')+
-          '<div class="ann-ed-date">'+esc(a.date)+'</div>'+
-        '</div>'
-      ).join('')
-      :'<div class="empty-state"><span>📢</span><p>No announcements yet.</p></div>')+
-    // Financial Reports
-    '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div>'+
-    (FIN_REPORTS.length
-      ?FIN_REPORTS.map(r=>
-        '<div class="report-row" id="rep-'+r.id+'">'+
-          '<div class="report-icon">📄</div>'+
-          '<div class="report-body">'+
-            '<div class="report-title">'+r.title+'</div>'+
-            '<div class="report-meta">'+r.period+' &nbsp;·&nbsp; '+r.date+'</div>'+
-            (r.summary?'<p class="report-sum">'+r.summary+'</p>':'')+
-          '</div>'+
-          (r.url&&r.url!=='#'?'<a href="'+r.url+'" target="_blank" class="report-dl">⬇ Download</a>':'')+
-        '</div>'
-      ).join('')
-      :'<div class="empty-state"><span>📊</span><p>No reports published yet.</p></div>')+
+    // Announcements — clickable, scrollable, latest on top
+    announcementsListHTML()+
+    // Financial Reports — clickable, scrollable, latest on top
+    reportsListHTML()+
     // Leave
     '<div class="leave-row">'+
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
-    '</div>';
+    '</div>'+
+    '</div></div>'; // close .mem-main and .mem-split
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
+}
+
+/* ═══ Announcements & Financial Reports — clickable, scrollable, latest on top ═══ */
+function announcementsListHTML(){
+  if(!ANNOUNCES.length)return '<div class="mem-sec-title" style="margin-top:1.25rem">Latest from UBF</div><div class="empty-state"><span>📢</span><p>No announcements yet.</p></div>';
+  return '<div class="feed-head-row"><div class="mem-sec-title" style="margin:1.25rem 0 .2rem">📢 Latest from UBF</div><span class="feed-count">'+ANNOUNCES.length+'</span></div>'+
+    '<div class="upd-list">'+ANNOUNCES.map((a,i)=>
+      '<div class="upd-row" role="button" tabindex="0" onclick="openAnnounce(\''+a.id+'\')" onkeydown="if(event.key===\'Enter\')openAnnounce(\''+a.id+'\')">'+
+        '<span class="upd-ic">📣</span>'+
+        '<div class="upd-mid"><div class="upd-t">'+esc(a.title)+(i<2?' <span class="upd-new">New</span>':'')+'</div>'+
+          '<div class="upd-d">'+esc((a.body||a.type||'').slice(0,80))+(((a.body||'').length>80)?'…':'')+' · '+esc(a.date||'')+'</div></div>'+
+        '<span class="upd-chev">›</span>'+
+      '</div>'
+    ).join('')+'</div>';
+}
+function reportsListHTML(){
+  if(!FIN_REPORTS.length)return '<div class="mem-sec-title" style="margin-top:2rem">Financial Reports</div><div class="empty-state"><span>📊</span><p>No reports published yet.</p></div>';
+  return '<div class="feed-head-row"><div class="mem-sec-title" style="margin:2rem 0 .2rem">📄 Financial Reports</div><span class="feed-count">'+FIN_REPORTS.length+'</span></div>'+
+    '<div class="upd-list">'+FIN_REPORTS.map((r,i)=>
+      '<div class="upd-row" role="button" tabindex="0" onclick="openReport(\''+r.id+'\')" onkeydown="if(event.key===\'Enter\')openReport(\''+r.id+'\')">'+
+        '<span class="upd-ic">📄</span>'+
+        '<div class="upd-mid"><div class="upd-t">'+esc(r.title)+(i===0?' <span class="upd-new">New</span>':'')+'</div>'+
+          '<div class="upd-d">'+esc([r.period,r.date].filter(Boolean).join(' · '))+(r.summary?' · '+esc(r.summary.slice(0,50)):'')+'</div></div>'+
+        '<span class="upd-chev">'+((r.url&&r.url!=='#')?'⬇':'›')+'</span>'+
+      '</div>'
+    ).join('')+'</div>';
+}
+function openAnnounce(id){
+  const a=(ANNOUNCES||[]).find(x=>x.id===id);if(!a)return;_buzz&&_buzz();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:120px;background:linear-gradient(135deg,#153d28,#2D6A4F)"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">📢 '+esc(a.type||'Announcement')+'</span><h2>'+esc(a.title)+'</h2>'+
+      (a.date?'<span class="dtl-region">'+esc(a.date)+'</span>':'')+'</div></div>'+
+    '<div class="dtl-body">'+
+      (a.body?'<p class="dtl-blurb">'+esc(a.body)+'</p>':'<p class="dtl-blurb" style="color:var(--muted)">No further details.</p>')+
+      '<div class="dtl-cta-row"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+    '</div>';
+  openModal('m-detail');
+}
+function openReport(id){
+  const r=(FIN_REPORTS||[]).find(x=>x.id===id);if(!r)return;_buzz&&_buzz();
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:120px;background:linear-gradient(135deg,#1a2e3a,#2E7D9A)"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">📄 Financial Report</span><h2>'+esc(r.title)+'</h2>'+
+      '<span class="dtl-region">'+esc([r.period,r.date].filter(Boolean).join(' · '))+'</span></div></div>'+
+    '<div class="dtl-body">'+
+      (r.summary?'<p class="dtl-blurb">'+esc(r.summary)+'</p>':'')+
+      '<div class="dtl-cta-row">'+
+        ((r.url&&r.url!=='#')?'<a class="btn btn-gold" href="'+esc(r.url)+'" target="_blank" rel="noopener">⬇ Open / Download</a>':'<span style="font-size:.85rem;color:var(--muted)">The document will be available once uploaded.</span>')+
+        '<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>'+
+      '</div>'+
+    '</div>';
+  openModal('m-detail');
 }
 
 /* ═══ ACCOUNTABILITY DASHBOARD (member-facing, admin-editable) ═══ */
@@ -2553,21 +2726,32 @@ function downloadImpactStatement(){
 
 /* ═══ DISCOVER MEMBERS DIRECTORY — search & follow members/institutions ═══ */
 let _memberDirQuery='';
+let MY_FOLLOWERS=new Set();  // ids of members who follow the current user
+let _dirTab='suggested';     // suggested | following | followers
 async function populateMembersDirectory(){
   const el=document.getElementById('members-directory');
   if(!el||!currentUser)return;
-  // Load who the current user already follows (so buttons show the right state)
-  const{data:fl}=await sb.from('follows').select('following_id').eq('follower_id',currentUser.id);
-  MY_FOLLOWING=new Set((fl||[]).map(f=>f.following_id));
+  // Who I follow, and who follows me (for the Following / Followers tabs)
+  const[a,b]=await Promise.all([
+    sb.from('follows').select('following_id').eq('follower_id',currentUser.id),
+    sb.from('follows').select('follower_id').eq('following_id',currentUser.id)
+  ]);
+  MY_FOLLOWING=new Set(((a&&a.data)||[]).map(f=>f.following_id));
+  MY_FOLLOWERS=new Set(((b&&b.data)||[]).map(f=>f.follower_id));
   _memberDirQuery='';
   renderMemberDir('');
 }
+function setDirTab(t){_dirTab=t;const i=document.getElementById('member-search');renderMemberDir(i?i.value:'');}
 function _memberCardHtml(m){
   const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
   const initials=esc((m.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase());
   const following=MY_FOLLOWING.has(m.id);
   const safeName=esc(m.name).replace(/'/g,'');
   const sub=esc(td.label)+(m.org?' · '+esc(m.org):'')+' · '+(m.followers_count||0)+' follower'+((m.followers_count||0)===1?'':'s');
+  // Follow-back styling for followers you don't yet follow
+  const backable=!following&&_dirTab==='followers';
+  const followCls=following?'btn-ghost':(backable?'btn-gold':'btn-canopy');
+  const followTxt=following?'✓ Following':(backable?'+ Follow back':'+ Follow');
   return '<div class="mdir-card">'+
     '<div class="mdir-top" onclick="viewMemberProfile(\''+m.id+'\')">'+
       (m.photo_url?'<img src="'+esc(m.photo_url)+'" class="mdir-av" alt=""/>':'<div class="mdir-av mdir-av-init">'+initials+'</div>')+
@@ -2576,26 +2760,43 @@ function _memberCardHtml(m){
         '<div class="mdir-tier">'+sub+'</div>'+
       '</div>'+
     '</div>'+
-    '<button id="dfollow-'+m.id+'" class="btn '+(following?'btn-ghost':'btn-canopy')+' btn-sm mdir-follow" onclick="dirToggleFollow(\''+m.id+'\',\''+safeName+'\')">'+(following?'✓ Following':'+ Follow')+'</button>'+
+    '<div class="mdir-actions">'+
+      '<button class="mdir-msg" onclick="openChat(\''+m.id+'\')" title="Message" aria-label="Message">✉</button>'+
+      '<button id="dfollow-'+m.id+'" class="btn '+followCls+' btn-sm mdir-follow" onclick="dirToggleFollow(\''+m.id+'\',\''+safeName+'\')">'+followTxt+'</button>'+
+    '</div>'+
   '</div>';
 }
 function renderMemberDir(query){
   const el=document.getElementById('members-directory');
   if(!el||!currentUser)return;
   const q=(query||'').trim().toLowerCase();
-  let list=MEMBERS.filter(m=>m.id!==currentUser.id&&m.role==='member'&&m.status==='active');
+  const base=MEMBERS.filter(m=>m.id!==currentUser.id&&m.role==='member'&&m.status==='active');
+  // Tab bar with live counts
+  const seg=(t,label)=>'<button class="mdir-seg'+(_dirTab===t?' on':'')+'" onclick="setDirTab(\''+t+'\')"><b>'+label+'</b><span>'+(t==='following'?MY_FOLLOWING.size:t==='followers'?MY_FOLLOWERS.size:'for you')+'</span></button>';
+  const tabs='<div class="mdir-segs">'+seg('suggested','Suggested')+seg('following','Following')+seg('followers','Followers')+'</div>';
+  // Pick the list for the active tab
+  let list;
+  if(_dirTab==='following')list=base.filter(m=>MY_FOLLOWING.has(m.id));
+  else if(_dirTab==='followers')list=base.filter(m=>MY_FOLLOWERS.has(m.id));
+  else list=base.filter(m=>!MY_FOLLOWING.has(m.id)); // suggested = not-yet-followed
   if(q)list=list.filter(m=>(m.name||'').toLowerCase().includes(q)||(m.org||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(b.followers_count||0)-(a.followers_count||0));
+  list.sort((x,y)=>(y.followers_count||0)-(x.followers_count||0));
+  const shown=(_dirTab==='suggested'&&!q)?list.slice(0,6):list.slice(0,50);
+  let hint,body;
   if(!list.length){
-    el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">'+(q?'No members or institutions match “'+esc(query.trim())+'”.':'No other members yet — check back as the community grows.')+'</p>';
-    return;
+    const empty=q?'No members or institutions match “'+esc(query.trim())+'”.'
+      :_dirTab==='following'?'You’re not following anyone yet — tap Suggested to find members.'
+      :_dirTab==='followers'?'No followers yet — share your posts to grow your circle.'
+      :'No other members yet — check back as the community grows.';
+    hint='';body='<p style="font-size:.85rem;color:var(--muted);margin-top:.4rem">'+empty+'</p>';
+  }else{
+    const label=q?list.length+' result'+(list.length===1?'':'s')
+      :_dirTab==='following'?'You follow '+MY_FOLLOWING.size+' member'+(MY_FOLLOWING.size===1?'':'s')
+      :_dirTab==='followers'?MY_FOLLOWERS.size+' member'+(MY_FOLLOWERS.size===1?'':'s')+' follow you'
+      :'Most-followed members'+(list.length>shown.length?' · search to see all '+list.length:'');
+    hint='<div class="mdir-hint">'+label+'</div>';body=shown.map(_memberCardHtml).join('');
   }
-  // Default view (no search): show a few suggested influential members. Search: show up to 30 matches.
-  const shown=q?list.slice(0,30):list.slice(0,6);
-  const hint=q
-    ?'<div class="mdir-hint">'+list.length+' result'+(list.length===1?'':'s')+'</div>'
-    :'<div class="mdir-hint">Suggested — most-followed members'+(list.length>shown.length?' · type to search all '+list.length:'')+'</div>';
-  el.innerHTML=hint+shown.map(_memberCardHtml).join('');
+  el.innerHTML=tabs+hint+body;
 }
 function searchMembers(val){_memberDirQuery=val;renderMemberDir(val);}
 
@@ -2620,7 +2821,8 @@ async function dirToggleFollow(id,name){
     toast('Now following '+name+'!');
   }
   await loadMembers();
-  renderMemberDir(_memberDirQuery);
+  const inp=document.getElementById('member-search');
+  renderMemberDir(inp?inp.value:_memberDirQuery);
 }
 
 /* ═══ CERTIFICATE ═══ */
