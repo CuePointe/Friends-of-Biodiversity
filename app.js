@@ -2726,21 +2726,32 @@ function downloadImpactStatement(){
 
 /* ═══ DISCOVER MEMBERS DIRECTORY — search & follow members/institutions ═══ */
 let _memberDirQuery='';
+let MY_FOLLOWERS=new Set();  // ids of members who follow the current user
+let _dirTab='suggested';     // suggested | following | followers
 async function populateMembersDirectory(){
   const el=document.getElementById('members-directory');
   if(!el||!currentUser)return;
-  // Load who the current user already follows (so buttons show the right state)
-  const{data:fl}=await sb.from('follows').select('following_id').eq('follower_id',currentUser.id);
-  MY_FOLLOWING=new Set((fl||[]).map(f=>f.following_id));
+  // Who I follow, and who follows me (for the Following / Followers tabs)
+  const[a,b]=await Promise.all([
+    sb.from('follows').select('following_id').eq('follower_id',currentUser.id),
+    sb.from('follows').select('follower_id').eq('following_id',currentUser.id)
+  ]);
+  MY_FOLLOWING=new Set(((a&&a.data)||[]).map(f=>f.following_id));
+  MY_FOLLOWERS=new Set(((b&&b.data)||[]).map(f=>f.follower_id));
   _memberDirQuery='';
   renderMemberDir('');
 }
+function setDirTab(t){_dirTab=t;const i=document.getElementById('member-search');renderMemberDir(i?i.value:'');}
 function _memberCardHtml(m){
   const td=TIERS_DATA[m.tier]||TIERS_DATA.silver;
   const initials=esc((m.name||'?').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase());
   const following=MY_FOLLOWING.has(m.id);
   const safeName=esc(m.name).replace(/'/g,'');
   const sub=esc(td.label)+(m.org?' · '+esc(m.org):'')+' · '+(m.followers_count||0)+' follower'+((m.followers_count||0)===1?'':'s');
+  // Follow-back styling for followers you don't yet follow
+  const backable=!following&&_dirTab==='followers';
+  const followCls=following?'btn-ghost':(backable?'btn-gold':'btn-canopy');
+  const followTxt=following?'✓ Following':(backable?'+ Follow back':'+ Follow');
   return '<div class="mdir-card">'+
     '<div class="mdir-top" onclick="viewMemberProfile(\''+m.id+'\')">'+
       (m.photo_url?'<img src="'+esc(m.photo_url)+'" class="mdir-av" alt=""/>':'<div class="mdir-av mdir-av-init">'+initials+'</div>')+
@@ -2749,26 +2760,43 @@ function _memberCardHtml(m){
         '<div class="mdir-tier">'+sub+'</div>'+
       '</div>'+
     '</div>'+
-    '<button id="dfollow-'+m.id+'" class="btn '+(following?'btn-ghost':'btn-canopy')+' btn-sm mdir-follow" onclick="dirToggleFollow(\''+m.id+'\',\''+safeName+'\')">'+(following?'✓ Following':'+ Follow')+'</button>'+
+    '<div class="mdir-actions">'+
+      '<button class="mdir-msg" onclick="openChat(\''+m.id+'\')" title="Message" aria-label="Message">✉</button>'+
+      '<button id="dfollow-'+m.id+'" class="btn '+followCls+' btn-sm mdir-follow" onclick="dirToggleFollow(\''+m.id+'\',\''+safeName+'\')">'+followTxt+'</button>'+
+    '</div>'+
   '</div>';
 }
 function renderMemberDir(query){
   const el=document.getElementById('members-directory');
   if(!el||!currentUser)return;
   const q=(query||'').trim().toLowerCase();
-  let list=MEMBERS.filter(m=>m.id!==currentUser.id&&m.role==='member'&&m.status==='active');
+  const base=MEMBERS.filter(m=>m.id!==currentUser.id&&m.role==='member'&&m.status==='active');
+  // Tab bar with live counts
+  const seg=(t,label)=>'<button class="mdir-seg'+(_dirTab===t?' on':'')+'" onclick="setDirTab(\''+t+'\')"><b>'+label+'</b><span>'+(t==='following'?MY_FOLLOWING.size:t==='followers'?MY_FOLLOWERS.size:'for you')+'</span></button>';
+  const tabs='<div class="mdir-segs">'+seg('suggested','Suggested')+seg('following','Following')+seg('followers','Followers')+'</div>';
+  // Pick the list for the active tab
+  let list;
+  if(_dirTab==='following')list=base.filter(m=>MY_FOLLOWING.has(m.id));
+  else if(_dirTab==='followers')list=base.filter(m=>MY_FOLLOWERS.has(m.id));
+  else list=base.filter(m=>!MY_FOLLOWING.has(m.id)); // suggested = not-yet-followed
   if(q)list=list.filter(m=>(m.name||'').toLowerCase().includes(q)||(m.org||'').toLowerCase().includes(q));
-  list.sort((a,b)=>(b.followers_count||0)-(a.followers_count||0));
+  list.sort((x,y)=>(y.followers_count||0)-(x.followers_count||0));
+  const shown=(_dirTab==='suggested'&&!q)?list.slice(0,6):list.slice(0,50);
+  let hint,body;
   if(!list.length){
-    el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">'+(q?'No members or institutions match “'+esc(query.trim())+'”.':'No other members yet — check back as the community grows.')+'</p>';
-    return;
+    const empty=q?'No members or institutions match “'+esc(query.trim())+'”.'
+      :_dirTab==='following'?'You’re not following anyone yet — tap Suggested to find members.'
+      :_dirTab==='followers'?'No followers yet — share your posts to grow your circle.'
+      :'No other members yet — check back as the community grows.';
+    hint='';body='<p style="font-size:.85rem;color:var(--muted);margin-top:.4rem">'+empty+'</p>';
+  }else{
+    const label=q?list.length+' result'+(list.length===1?'':'s')
+      :_dirTab==='following'?'You follow '+MY_FOLLOWING.size+' member'+(MY_FOLLOWING.size===1?'':'s')
+      :_dirTab==='followers'?MY_FOLLOWERS.size+' member'+(MY_FOLLOWERS.size===1?'':'s')+' follow you'
+      :'Most-followed members'+(list.length>shown.length?' · search to see all '+list.length:'');
+    hint='<div class="mdir-hint">'+label+'</div>';body=shown.map(_memberCardHtml).join('');
   }
-  // Default view (no search): show a few suggested influential members. Search: show up to 30 matches.
-  const shown=q?list.slice(0,30):list.slice(0,6);
-  const hint=q
-    ?'<div class="mdir-hint">'+list.length+' result'+(list.length===1?'':'s')+'</div>'
-    :'<div class="mdir-hint">Suggested — most-followed members'+(list.length>shown.length?' · type to search all '+list.length:'')+'</div>';
-  el.innerHTML=hint+shown.map(_memberCardHtml).join('');
+  el.innerHTML=tabs+hint+body;
 }
 function searchMembers(val){_memberDirQuery=val;renderMemberDir(val);}
 
@@ -2793,7 +2821,8 @@ async function dirToggleFollow(id,name){
     toast('Now following '+name+'!');
   }
   await loadMembers();
-  renderMemberDir(_memberDirQuery);
+  const inp=document.getElementById('member-search');
+  renderMemberDir(inp?inp.value:_memberDirQuery);
 }
 
 /* ═══ CERTIFICATE ═══ */
