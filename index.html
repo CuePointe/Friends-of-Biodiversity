@@ -43,9 +43,9 @@
 <!-- True PDF download for certificates (html2canvas renders the card, jsPDF saves the file) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" crossorigin="anonymous" defer></script>
-<link rel="preload" as="image" href="slide-1.jpg"/>
-<link rel="preload" as="image" href="slide-2.jpg"/>
-<link rel="preload" as="image" href="slide-3.jpg"/>
+<link rel="preload" as="image" href="slide1sm.jpg"/>
+<link rel="preload" as="image" href="slide2sm.jpg"/>
+<link rel="preload" as="image" href="slide3sm.jpg"/>
 <link rel="preload" as="image" href="fob-logo.png"/>
 <link rel="preload" as="image" href="ubf-logo.png"/>
 <link rel="preload" as="image" href="footprint-globe.jpg"/>
@@ -308,7 +308,7 @@
     <!-- Living poster + editable impact -->
     <div class="pay-hero reveal">
       <div class="pay-poster" id="pay-promo">
-        <img id="pay-poster-img" src="slide-3.jpg" alt="Uganda’s mountain gorillas" onerror="this.onerror=null;this.src='slide-2.jpg'"/>
+        <img id="pay-poster-img" src="slide3sm.jpg" alt="Uganda’s mountain gorillas" onerror="this.onerror=null;this.src='slide2sm.jpg'"/>
         <span class="pay-media-badge">Watch · Your impact</span>
         <div class="pay-play" aria-hidden="true"><svg width="20" height="22" viewBox="0 0 22 24" fill="#fff"><path d="M0 0l22 12L0 24z"/></svg></div>
         <div class="pay-pcap"><b>This is who you’re protecting.</b><span id="pay-promo-cap">Upload a 60-second welcome — until then, Uganda’s wild greets your members here.</span></div>
@@ -1566,11 +1566,19 @@
     <p class="msub">Every donation goes to a <strong>specific conservation cause</strong> — you choose it below, pay via any official channel, then log it here.</p>
     <div id="donate-cause-card" class="donate-cause"></div>
     <div class="fg" id="donate-cause-pick" style="display:none"></div>
+    <div class="fg"><label>Pay via an official channel first</label>
+      <div class="donate-chan-row">
+        <button type="button" class="donate-chan on" data-ch="MTN MoMo" onclick="pickDonChan(this)"><b>MTN</b><span>*165#</span></button>
+        <button type="button" class="donate-chan" data-ch="Airtel Money" onclick="pickDonChan(this)"><b>Airtel</b><span>*185#</span></button>
+        <button type="button" class="donate-chan" data-ch="Stanbic Bank" onclick="pickDonChan(this)"><b>Stanbic</b><span>Bank</span></button>
+      </div>
+      <span style="font-size:.72rem;color:var(--muted)">Numbers &amp; account details are on <a href="#" onclick="closeModal('m-donate');goToPayment();return false" style="color:var(--canopy-lt);font-weight:700">How to Pay →</a></span>
+    </div>
     <div class="fg"><label>Your name</label><input id="donate-name" placeholder="Jane Akello (or 'Anonymous')"/></div>
     <div class="fg"><label>Amount (UGX)</label><input id="donate-amount" type="number" placeholder="e.g. 50000"/></div>
-    <div class="fg"><label>Payment reference</label><input id="donate-payref" placeholder="e.g. MTN Ref #12345"/></div>
-    <p class="donate-channels">💳 Pay via our official channels — <b>MTN</b>, <b>Airtel</b> or <b>Stanbic Bank</b> — then log your reference here. <a href="#" onclick="closeModal('m-donate');goToPayment();return false">See How to Pay →</a></p>
-    <button class="btn btn-gold btn-full" onclick="submitDonation()">Log my donation</button>
+    <div class="fg"><label>Payment reference (from your payment)</label><input id="donate-payref" placeholder="e.g. MTN Ref #12345" oninput="donateGate()"/></div>
+    <button class="btn btn-gold btn-full" id="donate-submit" onclick="submitDonation()" disabled>🔒 Log my donation</button>
+    <p class="donate-locknote" id="donate-locknote">Pay first via the channel above, then enter your payment reference — the button unlocks once a reference is entered.</p>
   </div>
 </div>
 
