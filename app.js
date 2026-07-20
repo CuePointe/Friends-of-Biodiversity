@@ -735,7 +735,15 @@ function bannerStripHTML(){
   return '<div class="ad-banner-strip ad-rotator">'+ads.map((a,i)=>'<div class="ad-slide'+(i===0?' on':'')+'">'+bannerAdHTML(a)+'</div>').join('')+
     (ads.length>1?'<div class="ad-dots">'+ads.map((a,i)=>'<i'+(i===0?' class="on"':'')+'></i>').join('')+'</div>':'')+'</div>';
 }
-// Side rail — floats beside the content on desktop; hidden on phones by CSS
+// Side rail — POP-IN/POP-OFF cards: each slides in from the right edge, stays a
+// while, slides off, and the next campaign pops in. Up to 3 stacked at once.
+const AD_RAIL_SLOTS=3;
+let _railIdx=0;
+function _railSlotHTML(a,slot){
+  return '<div class="rail-slot" data-slot="'+slot+'">'+
+    '<button class="rail-x" onclick="railDismiss('+slot+')" aria-label="Close">✕</button>'+
+    railAdHTML(a)+'</div>';
+}
 function renderAdRail(){
   let rail=document.getElementById('ad-rail');
   // Members only — never in the admin console
@@ -744,9 +752,40 @@ function renderAdRail(){
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
   if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
   rail.style.display='';
-  rail.innerHTML='<div class="ad-rail-head">Sponsored</div><div class="ad-rotator">'+
-    ads.map((a,i)=>'<div class="ad-slide'+(i===0?' on':'')+'">'+railAdHTML(a)+'</div>').join('')+'</div>';
+  const n=Math.min(AD_RAIL_SLOTS,ads.length);
+  rail.innerHTML='<div class="ad-rail-head">Sponsored</div>'+
+    Array.from({length:n},(_,s)=>_railSlotHTML(ads[s%ads.length],s)).join('');
+  _railIdx=n;
+  // stagger the entrances so they pop in one after another
+  [...rail.querySelectorAll('.rail-slot')].forEach((el,i)=>setTimeout(()=>el.classList.add('in'),150+i*350));
 }
+function _railSwap(slotEl){
+  const ads=adsFor('rail');if(!ads.length)return;
+  const a=ads[_railIdx%ads.length];_railIdx++;
+  slotEl.classList.remove('in');            // slide off…
+  setTimeout(()=>{
+    const slot=slotEl.getAttribute('data-slot');
+    slotEl.outerHTML=_railSlotHTML(a,slot);
+    const fresh=document.querySelector('#ad-rail .rail-slot[data-slot="'+slot+'"]');
+    if(fresh)requestAnimationFrame(()=>requestAnimationFrame(()=>fresh.classList.add('in'))); // …next pops in
+  },450);
+}
+function railDismiss(slot){
+  const el=document.querySelector('#ad-rail .rail-slot[data-slot="'+slot+'"]');
+  if(!el)return;
+  const more=adsFor('rail').length>document.querySelectorAll('#ad-rail .rail-slot').length;
+  if(more){_railSwap(el);}                                  // another campaign pops in
+  else{el.classList.remove('in');setTimeout(()=>el.remove(),450);} // ✕ = gone for this visit
+}
+// One gentle cycle: every ~9s the oldest visible card slides off and the next pops in
+setInterval(()=>{
+  const rail=document.getElementById('ad-rail');
+  if(!rail||rail.style.display==='none'||!rail.offsetParent)return;
+  const slots=[...rail.querySelectorAll('.rail-slot.in')];
+  if(!slots.length)return;
+  if(adsFor('rail').length<=slots.length)return; // nothing new to rotate in
+  _railSwap(slots[0]);
+},9000);
 // One gentle ticker crossfades every visible ad rotator (banner + rail)
 setInterval(()=>{
   document.querySelectorAll('.ad-rotator').forEach(rot=>{
@@ -1086,17 +1125,50 @@ function openDonate(cid,source){
   }
   ['donate-amount','donate-payref','donate-name'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
   const nm=document.getElementById('donate-name');if(nm&&currentUser)nm.value=currentUser.name;
+  donateGate(); // re-lock the log button until a fresh payment reference is entered
   openModal('m-donate');
+}
+let _donChan='MTN MoMo';
+function pickDonChan(btn){
+  document.querySelectorAll('.donate-chan').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');_donChan=btn.dataset.ch;
+}
+// Pay-first gate: the log button stays locked until a payment reference exists
+function donateGate(){
+  const ref=(document.getElementById('donate-payref').value||'').trim();
+  const btn=document.getElementById('donate-submit');
+  const note=document.getElementById('donate-locknote');
+  if(btn){btn.disabled=!ref;btn.textContent=ref?'✓ Log my donation':'🔒 Log my donation';}
+  if(note)note.style.display=ref?'none':'';
 }
 async function submitDonation(){
   const amount=parseInt(document.getElementById('donate-amount').value)||0;
   const payref=(document.getElementById('donate-payref').value||'').trim();
   const donor=(document.getElementById('donate-name').value||'').trim()||'Anonymous friend';
-  if(!amount){toast('⚠ Enter an amount.');return}
-  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref,source:_donateSource});
+  if(!payref){toast('🔒 Pay first — then enter your payment reference to unlock logging.');return}
+  if(!amount){toast('⚠ Enter the amount you paid.');return}
+  const btn=document.getElementById('donate-submit');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const ref=(_donChan?_donChan+' · ':'')+payref;
+  const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref:ref,source:_donateSource});
+  if(btn){btn.disabled=false;btn.textContent='✓ Log my donation';}
   if(error){toast('⚠ Could not record the donation.');console.error(error);return}
   closeModal('m-donate');
-  toast('💚 Thank you, '+esc(donor.split(' ')[0])+'! It counts once payment is confirmed.');
+  // Auto-logged recap — the member sees exactly what the system recorded
+  const c=CAMPAIGNS.find(x=>x.id===_donateCampaign);
+  const kv=(k,v)=>'<div class="don-krow"><span>'+k+'</span><b>'+esc(v)+'</b></div>';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:110px;background:linear-gradient(135deg,#153d28,#2D6A4F)"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">✅ Recorded automatically</span><h2>Thank you, '+esc(donor.split(' ')[0])+'!</h2></div></div>'+
+    '<div class="dtl-body">'+
+      '<p class="dtl-blurb" style="margin-bottom:.8rem">Your donation was logged and awaits admin confirmation against the payment statement.</p>'+
+      kv('Cause',c?c.title:'UBF Conservation Fund')+
+      (_donateSource?kv('For',_donateSource):'')+
+      kv('Amount','UGX '+amount.toLocaleString())+
+      kv('Reference',ref)+
+      kv('Status','Pending ✓')+
+      '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+    '</div>';
+  openModal('m-detail');
 }
 async function approveDonation(id){
   const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
@@ -1498,9 +1570,10 @@ function updatePostCreateBtn(){
 /* ═══ HERO SLIDESHOW ═══ */
 let curSlide=0;
 /* ═══ PRELOAD ONLY FIRST 3 SLIDES — rest loaded lazily ═══ */
-// Phones get compressed 900px versions (slideNsm.jpg ≈ 75% smaller); desktop keeps the originals.
+// ALL screens use the compressed 900px versions (slideNsm.jpg) — the big
+// slide-N.jpg originals are being removed from the repo entirely.
 function _slideSmall(src){return src.replace('slide-','slide').replace('.jpg','sm.jpg')}
-function slideSrc(src){return window.innerWidth<=860?_slideSmall(src):src}
+function slideSrc(src){return _slideSmall(src)}
 function preloadSlides(){
   SLIDE_IMAGES.slice(0,3).forEach(src=>{const img=new Image();img.src=slideSrc(src);});
   // Lazy load the rest after a short idle delay
