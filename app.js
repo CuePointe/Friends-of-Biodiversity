@@ -1138,7 +1138,7 @@ function donateGate(){
   const ref=(document.getElementById('donate-payref').value||'').trim();
   const btn=document.getElementById('donate-submit');
   const note=document.getElementById('donate-locknote');
-  if(btn){btn.disabled=!ref;btn.textContent=ref?'✓ Log my donation':'🔒 Log my donation';}
+  if(btn){btn.disabled=!ref;btn.textContent=ref?'✓ Submit payment for verification':'🔒 Submit payment for verification';}
   if(note)note.style.display=ref?'none':'';
 }
 async function submitDonation(){
@@ -1150,7 +1150,7 @@ async function submitDonation(){
   const btn=document.getElementById('donate-submit');if(btn){btn.disabled=true;btn.textContent='Saving…';}
   const ref=(_donChan?_donChan+' · ':'')+payref;
   const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref:ref,source:_donateSource});
-  if(btn){btn.disabled=false;btn.textContent='✓ Log my donation';}
+  if(btn){btn.disabled=false;btn.textContent='✓ Submit payment for verification';}
   if(error){toast('⚠ Could not record the donation.');console.error(error);return}
   closeModal('m-donate');
   // Auto-logged recap — the member sees exactly what the system recorded
@@ -1158,14 +1158,14 @@ async function submitDonation(){
   const kv=(k,v)=>'<div class="don-krow"><span>'+k+'</span><b>'+esc(v)+'</b></div>';
   document.getElementById('detail-body').innerHTML=
     '<div class="dtl-hero" style="height:110px;background:linear-gradient(135deg,#153d28,#2D6A4F)"><div class="dtl-hero-grad"></div>'+
-      '<div class="dtl-hero-txt"><span class="dtl-kind">✅ Recorded automatically</span><h2>Thank you, '+esc(donor.split(' ')[0])+'!</h2></div></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🕓 Submitted for verification</span><h2>Thank you, '+esc(donor.split(' ')[0])+'!</h2></div></div>'+
     '<div class="dtl-body">'+
-      '<p class="dtl-blurb" style="margin-bottom:.8rem">Your donation was logged and awaits admin confirmation against the payment statement.</p>'+
+      '<p class="dtl-blurb" style="margin-bottom:.8rem">Your payment claim has been submitted. <b>It does not count yet</b> — the UBF team first verifies your reference against the '+esc(_donChan||'payment')+' statement. Once the payment is found, your donation is confirmed and added to the cause. Claims with no matching payment are rejected.</p>'+
       kv('Cause',c?c.title:'UBF Conservation Fund')+
       (_donateSource?kv('For',_donateSource):'')+
       kv('Amount','UGX '+amount.toLocaleString())+
       kv('Reference',ref)+
-      kv('Status','Pending ✓')+
+      kv('Status','Awaiting payment verification 🕓')+
       '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
     '</div>';
   openModal('m-detail');
@@ -1176,9 +1176,19 @@ async function approveDonation(id){
   if(!confirm('Confirm donation of UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'donor')+'?'))return;
   await sb.from('donations').update({status:'approved'}).eq('id',id);
   if(dn.campaign_id){const c=CAMPAIGNS.find(x=>x.id===dn.campaign_id);if(c)await sb.from('campaigns').update({raised:(c.raised||0)+(dn.amount||0)}).eq('id',c.id);}
-  audit('Confirmed donation','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||''));
+  audit('Verified donation payment','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||''));
   await loadCampaigns();renderCampaignsAdmin();renderMemberView();
-  toast('✅ Donation confirmed and added to the campaign.');
+  toast('✅ Payment verified — donation now counts.');
+}
+// A claim whose payment can't be found in the statement gets rejected — it never counted
+async function rejectDonation(id){
+  const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
+  if(!dn)return;
+  if(!confirm('Reject this claim? UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'donor')+' ('+(dn.payref||'no ref')+') — no matching payment found.'))return;
+  await sb.from('donations').update({status:'rejected'}).eq('id',id);
+  audit('Rejected donation claim','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'')+' · '+(dn.payref||'no ref'));
+  renderCampaignsAdmin();
+  toast('✗ Claim rejected — it was never counted.');
 }
 let _campEditId=null;
 function resetCampForm(){_campEditId=null;['camp-title','camp-blurb','camp-goal','camp-img','camp-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('camp-active');if(a)a.checked=true;const b=document.getElementById('camp-save');if(b)b.textContent='Create fundraiser';}
@@ -1203,7 +1213,10 @@ async function renderCampaignsAdmin(){
   const dl=document.getElementById('donations-pending-list');
   if(dl){
     const{data}=await sb.from('donations').select('*').eq('status','pending').order('created_at',{ascending:false});
-    dl.innerHTML=(data&&data.length)?data.map(d=>'<div class="pa-row"><span class="pa-thumb">💚</span><div class="pa-info"><strong>UGX '+((d.amount||0).toLocaleString())+' — '+esc(d.donor_name||'Anonymous')+'</strong><span>'+(d.payref?'Ref: '+esc(d.payref):'no reference')+' · '+String(d.created_at||'').slice(0,10)+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveDonation(\''+d.id+'\')">✓ Confirm</button></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No pending donations.</p>';
+    dl.innerHTML=(data&&data.length)?
+      '<p style="font-size:.8rem;color:var(--muted);line-height:1.55;margin-top:0">These are <b>unverified claims</b> — they count nowhere until you check the reference against the MTN/Airtel/Stanbic statement and press <b>✓ Verify</b>. No matching payment? Press <b>✗ Reject</b>.</p>'+
+      data.map(d=>'<div class="pa-row"><span class="pa-thumb">💚</span><div class="pa-info"><strong>UGX '+((d.amount||0).toLocaleString())+' — '+esc(d.donor_name||'Anonymous')+'</strong><span>'+(d.payref?'Ref: '+esc(d.payref):'⚠ no reference')+(d.source?' · '+esc(d.source):'')+' · '+String(d.created_at||'').slice(0,10)+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveDonation(\''+d.id+'\')">✓ Verify payment</button><button class="btn btn-danger btn-sm" onclick="rejectDonation(\''+d.id+'\')">✗ Reject</button></div>').join('')
+      :'<p style="font-size:.85rem;color:var(--muted)">No claims awaiting verification.</p>';
   }
 }
 
