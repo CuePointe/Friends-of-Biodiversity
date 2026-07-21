@@ -72,7 +72,7 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 
 /* HERO — app-style card: the whole photo sits inside a contained, rounded card (never full-screen) */
 .hero{position:relative;display:flex;justify-content:center;padding:clamp(86px,9vw,102px) 1.25rem clamp(2rem,5vw,3.4rem);background:radial-gradient(125% 92% at 50% 0%,#143523 0%,#0B2618 52%,#071a11 100%)}
-.hero-card{width:100%;max-width:680px;background:var(--white);border-radius:22px;overflow:hidden;box-shadow:0 26px 60px -26px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.14);opacity:0;animation:fadeUp .7s .1s forwards}
+.hero-card{width:100%;max-width:820px;background:var(--white);border-radius:22px;overflow:hidden;box-shadow:0 26px 60px -26px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.14);opacity:0;animation:fadeUp .7s .1s forwards}
 .hero-media{position:relative;width:100%;aspect-ratio:16/9;background:#0a1710;overflow:hidden}
 #slide-track{position:absolute;inset:0}
 .slide{position:absolute;inset:0;background-size:cover;background-position:center center;opacity:0;transition:opacity 1.2s ease-in-out;z-index:0}
@@ -98,27 +98,28 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
 
 /* ═══ SIDE SHELL — app-style left rail; home shows only hero + gallery, the rest lives behind buttons ═══ */
 .side-shell{display:none}
-body.shell-mode .side-shell{display:flex;flex-direction:column;align-items:center;gap:2px;
-  position:fixed;top:70px;left:0;bottom:0;width:74px;z-index:150;
-  background:linear-gradient(180deg,#0B2618,#123a26);padding:14px 0;overflow-y:auto;
+body.shell-mode .side-shell{display:flex;flex-direction:column;align-items:center;gap:8px;
+  position:fixed;top:70px;left:0;bottom:0;width:104px;z-index:150;
+  background:linear-gradient(180deg,#0B2618,#123a26);padding:18px 0;overflow-y:auto;
   box-shadow:4px 0 22px -12px rgba(0,0,0,.5)}
-.shell-btn{width:62px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;border:none;background:none;border-radius:13px;color:rgba(255,255,255,.82);cursor:pointer;transition:background .18s,color .18s}
-.shell-btn .i{font-size:1.15rem;line-height:1}
-.shell-btn .t{font-size:.5rem;font-weight:700;letter-spacing:.02em;text-align:center;line-height:1.12}
+/* Big buttons that spread down the full height to match the hero frame */
+.shell-btn{width:90px;flex:1 1 0;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:12px 0;border:none;background:none;border-radius:18px;color:rgba(255,255,255,.85);cursor:pointer;transition:background .18s,color .18s}
+.shell-btn .i{font-size:1.7rem;line-height:1}
+.shell-btn .t{font-size:.64rem;font-weight:700;letter-spacing:.02em;text-align:center;line-height:1.15}
 .shell-btn:hover{background:rgba(255,255,255,.08);color:#fff}
 .shell-btn.on{background:rgba(200,168,75,.2);color:var(--gold-lt)}
-.shell-btn.join{background:var(--gold);margin-top:6px}
+.shell-btn.join{flex:0 0 auto;background:var(--gold);margin-top:4px}
 .shell-btn.join,.shell-btn.join .i,.shell-btn.join .t{color:var(--canopy)}
 .shell-btn.join:hover{background:var(--gold-lt)}
 /* main home content shifts right of the rail */
 body.shell-mode #view-main>.hero,
 body.shell-mode #view-main>#protect,
-body.shell-mode #view-main>footer{margin-left:74px}
+body.shell-mode #view-main>footer{margin-left:104px}
 /* hide the secondary sections from the home scroll */
 body.shell-mode #view-main>section.shell-sec{display:none}
 /* the drawer a chosen section slides into */
 #shell-drawer{display:none}
-body.shell-mode #shell-drawer{display:flex;flex-direction:column;position:fixed;top:70px;left:74px;right:0;bottom:0;z-index:140;
+body.shell-mode #shell-drawer{display:flex;flex-direction:column;position:fixed;top:70px;left:104px;right:0;bottom:0;z-index:140;
   background:var(--mist);transform:translateX(102%);transition:transform .3s cubic-bezier(.4,0,.2,1);
   box-shadow:-10px 0 34px -14px rgba(0,0,0,.35)}
 body.shell-mode #shell-drawer.open{transform:none}
@@ -134,14 +135,14 @@ body.shell-open #hdr{background:rgba(11,38,24,.97);backdrop-filter:blur(8px);box
 /* logged-out visitors navigate via the side shell — hide the redundant top nav & hamburger (admins keep theirs) */
 body.guest #hdr nav,body.guest #hdr .ham{display:none!important}
 @media(max-width:640px){
-  body.shell-mode .side-shell{width:58px}
-  .shell-btn{width:50px}
-  .shell-btn .i{font-size:1.05rem}
+  body.shell-mode .side-shell{width:60px;gap:3px;padding:12px 0}
+  .shell-btn{width:52px;flex:0 0 auto;min-height:0;gap:3px;padding:9px 0;border-radius:12px}
+  .shell-btn .i{font-size:1.1rem}
   .shell-btn .t{font-size:.44rem}
   body.shell-mode #view-main>.hero,
   body.shell-mode #view-main>#protect,
-  body.shell-mode #view-main>footer{margin-left:58px}
-  body.shell-mode #shell-drawer{left:58px}
+  body.shell-mode #view-main>footer{margin-left:60px}
+  body.shell-mode #shell-drawer{left:60px}
 }
 
 /* IMPACT */
@@ -435,6 +436,11 @@ body.app-mode.tab-home #learn .sec-title,
 body.app-mode.tab-home #learn .sec-body,
 body.app-mode.tab-home #content-grid{display:none!important}
 body.app-mode.tab-home #community-feed-wrap{margin-top:0}
+/* Keep the member Home feed centred (was drifting to the left when coming from the profile) */
+body.app-mode.tab-home #learn{padding-left:1rem;padding-right:1rem}
+body.app-mode.tab-home #learn .inner{max-width:720px;margin:0 auto}
+body.app-mode.tab-home #community-feed-wrap,
+body.app-mode.tab-home #learn .feed-inner{max-width:680px;margin-left:auto;margin-right:auto}
 body.app-mode.tab-learn #community-feed-wrap{display:none!important}
 body.app-mode .reveal{opacity:1!important;transform:none!important}
 body.app-mode{padding-top:58px;background:#eef1ec}
@@ -1323,17 +1329,21 @@ input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)
 video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;background:#000}
 /* Side rail — floats beside the content on large screens; hidden on phones/tablets */
 #ad-rail{display:none}
-@media(min-width:1300px){
-  #ad-rail{display:block;position:fixed;top:96px;right:24px;width:210px;z-index:60;max-height:calc(100vh - 130px);overflow-y:auto}
+@media(min-width:1200px){
+  #ad-rail{display:block;position:fixed;top:92px;right:22px;width:290px;z-index:60;max-height:calc(100vh - 120px);overflow-y:auto}
+  /* keep the hero centered in the space between the shell and the ad rail */
+  body.shell-mode.has-adrail:not(.shell-open) .hero{padding-right:312px}
 }
+/* a panel is open, or admin console — never show the rail there */
+body.shell-open #ad-rail{display:none!important}
 .ad-rail-head{font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);font-weight:800;margin-bottom:.5rem;padding-left:.2rem}
 .ad-rail-card{position:relative;background:linear-gradient(160deg,#0c2a19,#174530);border-radius:12px;overflow:hidden;margin-bottom:12px;color:#fff;border:1px solid rgba(200,168,75,.3)}
-.ad-rail-media{width:100%;max-height:150px;object-fit:cover;display:block;background:#000}
-.ad-rail-card .ad-tag{font-size:.5rem;padding:.15rem .4rem}
-.ad-rail-body{padding:10px 12px}
-.ad-rail-body b{font-family:var(--ff-d);font-size:.9rem;display:block;margin-bottom:.2rem;line-height:1.25}
-.ad-rail-body p{margin:0 0 .5rem;font-size:.74rem;color:rgba(255,255,255,.78);line-height:1.45}
-.ad-rail-body .ad-cta{font-size:.72rem;padding:.35rem .7rem}
+.ad-rail-media{width:100%;max-height:200px;object-fit:cover;display:block;background:#000}
+.ad-rail-card .ad-tag{font-size:.54rem;padding:.16rem .45rem}
+.ad-rail-body{padding:13px 15px}
+.ad-rail-body b{font-family:var(--ff-d);font-size:1.02rem;display:block;margin-bottom:.25rem;line-height:1.25}
+.ad-rail-body p{margin:0 0 .6rem;font-size:.8rem;color:rgba(255,255,255,.8);line-height:1.5}
+.ad-rail-body .ad-cta{font-size:.78rem;padding:.42rem .8rem}
 /* Banner — wide creative below the content */
 .ad-banner-strip{margin:0 0 14px}
 .ad-banner-card{display:flex;align-items:stretch;gap:0;background:linear-gradient(120deg,#0c2a19,#174530);border:1px solid rgba(200,168,75,.35);border-radius:14px;overflow:hidden;margin-bottom:10px;color:#fff}

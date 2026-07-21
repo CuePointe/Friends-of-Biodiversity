@@ -746,11 +746,15 @@ function _railSlotHTML(a,slot){
 }
 function renderAdRail(){
   let rail=document.getElementById('ad-rail');
-  // Members only — never in the admin console
-  const show=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  // Show for signed-in members on their home/learn tabs, AND for public visitors on the shell home (desktop).
+  const memberShow=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  const guestShow=document.body.classList.contains('shell-mode')&&!document.body.classList.contains('shell-open');
+  const show=memberShow||guestShow;
   const ads=adsFor('rail');
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
-  if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
+  const visible=!!(ads.length&&show);
+  document.body.classList.toggle('has-adrail',visible);
+  if(!visible){rail.style.display='none';rail.innerHTML='';return;}
   rail.style.display='';
   const n=Math.min(AD_RAIL_SLOTS,ads.length);
   rail.innerHTML='<div class="ad-rail-head">Sponsored</div>'+
