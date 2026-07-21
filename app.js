@@ -746,11 +746,15 @@ function _railSlotHTML(a,slot){
 }
 function renderAdRail(){
   let rail=document.getElementById('ad-rail');
-  // Members only — never in the admin console
-  const show=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  // Show for signed-in members on their home/learn tabs, AND for public visitors on the shell home (desktop).
+  const memberShow=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
+  const guestShow=document.body.classList.contains('shell-mode')&&!document.body.classList.contains('shell-open');
+  const show=memberShow||guestShow;
   const ads=adsFor('rail');
   if(!rail){rail=document.createElement('aside');rail.id='ad-rail';document.body.appendChild(rail);}
-  if(!ads.length||!show){rail.style.display='none';rail.innerHTML='';return;}
+  const visible=!!(ads.length&&show);
+  document.body.classList.toggle('has-adrail',visible);
+  if(!visible){rail.style.display='none';rail.innerHTML='';return;}
   rail.style.display='';
   const n=Math.min(AD_RAIL_SLOTS,ads.length);
   rail.innerHTML='<div class="ad-rail-head">Sponsored</div>'+
@@ -1138,7 +1142,7 @@ function donateGate(){
   const ref=(document.getElementById('donate-payref').value||'').trim();
   const btn=document.getElementById('donate-submit');
   const note=document.getElementById('donate-locknote');
-  if(btn){btn.disabled=!ref;btn.textContent=ref?'✓ Log my donation':'🔒 Log my donation';}
+  if(btn){btn.disabled=!ref;btn.textContent=ref?'✓ Submit payment for verification':'🔒 Submit payment for verification';}
   if(note)note.style.display=ref?'none':'';
 }
 async function submitDonation(){
@@ -1150,7 +1154,7 @@ async function submitDonation(){
   const btn=document.getElementById('donate-submit');if(btn){btn.disabled=true;btn.textContent='Saving…';}
   const ref=(_donChan?_donChan+' · ':'')+payref;
   const{error}=await sb.from('donations').insert({campaign_id:_donateCampaign,donor_name:donor,member_id:currentUser?currentUser.id:null,amount,payref:ref,source:_donateSource});
-  if(btn){btn.disabled=false;btn.textContent='✓ Log my donation';}
+  if(btn){btn.disabled=false;btn.textContent='✓ Submit payment for verification';}
   if(error){toast('⚠ Could not record the donation.');console.error(error);return}
   closeModal('m-donate');
   // Auto-logged recap — the member sees exactly what the system recorded
@@ -1158,14 +1162,14 @@ async function submitDonation(){
   const kv=(k,v)=>'<div class="don-krow"><span>'+k+'</span><b>'+esc(v)+'</b></div>';
   document.getElementById('detail-body').innerHTML=
     '<div class="dtl-hero" style="height:110px;background:linear-gradient(135deg,#153d28,#2D6A4F)"><div class="dtl-hero-grad"></div>'+
-      '<div class="dtl-hero-txt"><span class="dtl-kind">✅ Recorded automatically</span><h2>Thank you, '+esc(donor.split(' ')[0])+'!</h2></div></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">🕓 Submitted for verification</span><h2>Thank you, '+esc(donor.split(' ')[0])+'!</h2></div></div>'+
     '<div class="dtl-body">'+
-      '<p class="dtl-blurb" style="margin-bottom:.8rem">Your donation was logged and awaits admin confirmation against the payment statement.</p>'+
+      '<p class="dtl-blurb" style="margin-bottom:.8rem">Your payment claim has been submitted. <b>It does not count yet</b> — the UBF team first verifies your reference against the '+esc(_donChan||'payment')+' statement. Once the payment is found, your donation is confirmed and added to the cause. Claims with no matching payment are rejected.</p>'+
       kv('Cause',c?c.title:'UBF Conservation Fund')+
       (_donateSource?kv('For',_donateSource):'')+
       kv('Amount','UGX '+amount.toLocaleString())+
       kv('Reference',ref)+
-      kv('Status','Pending ✓')+
+      kv('Status','Awaiting payment verification 🕓')+
       '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
     '</div>';
   openModal('m-detail');
@@ -1176,9 +1180,19 @@ async function approveDonation(id){
   if(!confirm('Confirm donation of UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'donor')+'?'))return;
   await sb.from('donations').update({status:'approved'}).eq('id',id);
   if(dn.campaign_id){const c=CAMPAIGNS.find(x=>x.id===dn.campaign_id);if(c)await sb.from('campaigns').update({raised:(c.raised||0)+(dn.amount||0)}).eq('id',c.id);}
-  audit('Confirmed donation','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||''));
+  audit('Verified donation payment','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||''));
   await loadCampaigns();renderCampaignsAdmin();renderMemberView();
-  toast('✅ Donation confirmed and added to the campaign.');
+  toast('✅ Payment verified — donation now counts.');
+}
+// A claim whose payment can't be found in the statement gets rejected — it never counted
+async function rejectDonation(id){
+  const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
+  if(!dn)return;
+  if(!confirm('Reject this claim? UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'donor')+' ('+(dn.payref||'no ref')+') — no matching payment found.'))return;
+  await sb.from('donations').update({status:'rejected'}).eq('id',id);
+  audit('Rejected donation claim','UGX '+(dn.amount||0).toLocaleString()+' from '+(dn.donor_name||'')+' · '+(dn.payref||'no ref'));
+  renderCampaignsAdmin();
+  toast('✗ Claim rejected — it was never counted.');
 }
 let _campEditId=null;
 function resetCampForm(){_campEditId=null;['camp-title','camp-blurb','camp-goal','camp-img','camp-end'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});const a=document.getElementById('camp-active');if(a)a.checked=true;const b=document.getElementById('camp-save');if(b)b.textContent='Create fundraiser';}
@@ -1203,7 +1217,10 @@ async function renderCampaignsAdmin(){
   const dl=document.getElementById('donations-pending-list');
   if(dl){
     const{data}=await sb.from('donations').select('*').eq('status','pending').order('created_at',{ascending:false});
-    dl.innerHTML=(data&&data.length)?data.map(d=>'<div class="pa-row"><span class="pa-thumb">💚</span><div class="pa-info"><strong>UGX '+((d.amount||0).toLocaleString())+' — '+esc(d.donor_name||'Anonymous')+'</strong><span>'+(d.payref?'Ref: '+esc(d.payref):'no reference')+' · '+String(d.created_at||'').slice(0,10)+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveDonation(\''+d.id+'\')">✓ Confirm</button></div>').join(''):'<p style="font-size:.85rem;color:var(--muted)">No pending donations.</p>';
+    dl.innerHTML=(data&&data.length)?
+      '<p style="font-size:.8rem;color:var(--muted);line-height:1.55;margin-top:0">These are <b>unverified claims</b> — they count nowhere until you check the reference against the MTN/Airtel/Stanbic statement and press <b>✓ Verify</b>. No matching payment? Press <b>✗ Reject</b>.</p>'+
+      data.map(d=>'<div class="pa-row"><span class="pa-thumb">💚</span><div class="pa-info"><strong>UGX '+((d.amount||0).toLocaleString())+' — '+esc(d.donor_name||'Anonymous')+'</strong><span>'+(d.payref?'Ref: '+esc(d.payref):'⚠ no reference')+(d.source?' · '+esc(d.source):'')+' · '+String(d.created_at||'').slice(0,10)+'</span></div><button class="btn btn-canopy btn-sm" onclick="approveDonation(\''+d.id+'\')">✓ Verify payment</button><button class="btn btn-danger btn-sm" onclick="rejectDonation(\''+d.id+'\')">✗ Reject</button></div>').join('')
+      :'<p style="font-size:.85rem;color:var(--muted)">No claims awaiting verification.</p>';
   }
 }
 
@@ -1638,6 +1655,44 @@ function showView(v){
   if(v==='admin')renderAdminAll();
 }
 
+/* ═══ SIDE SHELL — home = hero + gallery only; other sections slide into a drawer ═══ */
+var _shellMoved=[];
+function openShell(panel,title){
+  // For signed-in members browsing via Explore, the shell is off — just scroll to the section.
+  if(!document.body.classList.contains('shell-mode')){
+    const first=document.querySelector('#view-main > section.shell-sec[data-panel="'+panel+'"]');
+    if(first)first.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  closeShell(true); // restore any currently-open panel first (no scroll)
+  const body=document.getElementById('shell-drawer-body');
+  const drawer=document.getElementById('shell-drawer');
+  if(!body||!drawer)return;
+  const secs=[...document.querySelectorAll('#view-main > section.shell-sec[data-panel="'+panel+'"]')];
+  if(!secs.length)return;
+  _shellMoved=secs.map(s=>({node:s,parent:s.parentNode,next:s.nextSibling}));
+  secs.forEach(s=>{s.querySelectorAll('.reveal').forEach(e=>e.classList.add('visible'));body.appendChild(s);});
+  const t=document.getElementById('shell-title');if(t)t.textContent=title||'';
+  body.scrollTop=0;
+  document.body.classList.add('shell-open');
+  drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
+  document.querySelectorAll('.side-shell .shell-btn').forEach(b=>b.classList.remove('on'));
+  const btn=document.querySelector('.side-shell .shell-btn[data-panel="'+panel+'"]');if(btn)btn.classList.add('on');
+}
+function closeShell(silent){
+  if(_shellMoved&&_shellMoved.length){_shellMoved.forEach(m=>{m.parent.insertBefore(m.node,m.next);});}
+  _shellMoved=[];
+  const drawer=document.getElementById('shell-drawer');
+  if(drawer){drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');}
+  document.body.classList.remove('shell-open');
+  if(!silent){
+    document.querySelectorAll('.side-shell .shell-btn').forEach(b=>b.classList.remove('on'));
+    const h=document.querySelector('.side-shell .shell-btn[data-shell="home"]');if(h)h.classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function shellHome(){closeShell();}
+
 /* ═══ APP SHELL — full-screen app mode for signed-in members.
    The marketing site disappears; tabs switch between real screens. ═══ */
 let _appTab='home';
@@ -1820,6 +1875,11 @@ function updateNav(){
   const memberMode=in_&&!adm;
   document.body.classList.toggle('has-tabbar',memberMode);
   document.body.classList.toggle('app-mode',memberMode);
+  // Side shell is the public visitor experience — off for signed-in members.
+  if(memberMode)closeShell(true);
+  document.body.classList.toggle('shell-mode',!memberMode);
+  // Logged-out visitors navigate via the side shell, so declutter the top nav for them.
+  document.body.classList.toggle('guest',!in_);
   if(!memberMode)document.body.classList.remove('tab-home','tab-learn');
   const av=document.getElementById('ah-avatar');
   if(av&&memberMode){
@@ -2414,16 +2474,16 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+accessible.length+'</span><span class="lbl">Resources Unlocked</span></div>'+
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
-  document.getElementById('mem-body').innerHTML=
-    '<div class="mem-split">'+
-    // LEFT rail (LinkedIn-style): Discover + Fundraisers, level with the buttons
-    '<aside class="mem-aside">'+
+  // Discover Members — lifted into its own rail (level with the wallpaper on desktop; a card under the profile on mobile)
+  const discoverEl=document.getElementById('mem-discover');
+  if(discoverEl)discoverEl.innerHTML=
       '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
       '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
       '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
       '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
       (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
-    '</aside>'+
+      '';
+  document.getElementById('mem-body').innerHTML=
     '<div class="mem-main">'+
     renewBannerHTML(u)+
     // Benefits — clean chips
@@ -2471,7 +2531,7 @@ function renderMemberView(){
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>'+
-    '</div></div>'; // close .mem-main and .mem-split
+    '</div>'; // close .mem-main
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
