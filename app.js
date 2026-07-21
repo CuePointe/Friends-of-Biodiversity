@@ -704,6 +704,15 @@ function adOpen(id){
   if(u.charAt(0)==='#'){
     const sec=u.slice(1).toLowerCase();
     if(sec==='payment'||sec==='pay'||sec==='pay-now'){goToPayment();return;}
+    if(sec==='join'||sec==='member'||sec==='signup'||sec==='sign-up'){openModal('m-login');return;}
+    // In the public shell, sections live behind panels — open the matching panel
+    if(document.body.classList.contains('shell-mode')){
+      const target=document.querySelector('#view-main > section.shell-sec[data-panel="'+sec+'"]')||document.getElementById(sec);
+      const panelMap={greencard:['greencard','Green Card'],themes:['programmes','Programmes'],learn:['learning','Learning Exchange'],impact:['footprint','Our Footprint'],wallfame:['wallfame','Wall of Fame']};
+      if(panelMap[sec]){openShell(panelMap[sec][0],panelMap[sec][1]);return;}
+      const dp=target&&target.getAttribute&&target.getAttribute('data-panel');
+      if(dp){openShell(dp,sec);return;}
+    }
     const e=document.getElementById(u.slice(1));
     if(e){e.scrollIntoView({behavior:'smooth'});}else{goToPayment();}
   }else{
@@ -744,7 +753,17 @@ function _railSlotHTML(a,slot){
     '<button class="rail-x" onclick="railDismiss('+slot+')" aria-label="Close">✕</button>'+
     railAdHTML(a)+'</div>';
 }
+// Footprint landscape media — admin-managed via an ad with placement "footprint"
+function renderFootprintMedia(){
+  const el=document.getElementById('footprint-media');if(!el)return;
+  const ads=adsFor('footprint');
+  if(!ads.length)return; // keep the default landscape fallback already in the HTML
+  const a=ads[0];const media=_adMedia(a,'');
+  if(!media)return;
+  el.innerHTML=media+(a.title?'<div class="fp-media-cap">'+esc(a.title)+'</div>':'');
+}
 function renderAdRail(){
+  renderFootprintMedia();
   let rail=document.getElementById('ad-rail');
   // Show for signed-in members on their home/learn tabs, AND for public visitors on the shell home (desktop).
   const memberShow=currentUser&&currentUser.role==='member'&&(_appTab==='home'||_appTab==='learn'||!document.body.classList.contains('app-mode'));
@@ -936,7 +955,7 @@ function renderAdsAdmin(){
   const el=document.getElementById('ads-admin-list');if(!el)return;
   el.innerHTML=ADS.length?ADS.map(a=>{
     const[st,col]=_adStatus(a);
-    const slot={feed:'📰 Feed',rail:'📐 Side rail',banner:'🪧 Banner',popup:'🎬 Pop-up',all:'🌐 Everywhere'}[a.placement||'feed'];
+    const slot={feed:'📰 Feed',rail:'📐 Side rail',banner:'🪧 Banner',popup:'🎬 Pop-up',footprint:'🌍 Footprint media',all:'🌐 Everywhere'}[a.placement||'feed'];
     const media=(a.media_type==='video'&&a.video_url)?'🎬 video':(a.image_url?'🖼 image':'📝 text');
     return '<div class="pa-row"><span class="pa-thumb">'+((a.media_type==='video'&&a.video_url)?'🎬':'📣')+'</span>'+
       '<div class="pa-info"><strong>'+esc(a.title)+'</strong><span style="color:'+col+';font-weight:700">'+st+'</span><span> · '+slot+' · '+media+' · '+(a.starts_at||'—')+' → '+(a.ends_at||'no end')+' · 👁 '+(a.impressions||0)+' views · 🖱 '+(a.clicks||0)+' clicks</span></div>'+
@@ -1537,7 +1556,7 @@ function renderSightingsAdmin(){
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents(),loadSightings()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents(),loadSightings(),loadSubscribers()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -1575,7 +1594,8 @@ function subscribeRealtime(){
   sb.channel('public:member_posts').on('postgres_changes',{event:'*',schema:'public',table:'member_posts'},async()=>{await loadPosts();renderPosts();renderAdminPosts();updateNotifBadge();}).subscribe();
   sb.channel('public:post_comments').on('postgres_changes',{event:'*',schema:'public',table:'post_comments'},async()=>{await loadPosts();renderPosts();}).subscribe();
   sb.channel('public:member_messages').on('postgres_changes',{event:'*',schema:'public',table:'member_messages'},async()=>{await loadMessages();updateChatBadge();renderChats();renderChatThread();}).subscribe();
-  sb.channel('public:ads').on('postgres_changes',{event:'*',schema:'public',table:'ads'},async()=>{await loadAds();renderPosts();renderAdsAdmin();}).subscribe();
+  sb.channel('public:ads').on('postgres_changes',{event:'*',schema:'public',table:'ads'},async()=>{await loadAds();renderPosts();renderAdsAdmin();renderFootprintMedia();}).subscribe();
+  sb.channel('public:subscribers').on('postgres_changes',{event:'*',schema:'public',table:'subscribers'},async()=>{await loadSubscribers();renderSubscribersAdmin();}).subscribe();
   sb.channel('public:sightings').on('postgres_changes',{event:'*',schema:'public',table:'sightings'},async()=>{await loadSightings();renderSightingsAdmin();if(document.getElementById('m-sightmap').classList.contains('open'))renderSightMap();}).subscribe();
 }
 
@@ -2019,8 +2039,15 @@ function renderThemes(){
     tabsEl.appendChild(btn);
     const panel=document.createElement('div');panel.className='theme-panel'+(i===0?' active':'');panel.id='tp-'+th.id;
     const wins=WINDOWS_DATA.filter(w=>w.theme===th.id);
-    panel.innerHTML='<p style="font-size:.87rem;color:var(--muted);line-height:1.72;margin-bottom:1.2rem;max-width:680px">'+th.icon+' <strong style="color:var(--canopy)">'+th.label+'</strong> — one of UBF\'s three core thematic investment priorities.</p><div class="prog-grid">'+
-      wins.map(w=>'<div class="prog-card"><div class="prog-icon">'+w.icon+'</div><span class="prog-tag">Programme Window</span><div class="prog-title">'+w.name+'</div><p class="prog-desc">'+w.desc+'</p></div>').join('')+'</div>';
+    panel.innerHTML='<p class="theme-lead">'+th.icon+' <strong>'+th.label+'</strong> — '+esc(th.blurb||'one of UBF\'s three core thematic investment priorities, turning support into measurable impact on the ground.')+'</p><div class="prog-grid">'+
+      wins.map(w=>'<div class="prog-card">'+
+        '<div class="prog-icon">'+w.icon+'</div>'+
+        '<span class="prog-tag">Programme Window</span>'+
+        '<div class="prog-title">'+w.name+'</div>'+
+        '<p class="prog-desc">'+w.desc+'</p>'+
+        '<div class="prog-cta-row"><button class="prog-cta" onclick="openShell(\'greencard\',\'Green Card\')">💚 Support this work →</button></div>'+
+      '</div>').join('')+'</div>'+
+      '<div class="theme-quote">“Because of UBF, our forest is coming back — and our children will know it too.” <span>— a community voice from the Albertine Rift</span></div>';
     panelsEl.appendChild(panel);
   });
 }
@@ -3257,7 +3284,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();renderSightingsAdmin();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();renderSightingsAdmin();renderSubscribersAdmin();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
@@ -3753,6 +3780,7 @@ function showAdminPanel(btn){
   document.querySelectorAll('.adm-panel').forEach(p=>p.classList.remove('active'));
   const panel=document.getElementById(btn.dataset.ap);
   if(panel)panel.classList.add('active');
+  if(btn.dataset.ap==='ap-subscribers')renderSubscribersAdmin();// marks them seen
   toggleAdmSidebar(false);// close the drawer on mobile
   window.scrollTo({top:0,behavior:'smooth'});
 }
@@ -3992,8 +4020,54 @@ function dismissEP(){document.getElementById('ep').classList.remove('show');}
 async function subscribeEP(){
   const em=document.getElementById('ep-email').value.trim();
   if(!em||!em.includes('@')){toast('⚠ Enter a valid email address.');return}
-  await logEmail('Newsletter Subscription','New subscriber: '+em+' · '+new Date().toLocaleDateString());
-  dismissEP();toast('✅ Subscribed! You will receive UBF updates.');
+  const nm=(document.getElementById('ep-name')&&document.getElementById('ep-name').value||'').trim();
+  const inst=(document.getElementById('ep-institution')&&document.getElementById('ep-institution').value||'').trim();
+  const{error}=await sb.from('subscribers').insert({email:em,name:nm||null,institution:inst||null});
+  if(error){console.error('subscribe',error);toast('⚠ Could not subscribe — please try again.');return}
+  await logEmail('Newsletter Subscription','New subscriber: '+em+(inst?' · '+inst:'')+' · '+new Date().toLocaleDateString());
+  dismissEP();
+  toast(inst?('✅ Thank you, '+inst+' — you\'re subscribed!'):'✅ Subscribed! You\'ll receive UBF updates.');
+  const e1=document.getElementById('ep-email');if(e1)e1.value='';
+  const e2=document.getElementById('ep-name');if(e2)e2.value='';
+  const e3=document.getElementById('ep-institution');if(e3)e3.value='';
+  try{await loadSubscribers();renderSubscribersAdmin();}catch(err){}
+}
+/* ═══ SUBSCRIBERS — shared list the admin can see (newsletter + institutions) ═══ */
+let SUBSCRIBERS=[];
+async function loadSubscribers(){
+  const{data,error}=await sb.from('subscribers').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadSubscribers',error);return}
+  SUBSCRIBERS=data||[];
+}
+function renderSubscribersAdmin(){
+  const badge=document.getElementById('subs-nav-badge');
+  const seen=parseInt(LS.get('subs_seen_count','0'),10)||0;
+  const unseen=Math.max(0,SUBSCRIBERS.length-seen);
+  if(badge){badge.textContent=unseen;badge.style.display=unseen>0?'':'none';}
+  const cnt=document.getElementById('subs-count');if(cnt)cnt.textContent='('+SUBSCRIBERS.length+')';
+  const el=document.getElementById('subscribers-list');if(!el)return;
+  // viewing the panel marks them seen
+  if(document.getElementById('ap-subscribers')&&document.getElementById('ap-subscribers').classList.contains('active')){
+    LS.set('subs_seen_count',String(SUBSCRIBERS.length));if(badge)badge.style.display='none';
+  }
+  if(!SUBSCRIBERS.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">No sign-ups yet.</p>';return}
+  el.innerHTML='<div class="subs-table">'+SUBSCRIBERS.map(function(s){
+    return '<div class="subs-row">'+
+      '<div class="subs-main"><b>'+esc(s.email)+'</b>'+(s.name?'<span class="subs-name">'+esc(s.name)+'</span>':'')+'</div>'+
+      (s.institution?'<span class="subs-inst">🏢 '+esc(s.institution)+'</span>':'<span class="subs-inst subs-ind">Individual</span>')+
+      '<span class="subs-date">'+new Date(s.created_at).toLocaleDateString()+'</span>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function exportSubscribers(){
+  if(!SUBSCRIBERS.length){toast('No subscribers to export yet.');return}
+  const rows=[['Email','Name','Institution','Date']].concat(SUBSCRIBERS.map(function(s){
+    return [s.email||'',s.name||'',s.institution||'',new Date(s.created_at).toISOString().slice(0,10)];
+  }));
+  const csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download='ubf-subscribers.csv';a.click();URL.revokeObjectURL(url);
+  toast('✅ Subscribers exported.');
 }
 
 /* ═══ COMMUNITY POSTS ═══ */
