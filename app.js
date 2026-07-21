@@ -1712,6 +1712,11 @@ function closeShell(silent){
   }
 }
 function shellHome(){closeShell();}
+// Donate without joining — send them to the Conservation Gallery, where any species/place can be supported
+function openDonateGallery(){
+  closeShell(true);
+  setTimeout(function(){const e=document.getElementById('protect');if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},300);
+}
 
 /* ═══ APP SHELL — full-screen app mode for signed-in members.
    The marketing site disappears; tabs switch between real screens. ═══ */
