@@ -96,6 +96,54 @@ nav ul a.adm-link{background:rgba(185,242,255,.1);color:#7EB8C9;border:1px solid
   .hero-acts .btn-ghost{flex:1 1 40%;justify-content:center;padding:.7rem 1rem}
 }
 
+/* ═══ SIDE SHELL — app-style left rail; home shows only hero + gallery, the rest lives behind buttons ═══ */
+.side-shell{display:none}
+body.shell-mode .side-shell{display:flex;flex-direction:column;align-items:center;gap:2px;
+  position:fixed;top:70px;left:0;bottom:0;width:74px;z-index:150;
+  background:linear-gradient(180deg,#0B2618,#123a26);padding:14px 0;overflow-y:auto;
+  box-shadow:4px 0 22px -12px rgba(0,0,0,.5)}
+.shell-btn{width:62px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 0;border:none;background:none;border-radius:13px;color:rgba(255,255,255,.82);cursor:pointer;transition:background .18s,color .18s}
+.shell-btn .i{font-size:1.15rem;line-height:1}
+.shell-btn .t{font-size:.5rem;font-weight:700;letter-spacing:.02em;text-align:center;line-height:1.12}
+.shell-btn:hover{background:rgba(255,255,255,.08);color:#fff}
+.shell-btn.on{background:rgba(200,168,75,.2);color:var(--gold-lt)}
+.shell-btn.join{background:var(--gold);margin-top:6px}
+.shell-btn.join,.shell-btn.join .i,.shell-btn.join .t{color:var(--canopy)}
+.shell-btn.join:hover{background:var(--gold-lt)}
+/* main home content shifts right of the rail */
+body.shell-mode #view-main>.hero,
+body.shell-mode #view-main>#protect,
+body.shell-mode #view-main>footer{margin-left:74px}
+/* hide the secondary sections from the home scroll */
+body.shell-mode #view-main>section.shell-sec{display:none}
+/* the drawer a chosen section slides into */
+#shell-drawer{display:none}
+body.shell-mode #shell-drawer{display:flex;flex-direction:column;position:fixed;top:70px;left:74px;right:0;bottom:0;z-index:140;
+  background:var(--mist);transform:translateX(102%);transition:transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow:-10px 0 34px -14px rgba(0,0,0,.35)}
+body.shell-mode #shell-drawer.open{transform:none}
+.shell-drawer-bar{flex-shrink:0;display:flex;align-items:center;gap:12px;padding:10px 16px;background:#fff;border-bottom:1px solid var(--border)}
+.sd-back{border:none;background:none;color:var(--canopy-lt);font-weight:800;font-size:.82rem;cursor:pointer}
+.sd-title{font-family:var(--ff-d);color:var(--canopy);font-size:1.05rem;font-weight:700;margin:0 auto}
+.sd-x{border:none;background:none;color:var(--muted);font-size:1.05rem;cursor:pointer;width:34px;height:34px;border-radius:50%}
+.sd-x:hover{background:rgba(0,0,0,.05)}
+.shell-drawer-body{flex:1;overflow-y:auto;overflow-x:hidden}
+.shell-drawer-body>section{margin:0!important}
+/* solid header while a panel is open so nothing peeks above the drawer */
+body.shell-open #hdr{background:rgba(11,38,24,.97);backdrop-filter:blur(8px);box-shadow:0 2px 20px rgba(0,0,0,.35)}
+/* logged-out visitors navigate via the side shell — hide the redundant top nav & hamburger (admins keep theirs) */
+body.guest #hdr nav,body.guest #hdr .ham{display:none!important}
+@media(max-width:640px){
+  body.shell-mode .side-shell{width:58px}
+  .shell-btn{width:50px}
+  .shell-btn .i{font-size:1.05rem}
+  .shell-btn .t{font-size:.44rem}
+  body.shell-mode #view-main>.hero,
+  body.shell-mode #view-main>#protect,
+  body.shell-mode #view-main>footer{margin-left:58px}
+  body.shell-mode #shell-drawer{left:58px}
+}
+
 /* IMPACT */
 #impact{background:var(--canopy)}
 .stats-strip{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:1.5px;background:rgba(200,168,75,.2);border-radius:var(--r);overflow:hidden;margin-top:2.5rem}
@@ -725,10 +773,11 @@ body.app-mode.explore-mode #app-fab{display:none!important}
 .mdir-msg{width:30px;height:30px;flex:none;border-radius:50%;border:1px solid var(--border);background:var(--white);color:var(--canopy-lt);font-size:.82rem;cursor:pointer;display:grid;place-items:center;transition:.15s}
 .mdir-msg:hover{background:var(--canopy);color:#fff;border-color:var(--canopy)}
 /* Compact rows inside the narrow left rail so names stay readable */
-.mem-aside .mdir-card{padding:.55rem .6rem;gap:.45rem}
-.mem-aside .mdir-av{width:38px;height:38px}
-.mem-aside .mdir-follow{font-size:.68rem;padding:.3rem .5rem}
-.mem-aside .mdir-actions{gap:.3rem}
+#mem-discover .mdir-card{padding:.55rem .6rem;gap:.45rem}
+#mem-discover .mdir-av{width:38px;height:38px}
+#mem-discover .mdir-follow{font-size:.68rem;padding:.3rem .5rem}
+#mem-discover .mdir-actions{gap:.3rem}
+#mem-discover .members-dir{grid-template-columns:1fr}
 /* ── Accountability Dashboard (member-facing) ── */
 .adb-head{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin:0 0 1.1rem}
 .adb-head-l{display:flex;align-items:center;gap:.85rem}
@@ -913,12 +962,14 @@ body.app-mode.explore-mode #app-fab{display:none!important}
 /* MEMBER DASHBOARD */
 #view-member{background:var(--mist)}
 /* ── MEMBER DASHBOARD — REDESIGNED ── */
-.mem-hdr{background:var(--white);padding:0;border-bottom:1px solid var(--border)}
+/* Member shell — profile + feed + a lifted Discover rail, all as contained app cards */
+.mem-shell{max-width:760px;margin:0 auto;padding:1.1rem}
+.mem-hdr{background:transparent;padding:0;border:none}
 .mem-hdr h1{display:none}/* greeting moved into profile card */
 .mem-hdr>p{display:none}/* sub moved into profile card */
-.mem-body{padding:1.5rem;max-width:720px;margin:0 auto}
-/* Stats strip — inline metadata, not boxes */
-.mem-strip{display:flex;gap:0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--white)}
+.mem-body{padding:1.2rem 0 0;max-width:none;margin:0}
+/* Stats strip — inline metadata as a contained rounded card */
+.mem-strip{display:flex;gap:0;background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-top:.9rem;box-shadow:0 10px 30px -24px rgba(0,0,0,.35)}
 .mem-mini{flex:1;padding:.85rem .5rem;text-align:center;border-right:1px solid var(--border)}
 .mem-mini:last-child{border-right:none}
 .mem-mini .val{font-size:1.1rem;font-weight:700;color:var(--canopy);font-family:var(--ff-d);display:block}
@@ -1124,9 +1175,10 @@ input,select,textarea{border-radius:10px!important;transition:border-color .15s,
 input:focus,select:focus,textarea:focus{box-shadow:0 0 0 3px rgba(45,106,79,.12)!important}
 
 /* ── LINKEDIN-STYLE PROFILE HEADER ── */
-.profile-header-card{background:var(--white);overflow:hidden;border-bottom:1px solid var(--border)}
-.profile-wallpaper{height:180px;position:relative;background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)}
-.profile-avatar-row{display:flex;justify-content:space-between;align-items:flex-end;padding:0 1.25rem;margin-top:-40px;margin-bottom:.5rem}
+.profile-header-card{background:var(--white);overflow:hidden;border:1px solid var(--border);border-radius:18px;box-shadow:0 14px 40px -26px rgba(0,0,0,.4)}
+/* Contained, rounded wallpaper banner (app look — not a full-bleed website header) */
+.profile-wallpaper{height:150px;position:relative;margin:10px 10px 0;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#0B2618 0%,#2D6A4F 60%,#C8A84B 100%)}
+.profile-avatar-row{display:flex;justify-content:space-between;align-items:flex-end;padding:0 1.25rem;margin-top:-38px;margin-bottom:.5rem}
 .profile-avatar-wrap{position:relative}
 .profile-avatar-img{width:80px;height:80px;border-radius:50%;border:4px solid #fff;object-fit:cover;box-shadow:0 2px 12px rgba(0,0,0,.2);display:flex;align-items:center;justify-content:center}
 .profile-avatar-init{background:linear-gradient(135deg,var(--canopy-lt),var(--canopy));font-family:var(--ff-d);font-size:1.8rem;font-weight:700;color:var(--gold)}
@@ -1411,22 +1463,19 @@ video.ad-img{width:100%;max-height:220px;object-fit:cover;display:block;backgrou
 .footer-col a:hover::before{opacity:1;left:-4px}
 .footer-sub{color:var(--gold-lt,#E4C97A) !important;font-weight:700}
 
-/* ═══ MEMBER PROFILE — Discover docked as a distinct far side shell (LinkedIn/FB) ═══ */
-.mem-split{display:block}
+/* ═══ MEMBER PROFILE — Discover lifted up level with the wallpaper (LinkedIn/FB) ═══ */
 .mem-main{min-width:0}
-/* Desktop: Discover is a LEFT rail (LinkedIn), top-aligned with the buttons */
+/* Discover card (right rail on desktop, stacked card on mobile) */
+#mem-discover{background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;
+  padding:1.15rem 1.2rem;box-shadow:0 14px 40px -24px rgba(0,0,0,.35);margin-bottom:1.4rem}
+#mem-discover:empty{display:none}
+/* Desktop: two columns — profile + feed on the left, Discover lifted to the top-right */
 @media(min-width:1040px){
-  .mem-body{max-width:1160px}
-  .mem-split{display:grid;grid-template-columns:320px minmax(0,1fr);gap:2.4rem;align-items:start}
-  .mem-aside{order:1;position:sticky;top:84px;align-self:start;
-    background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;
-    padding:1.15rem 1.2rem;box-shadow:0 14px 40px -22px rgba(0,0,0,.35)}
-  .mem-main{order:2;min-width:0}
-  .mem-aside .members-dir{max-height:46vh;overflow-y:auto}
-}
-/* Below desktop, the left rail drops to its own full-width card above the feed */
-@media(max-width:1039px){
-  .mem-aside{margin-bottom:1.5rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;padding:1.15rem 1.2rem;box-shadow:0 10px 30px -20px rgba(0,0,0,.3)}
+  .mem-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;column-gap:2.4rem;align-items:start;max-width:1160px;margin:0 auto;padding:1.5rem}
+  .mem-shell .mem-hdr{grid-column:1;grid-row:1}
+  .mem-shell #mem-discover{grid-column:2;grid-row:1 / span 3;position:sticky;top:84px;margin-bottom:0}
+  .mem-shell .mem-body{grid-column:1;grid-row:2;padding:1.4rem 0 0;max-width:none;margin:0}
+  #mem-discover .members-dir{max-height:52vh;overflow-y:auto}
 }
 
 /* Clickable, scrollable Announcements & Financial Reports (latest on top) */

@@ -1651,6 +1651,44 @@ function showView(v){
   if(v==='admin')renderAdminAll();
 }
 
+/* ═══ SIDE SHELL — home = hero + gallery only; other sections slide into a drawer ═══ */
+var _shellMoved=[];
+function openShell(panel,title){
+  // For signed-in members browsing via Explore, the shell is off — just scroll to the section.
+  if(!document.body.classList.contains('shell-mode')){
+    const first=document.querySelector('#view-main > section.shell-sec[data-panel="'+panel+'"]');
+    if(first)first.scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  closeShell(true); // restore any currently-open panel first (no scroll)
+  const body=document.getElementById('shell-drawer-body');
+  const drawer=document.getElementById('shell-drawer');
+  if(!body||!drawer)return;
+  const secs=[...document.querySelectorAll('#view-main > section.shell-sec[data-panel="'+panel+'"]')];
+  if(!secs.length)return;
+  _shellMoved=secs.map(s=>({node:s,parent:s.parentNode,next:s.nextSibling}));
+  secs.forEach(s=>{s.querySelectorAll('.reveal').forEach(e=>e.classList.add('visible'));body.appendChild(s);});
+  const t=document.getElementById('shell-title');if(t)t.textContent=title||'';
+  body.scrollTop=0;
+  document.body.classList.add('shell-open');
+  drawer.classList.add('open');drawer.setAttribute('aria-hidden','false');
+  document.querySelectorAll('.side-shell .shell-btn').forEach(b=>b.classList.remove('on'));
+  const btn=document.querySelector('.side-shell .shell-btn[data-panel="'+panel+'"]');if(btn)btn.classList.add('on');
+}
+function closeShell(silent){
+  if(_shellMoved&&_shellMoved.length){_shellMoved.forEach(m=>{m.parent.insertBefore(m.node,m.next);});}
+  _shellMoved=[];
+  const drawer=document.getElementById('shell-drawer');
+  if(drawer){drawer.classList.remove('open');drawer.setAttribute('aria-hidden','true');}
+  document.body.classList.remove('shell-open');
+  if(!silent){
+    document.querySelectorAll('.side-shell .shell-btn').forEach(b=>b.classList.remove('on'));
+    const h=document.querySelector('.side-shell .shell-btn[data-shell="home"]');if(h)h.classList.add('on');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+}
+function shellHome(){closeShell();}
+
 /* ═══ APP SHELL — full-screen app mode for signed-in members.
    The marketing site disappears; tabs switch between real screens. ═══ */
 let _appTab='home';
@@ -1833,6 +1871,11 @@ function updateNav(){
   const memberMode=in_&&!adm;
   document.body.classList.toggle('has-tabbar',memberMode);
   document.body.classList.toggle('app-mode',memberMode);
+  // Side shell is the public visitor experience — off for signed-in members.
+  if(memberMode)closeShell(true);
+  document.body.classList.toggle('shell-mode',!memberMode);
+  // Logged-out visitors navigate via the side shell, so declutter the top nav for them.
+  document.body.classList.toggle('guest',!in_);
   if(!memberMode)document.body.classList.remove('tab-home','tab-learn');
   const av=document.getElementById('ah-avatar');
   if(av&&memberMode){
@@ -2427,16 +2470,16 @@ function renderMemberView(){
     '<div class="mem-mini"><span class="val">'+accessible.length+'</span><span class="lbl">Resources Unlocked</span></div>'+
     '<div class="mem-mini"><span class="val">'+myPostCount+'</span><span class="lbl">Posts Published</span></div>';
   const perks=PERKS_MAP[u.tier]||[];
-  document.getElementById('mem-body').innerHTML=
-    '<div class="mem-split">'+
-    // LEFT rail (LinkedIn-style): Discover + Fundraisers, level with the buttons
-    '<aside class="mem-aside">'+
+  // Discover Members — lifted into its own rail (level with the wallpaper on desktop; a card under the profile on mobile)
+  const discoverEl=document.getElementById('mem-discover');
+  if(discoverEl)discoverEl.innerHTML=
       '<div class="mem-sec-title" style="margin-top:0">Discover Members</div>'+
       '<p style="font-size:.8rem;color:var(--muted);margin:-.35rem 0 .8rem;line-height:1.55">Search a member or institution, then follow them. Tap any result to view their profile.</p>'+
       '<div class="member-search-wrap"><span class="member-search-ico">🔍</span><input id="member-search" type="search" class="member-search-input" placeholder="Search members…" oninput="searchMembers(this.value)" autocomplete="off" spellcheck="false"/></div>'+
       '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
       (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
-    '</aside>'+
+      '';
+  document.getElementById('mem-body').innerHTML=
     '<div class="mem-main">'+
     renewBannerHTML(u)+
     // Benefits — clean chips
@@ -2484,7 +2527,7 @@ function renderMemberView(){
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>'+
-    '</div></div>'; // close .mem-main and .mem-split
+    '</div>'; // close .mem-main
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
