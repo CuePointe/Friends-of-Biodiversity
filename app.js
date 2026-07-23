@@ -1712,6 +1712,16 @@ function closeShell(silent){
   }
 }
 function shellHome(){closeShell();}
+// Create a new account — the enrollment form lives in the Green Card panel behind the shell
+function goEnroll(){
+  closeModal('m-login');
+  if(document.body.classList.contains('shell-mode')){
+    openShell('greencard','Green Card');
+    setTimeout(function(){const e=document.getElementById('enroll');if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},420);
+  }else{
+    const e=document.getElementById('enroll');if(e)e.scrollIntoView({behavior:'smooth'});
+  }
+}
 // Donate without joining — send them to the Conservation Gallery, where any species/place can be supported
 function openDonateGallery(){
   closeShell(true);
@@ -1730,13 +1740,27 @@ function appNav(tab){
   document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode');
   {const b=document.getElementById('explore-back');if(b)b.style.display='none';}
   let screen=null;
-  if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}
-  else if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
+  if(tab==='home'){
+    // Member Home = the real homescreen everyone sees: side shell + hero + gallery + ads, centered.
+    document.body.classList.remove('app-mode');
+    document.body.classList.add('shell-mode');
+    if(typeof closeShell==='function')closeShell(true);
+    showView('main');
+    window.scrollTo(0,0);
+    renderAdRail();
+    startAdPopupCycle();
+    return;
+  }
+  // Every other tab uses the focused app view
+  document.body.classList.add('app-mode');
+  document.body.classList.remove('shell-mode');
+  if(typeof closeShell==='function')closeShell(true);
+  if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
   else if(tab==='profile'){showView('member');screen=document.getElementById('view-member');}
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
   renderAdRail();
-  if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
+  stopAdPopupCycle();
 }
 /* EXPLORE — members browse the full website while staying signed in */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
@@ -1898,11 +1922,12 @@ function updateNav(){
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
   // App shell: signed-in members get the full-screen app (marketing site hidden)
   const memberMode=in_&&!adm;
+  // A signed-in member on the Home tab sees the same shell homescreen everyone sees.
+  const memberHome=memberMode&&_appTab==='home';
   document.body.classList.toggle('has-tabbar',memberMode);
-  document.body.classList.toggle('app-mode',memberMode);
-  // Side shell is the public visitor experience — off for signed-in members.
-  if(memberMode)closeShell(true);
-  document.body.classList.toggle('shell-mode',!memberMode);
+  document.body.classList.toggle('app-mode',memberMode&&!memberHome);
+  document.body.classList.toggle('shell-mode',!memberMode||memberHome);
+  if(memberMode&&!memberHome)closeShell(true);
   // Logged-out visitors navigate via the side shell, so declutter the top nav for them.
   document.body.classList.toggle('guest',!in_);
   if(!memberMode)document.body.classList.remove('tab-home','tab-learn');
