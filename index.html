@@ -106,10 +106,11 @@
       <img src="fob-logo.png" alt="Friends of Biodiversity logo" title="Friends of Biodiversity — Demonstrating care for Uganda's biodiversity"/>
       <span class="logo-fob-sub">Demonstrating care for biodiversity</span>
     </div>
-    <div class="brand-name">
-      <span class="b1">Friends of Biodiversity</span>
-      <span class="b2">Uganda Biodiversity Fund</span>
-    </div>
+  </div>
+  <div class="nav-title">
+    <span class="nt-main">Uganda Biodiversity Fund</span>
+    <span class="nt-rule"></span>
+    <span class="nt-sub">Green Card Programme</span>
   </div>
   <nav>
     <ul>
@@ -425,13 +426,22 @@
   </div>
 </section>
 
-<!-- ANNOUNCEMENTS (public) -->
+<!-- FOOTPRINT CTA + LANDSCAPE MEDIA (replaces the announcements list) -->
 <section id="announce-strip" class="shell-sec" data-panel="footprint">
   <div class="inner">
-    <p class="eyebrow" style="color:var(--gold-lt)">Latest Updates</p>
-    <h2 class="sec-title" style="color:var(--white)">Announcements</h2>
-    <div class="announce-list-pub" id="announce-pub-list">
-      <p style="color:rgba(255,255,255,.4);font-size:.88rem">No announcements yet.</p>
+    <div class="fp-cta-row">
+      <div class="fp-cta reveal">
+        <p class="fp-k">You're welcome here</p>
+        <h2 class="fp-title">Come protect this, with us.</h2>
+        <p class="fp-body">Whether you join as a member or simply give what you can today, you become part of Uganda's story of hope. Every gift — big or small — reaches a ranger, a forest, a family. Thank you for caring.</p>
+        <div class="fp-acts">
+          <a href="#" class="btn btn-gold" onclick="openShell('greencard','Green Card');return false">💚 Join the Green Card</a>
+          <a href="#" class="btn btn-outline" onclick="openDonateGallery();return false">❤ Donate — no membership needed</a>
+        </div>
+      </div>
+      <div class="fp-media reveal" id="footprint-media">
+        <div class="fp-media-fallback"><img src="footprint-globe.jpg" alt="Uganda's landscapes"/><div class="fp-media-cap">Uganda's landscapes — Albertine Rift to Karamoja</div></div>
+      </div>
     </div>
   </div>
 </section>
@@ -563,23 +573,25 @@
           <div class="footer-logo-divider"></div>
           <img src="fob-logo.png" alt="Friends of Biodiversity"/>
         </div>
-        <p>Protecting Uganda's rich biological heritage across multiple landscapes — Albertine Rift, West Nile, Karamoja, and Central Uganda — demonstrating care for Uganda's biodiversity.</p>
+        <div class="footer-mission-card">
+          <p>Protecting Uganda's rich biological heritage across multiple landscapes — <strong>Albertine Rift, West Nile, Karamoja, and Central Uganda</strong> — demonstrating care for Uganda's biodiversity.</p>
+        </div>
       </div>
       <div class="footer-col">
         <h5>Programme</h5>
-        <a href="#" onclick="openShell('programmes','Programmes');return false">Strategic Framework</a>
-        <a href="#" onclick="openShell('greencard','Green Card');return false">Green Card Tiers</a>
-        <a href="#" onclick="openShell('learning','Learning Exchange');return false">Learning Exchange</a>
-        <a href="#" onclick="openShell('greencard','Green Card');return false">How to Pay</a>
-        <a href="#" onclick="openShell('wallfame','Wall of Fame');return false">Wall of Fame</a>
+        <a class="foot-btn" href="#" onclick="openShell('programmes','Programmes');return false"><span class="fi">🌿</span>Strategic Framework</a>
+        <a class="foot-btn" href="#" onclick="openShell('greencard','Green Card');return false"><span class="fi">💳</span>Green Card Tiers</a>
+        <a class="foot-btn" href="#" onclick="openShell('learning','Learning Exchange');return false"><span class="fi">📚</span>Learning Exchange</a>
+        <a class="foot-btn" href="#" onclick="openShell('greencard','Green Card');return false"><span class="fi">💰</span>How to Pay</a>
+        <a class="foot-btn" href="#" onclick="openShell('wallfame','Wall of Fame');return false"><span class="fi">🏅</span>Wall of Fame</a>
       </div>
       <div class="footer-col">
         <h5>Contact</h5>
-        <a href="mailto:info@ugandabiodiversityfund.org">info@ugandabiodiversityfund.org</a>
-        <a href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener">ugandabiodiversityfund.org</a>
-        <a href="tel:+256393216445">+256 (039) 3216445</a>
-        <a href="tel:+256200916445">+256 (200) 916 445</a>
-        <a href="#" onclick="openSubscribePopup();return false">🌿 Subscribe for Updates</a>
+        <a class="foot-btn" href="mailto:info@ugandabiodiversityfund.org"><span class="fi">✉</span>info@ugandabiodiversityfund.org</a>
+        <a class="foot-btn" href="https://www.ugandabiodiversityfund.org" target="_blank" rel="noopener"><span class="fi">🌐</span>ugandabiodiversityfund.org</a>
+        <a class="foot-btn" href="tel:+256393216445"><span class="fi">📞</span>+256 (039) 3216445</a>
+        <a class="foot-btn" href="tel:+256200916445"><span class="fi">📱</span>+256 (200) 916 445</a>
+        <a class="foot-btn foot-btn-gold" href="#" onclick="openSubscribePopup();return false"><span class="fi">🌱</span>Subscribe for Updates</a>
       </div>
     </div>
     <div class="footer-btm">
@@ -663,6 +675,7 @@
         <button class="adm-group-btn" onclick="toggleAdmGroup(this)"><span>Engagement</span><span class="chev">▾</span></button>
         <div class="adm-group-items">
           <button class="adm-nav-item" data-ap="ap-email" onclick="showAdminPanel(this)">✉ Email Campaigns</button>
+          <button class="adm-nav-item" data-ap="ap-subscribers" onclick="showAdminPanel(this)">🌱 Subscribers <span id="subs-nav-badge" class="subs-badge" style="display:none">0</span></button>
         </div>
       </div>
     </nav>
@@ -807,7 +820,7 @@
       <label class="pd-drop pd-drop-wide" style="margin-bottom:.6rem"><input type="file" id="ad-media" accept="image/*,video/*" onchange="pdPreview(this,'ad-thumb')" hidden/><span class="pd-thumb" id="ad-thumb">🖼</span><b>Upload an image or short video</b><span class="pd-hint">The creative that runs in your chosen slot. Video autoplays muted, like social platforms.</span></label>
       <div class="pd-row2">
         <div class="fg"><label>…or image filename/URL from repo (optional)</label><input id="ad-img" placeholder="e.g. campaign1.jpg"/></div>
-        <div class="fg"><label>Where it runs</label><select id="ad-placement"><option value="feed">📰 In the community feed</option><option value="rail">📐 Side rail (beside screen, desktop)</option><option value="banner">🪧 Banner (below the content)</option><option value="popup">🎬 Timed pop-up (slides up, attention-grabbing)</option><option value="all">🌐 Everywhere</option></select></div>
+        <div class="fg"><label>Where it runs</label><select id="ad-placement"><option value="feed">📰 In the community feed</option><option value="rail">📐 Side rail (beside screen, desktop)</option><option value="banner">🪧 Banner (below the content)</option><option value="popup">🎬 Timed pop-up (slides up, attention-grabbing)</option><option value="footprint">🌍 Our Footprint media (landscape video/image)</option><option value="all">🌐 Everywhere</option></select></div>
       </div>
       <div class="fg"><label>Link (where the button goes)</label><input id="ad-link" placeholder="e.g. https://… or #payment"/></div>
       <div class="pd-row2">
@@ -963,6 +976,17 @@
       <div class="fg"><label>Confirm new password</label><div class="pw-field"><input id="pw-confirm" type="password" placeholder="Re-type new password"/><button type="button" class="pw-eye" onclick="togglePw('pw-confirm',this)" title="Show password">👁</button></div></div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center"><button class="btn btn-gold" id="pw-save" onclick="changeAdminPassword()">Update password</button><button type="button" class="btn btn-ghost btn-sm" onclick="revealMyPassword('pw-current-view',this)">👁 Show my current password</button></div>
       <div id="pw-current-view" style="font-size:.82rem;color:var(--muted);margin-top:.6rem;font-family:var(--ff-m)"></div>
+    </div>
+  </div>
+
+  <div id="ap-subscribers" class="adm-panel">
+    <div class="adm-sec"><span>Subscribers — newsletter &amp; institution sign-ups</span></div>
+    <div class="adm-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.6rem;margin-bottom:1rem">
+        <h4 style="margin:0">🌱 Sign-ups <span id="subs-count" style="color:var(--muted);font-weight:600">(0)</span></h4>
+        <button class="btn btn-ghost btn-sm" onclick="exportSubscribers()">⬇ Export CSV</button>
+      </div>
+      <div id="subscribers-list"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>
     </div>
   </div>
 
@@ -1337,8 +1361,10 @@
     <button class="ep-x" onclick="dismissEP()">✕</button>
   </div>
   <div class="ep-body">
-    <input type="email" id="ep-email" placeholder="your@email.com"/>
-    <button class="btn btn-gold btn-sm" onclick="subscribeEP()">Subscribe</button>
+    <input type="email" id="ep-email" placeholder="✉  your@email.com"/>
+    <input type="text" id="ep-name" placeholder="👤  Your name"/>
+    <input type="text" id="ep-institution" placeholder="🏢  Institution (optional)"/>
+    <button class="btn btn-gold btn-sm btn-full" onclick="subscribeEP()">🌿 Subscribe</button>
   </div>
 </div>
 
