@@ -172,6 +172,22 @@ async function loadDashboard(){
   if(error){console.error('loadDashboard',error);return}
   DASH_ITEMS=items||[];
 }
+/* Five UBF thematic areas — used to tag & filter content across the app */
+const FOB_THEMES=[
+  {id:'landscapes',icon:'🌿',label:'Resilient Landscapes'},
+  {id:'food',icon:'🌾',label:'Nature-Positive Food'},
+  {id:'onehealth',icon:'🩺',label:'One Health & Bioeconomy'},
+  {id:'circular',icon:'♻️',label:'Circular & Green Cities'},
+  {id:'finance',icon:'💰',label:'Nature Finance'}
+];
+function themeLabel(id){const t=FOB_THEMES.find(x=>x.id===id);return t?t.icon+' '+t.label:'';}
+function themeOptions(sel){return '<option value="">— Thematic area —</option>'+FOB_THEMES.map(t=>'<option value="'+t.id+'"'+(sel===t.id?' selected':'')+'>'+t.icon+' '+t.label+'</option>').join('');}
+/* #1 Referral — remember who invited this visitor (persist across the session) */
+try{const _r=new URLSearchParams(location.search).get('ref');if(_r)sessionStorage.setItem('fob_ref',_r);}catch(e){}
+function myRefBy(){try{return sessionStorage.getItem('fob_ref')||null;}catch(e){return null;}}
+function myInviteLink(){return (location.origin||'https://www.ugandabiodiversityfund.org')+'/?ref='+(currentUser?currentUser.id:'');}
+function myReferralCount(){return currentUser?(MEMBERS||[]).filter(m=>m.referred_by===currentUser.id).length:0;}
+function copyInvite(){const url=myInviteLink();navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast('✅ Invite link copied — share it!')):toast(url);}
 let PROTECT=[];
 async function loadProtect(){
   const {data,error}=await sb.from('protect_gallery').select('*').order('sort',{ascending:true});
@@ -318,6 +334,13 @@ function copyPayNum(btn){
 /* ═══ CONSERVATION GALLERY — "What you're protecting" (data-driven) ═══ */
 let _protectTab='species';
 function setProtectTab(kind){_protectTab=kind;renderProtectGallery();}
+let _protectTheme='';
+function setProtectTheme(id){_protectTheme=id;renderProtectGallery();}
+function renderProtectThemeFilter(){
+  const el=document.getElementById('protect-theme-filter');if(!el)return;
+  const chips=[{id:'',icon:'',label:'All themes'}].concat(FOB_THEMES);
+  el.innerHTML=chips.map(t=>'<button class="pth-chip'+((_protectTheme||'')===t.id?' on':'')+'" onclick="setProtectTheme(\''+t.id+'\')">'+(t.icon?t.icon+' ':'')+esc(t.label)+'</button>').join('');
+}
 function protectStatusClass(s){
   s=(s||'').toLowerCase();
   if(s.includes('critical'))return 'b-cr';
@@ -327,7 +350,8 @@ function protectStatusClass(s){
 }
 function renderProtectGallery(){
   const wrap=document.getElementById('protect-grid');if(!wrap)return;
-  const items=PROTECT.filter(p=>p.active!==false && p.kind===_protectTab);
+  renderProtectThemeFilter();
+  const items=PROTECT.filter(p=>p.active!==false && p.kind===_protectTab && (!_protectTheme || p.theme===_protectTheme));
   const spN=PROTECT.filter(p=>p.active!==false&&p.kind==='species').length;
   const plN=PROTECT.filter(p=>p.active!==false&&p.kind==='place').length;
   const tS=document.getElementById('protect-tab-species'),tP=document.getElementById('protect-tab-place');
@@ -355,7 +379,7 @@ function renderProtectGallery(){
     const hasMedia=isVid||imgs.length;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
     return '<article class="pg-card pg-click"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+' data-pid="'+esc(p.id)+'" role="button" tabindex="0" onclick="openProtect(\''+p.id+'\')" onkeydown="if(event.key===\'Enter\')openProtect(\''+p.id+'\')"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
-      '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
+      '<div class="pg-body">'+badge+(p.theme?'<span class="pg-theme">'+esc(themeLabel(p.theme))+'</span>':'')+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
       (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'<span class="pg-more">Tap to learn more →</span></div></article>';
   }).join('');
   renderTierProtect();
@@ -379,7 +403,10 @@ function openProtect(id){
       (p.region?'<span class="dtl-region">📍 '+esc(p.region)+'</span>':'')+'</div>'+badge+'</div>'+
     '<div class="dtl-body">'+
       strip+
+      (p.theme?'<span class="dtl-theme">'+esc(themeLabel(p.theme))+'</span>':'')+
       (p.blurb?'<p class="dtl-blurb">'+esc(p.blurb)+'</p>':'')+
+      (function(){var arc=[['Challenge',p.s_challenge],['Solution',p.s_solution],['Achievement',p.s_achievement]].filter(a=>a[1]&&a[1].trim());
+        return arc.length?'<div class="dtl-arc">'+arc.map(a=>'<div class="dtl-arc-row"><span class="dtl-arc-l">'+a[0]+'</span><span class="dtl-arc-t">'+esc(a[1])+'</span></div>').join('')+'</div>':'';})()+
       '<p class="dtl-give-note">💚 “Help protect” makes a <b>donation</b> to this cause, paid through UBF’s official channels (MTN, Airtel or Stanbic).</p>'+
       '<div class="dtl-cta-row">'+
         '<button class="btn btn-gold" onclick="donateForProtect(\''+p.id+'\')">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
@@ -446,6 +473,10 @@ function fillProtectForm(p){
   if(g('pf-region'))g('pf-region').value=p.region||'';
   if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(Array.isArray(p.images)&&p.images.length?p.images.join(', '):(p.image_url||''));
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
+  if(g('pf-theme'))g('pf-theme').innerHTML=themeOptions(p.theme||'');
+  if(g('pf-challenge'))g('pf-challenge').value=p.s_challenge||'';
+  if(g('pf-solution'))g('pf-solution').value=p.s_solution||'';
+  if(g('pf-achievement'))g('pf-achievement').value=p.s_achievement||'';
   const cs=g('pf-cause');
   if(cs)cs.innerHTML='<option value="">— Donations go to the default cause —</option>'+(CAMPAIGNS||[]).filter(c=>c.active!==false).map(c=>'<option value="'+c.id+'"'+(p.cause_campaign_id===c.id?' selected':'')+'>'+esc(c.title)+'</option>').join('');
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
@@ -483,6 +514,10 @@ async function saveProtectItem(){
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
     tier:document.getElementById('pf-tier').value||null,
+    theme:(document.getElementById('pf-theme')?document.getElementById('pf-theme').value||null:null),
+    s_challenge:(document.getElementById('pf-challenge')?document.getElementById('pf-challenge').value.trim():''),
+    s_solution:(document.getElementById('pf-solution')?document.getElementById('pf-solution').value.trim():''),
+    s_achievement:(document.getElementById('pf-achievement')?document.getElementById('pf-achievement').value.trim():''),
     cause_campaign_id:(document.getElementById('pf-cause')?document.getElementById('pf-cause').value||null:null),
     active:document.getElementById('pf-active').checked};
   if(_protectEditId)row.id=_protectEditId;
@@ -1221,9 +1256,59 @@ async function submitDonation(){
       kv('Amount','UGX '+amount.toLocaleString())+
       kv('Reference',ref)+
       kv('Status','Awaiting payment verification 🕓')+
-      '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+      '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-gold" onclick="impactReceiptFor(\''+esc((_donateSource||(c?c.title:'')).replace(/'/g,""))+'\',\''+esc(donor.replace(/'/g,""))+'\')">🎫 Get my impact card</button><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
     '</div>';
   openModal('m-detail');
+}
+/* #5/#6 Enquiries — Data Pack requests & sponsorship enquiries */
+let _enqKind='datapack';
+function openEnquiry(kind){
+  _enqKind=kind;
+  const t=document.getElementById('enq-title'),s=document.getElementById('enq-sub'),ml=document.getElementById('enq-msg-label');
+  if(kind==='sponsor'){if(t)t.textContent='Become a sponsor';if(s)s.textContent='Reach FoB members & visitors. Tell us your goals and budget range.';if(ml)ml.textContent='Placements of interest / budget';}
+  else{if(t)t.textContent='Request a Data Pack';if(s)s.textContent='Verified biodiversity data for a landscape. Tell us which area and purpose.';if(ml)ml.textContent='Landscape & purpose';}
+  ['enq-name','enq-email','enq-org','enq-msg'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  openModal('m-enquiry');
+}
+async function submitEnquiry(){
+  const name=(document.getElementById('enq-name').value||'').trim();
+  const email=(document.getElementById('enq-email').value||'').trim();
+  const org=(document.getElementById('enq-org').value||'').trim();
+  const message=(document.getElementById('enq-msg').value||'').trim();
+  if(!email||!email.includes('@')){toast('⚠ Enter a valid email.');return}
+  const{error}=await sb.from('enquiries').insert({kind:_enqKind,name:name||null,email,org:org||null,message:message||null});
+  if(error){console.error('enquiry',error);toast('⚠ Could not send — please try again.');return}
+  await logEmail((_enqKind==='sponsor'?'Sponsorship enquiry':'Data Pack request'),email+(org?' · '+org:'')+' · '+new Date().toLocaleDateString());
+  closeModal('m-enquiry');
+  toast('✅ Sent! The UBF team will be in touch.');
+}
+/* #8 Impact receipt — a shareable card celebrating a gift */
+function impactReceiptFor(subject,name){
+  const pit=(PROTECT||[]).find(p=>p.name===subject);
+  impactReceipt(name||'A Friend of Biodiversity',subject||"Uganda's wild places",pit&&pit.image_url);
+}
+function impactReceipt(name,subject,photo){
+  document.getElementById('detail-body').innerHTML=
+    '<div id="impact-card" class="impact-card">'+
+      '<div class="ic-photo" style="'+(photo?'background-image:url(\''+esc(photo)+'\')':'background:linear-gradient(135deg,#153d28,#2D6A4F 60%,#0B2618)')+'">'+
+        '<div class="ic-cap"><span class="ic-k">I stood with Uganda\'s wild places</span><h3>I protected '+esc(subject)+'</h3></div></div>'+
+      '<div class="ic-foot"><img src="fob-logo.png" alt="" crossorigin="anonymous"/><div class="ic-who"><b>'+esc(name)+'</b><span>Friend of Biodiversity · '+new Date().getFullYear()+'</span></div></div>'+
+    '</div>'+
+    '<div class="dtl-cta-row" style="margin:1rem;padding-bottom:.5rem"><button class="btn btn-gold" onclick="downloadImpactCard()">⬇ Download</button>'+
+    '<button class="btn btn-ghost" onclick="shareImpactCard(\''+esc(subject.replace(/'/g,""))+'\')">↗ Share</button></div>';
+  openModal('m-detail');
+}
+function downloadImpactCard(){
+  const el=document.getElementById('impact-card');
+  if(!el||!window.html2canvas){toast('Preparing…');return;}
+  html2canvas(el,{useCORS:true,scale:2,backgroundColor:null}).then(function(cv){
+    const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='my-impact-card.png';a.click();
+  }).catch(function(e){console.error(e);toast('⚠ Could not render the card.');});
+}
+function shareImpactCard(subject){
+  const t='I just helped protect '+subject+' with the Uganda Biodiversity Fund. Join me 🌿';
+  if(navigator.share){navigator.share({title:'Friends of Biodiversity',text:t,url:(location.origin||'')}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(t+' '+(location.origin||''));toast('✅ Message copied — share it!');}
 }
 async function approveDonation(id){
   const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
@@ -2057,9 +2142,11 @@ document.getElementById('enroll-form').addEventListener('submit',async function(
   if(MEMBERS.find(m=>m.email.toLowerCase()===email)){toast('⚠ This email is already registered. Please sign in.');return}
   const interests=Array.from(_wizInterests||[]);
   const engageText=[interests.join(', '),document.getElementById('ef-engage').value.trim()].filter(Boolean).join(' — ');
+  const _refBy=myRefBy();
   const nm={name:name.trim(),email,pass,tel,type,tier,amount,year,payref,
     org:document.getElementById('ef-org').value.trim(),
     engage:engageText,engage_prefs:interests.length?interests:null,
+    referred_by:(_refBy&&_refBy.length>20)?_refBy:null,
     role:'member',status:'pending'};
   const {data:created,error}=await sb.from('members').insert(nm).select().single();
   if(error){toast('⚠ Could not register — please try again.');console.error(error);return}
@@ -2498,6 +2585,42 @@ function renderPublicAnnounces(){
 }
 
 /* ═══ MEMBER DASHBOARD ═══ */
+/* Tier rank helpers for tier-differentiated experience (#4) */
+const TIER_ORDER=['student','silver','gold','platinum','diamond'];
+function tierRank(t){const i=TIER_ORDER.indexOf((t||'silver').toLowerCase());return i<0?1:i;}
+function tierRibbonHTML(u){
+  const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  const gold=tierRank(u.tier)>=tierRank('gold');
+  return '<div class="tier-ribbon tr-'+(u.tier||'silver')+'">'+
+    '<span class="tr-badge">'+(td.emoji||'🌿')+'</span>'+
+    '<div><b>'+esc(td.label||'Member')+(gold?' Steward':' Member')+'</b>'+
+    '<span>'+(gold?'Your tier unlocks exclusive Steward access':'Upgrade to unlock Steward Briefings')+'</span></div>'+
+    (gold?'':'<button class="tr-up" onclick="openTierModal()">Upgrade ↑</button>')+'</div>';
+}
+function briefingHTML(u){
+  const gold=tierRank(u.tier)>=tierRank('gold');
+  if(gold){
+    return '<div class="mem-brief"><div class="mb-k">Steward Briefing · Gold &amp; above</div>'+
+      '<h3>Field &amp; finance briefings</h3>'+
+      '<div class="mb-item">📄 Quarterly impact &amp; finance report (pre-release)</div>'+
+      '<div class="mb-item">🎟 Priority invitations to ED roundtables &amp; field visits</div>'+
+      (tierRank(u.tier)>=tierRank('platinum')?'<div class="mb-item">🌍 Named landscape sponsorship options</div>':'')+
+      '<p class="mb-note">Your Steward benefits are active. The UBF team will reach you directly for briefings and invitations.</p></div>';
+  }
+  return '<div class="mem-brief mem-brief-locked"><div class="mb-k">Steward Briefing · locked</div>'+
+    '<h3>Exclusive briefings open at Gold+</h3>'+
+    '<p class="mb-note">Pre-release reports, ED roundtables and named sponsorships unlock at Gold and above. '+
+    '<a href="#" onclick="openTierModal();return false">Upgrade your tier →</a></p></div>';
+}
+function referralCardHTML(u){
+  const n=myReferralCount();
+  return '<div class="ref-card"><div class="ref-top"><div class="ref-k">Grow the movement</div>'+
+    '<h3>Bring a Friend of Biodiversity</h3><p>Share your personal link. Every friend who joins is credited to you.</p></div>'+
+    '<div class="ref-body"><div class="ref-link"><span class="ref-url">'+esc(myInviteLink())+'</span>'+
+    '<button class="ref-copy" onclick="copyInvite()">Copy</button></div>'+
+    '<div class="ref-prog"><div class="ref-count">'+n+'</div><div class="ref-txt"><b>'+n+' Friend'+(n===1?'':'s')+' joined</b> through you.'+
+    (n<5?'<br>'+(5-n)+' more to reach <b>Community Champion</b>.':'<br>🏅 You\'re a <b>Community Champion</b> — thank you!')+'</div></div></div></div>';
+}
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -2563,6 +2686,9 @@ function renderMemberView(){
   document.getElementById('mem-body').innerHTML=
     '<div class="mem-main">'+
     renewBannerHTML(u)+
+    tierRibbonHTML(u)+
+    briefingHTML(u)+
+    referralCardHTML(u)+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
@@ -4100,14 +4226,37 @@ function renderSubscribersAdmin(){
   if(document.getElementById('ap-subscribers')&&document.getElementById('ap-subscribers').classList.contains('active')){
     LS.set('subs_seen_count',String(SUBSCRIBERS.length));if(badge)badge.style.display='none';
   }
-  if(!SUBSCRIBERS.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">No sign-ups yet.</p>';return}
-  el.innerHTML='<div class="subs-table">'+SUBSCRIBERS.map(function(s){
+  const prospects=SUBSCRIBERS.filter(s=>s.is_prospect);
+  const signups=SUBSCRIBERS.filter(s=>!s.is_prospect);
+  const tierOpt=function(sel){return ['Silver','Gold','Platinum','Diamond'].map(t=>'<option'+(sel===t?' selected':'')+'>'+t+'</option>').join('');};
+  const statOpt=function(sel){return ['New','Contacted','Proposal sent','Won','Parked'].map(t=>'<option'+(sel===t?' selected':'')+'>'+t+'</option>').join('');};
+  let html='';
+  if(prospects.length){
+    html+='<div class="mem-sec-title" style="font-size:1rem;margin:.2rem 0 .6rem">🎯 Institution prospects ('+prospects.length+')</div><div class="subs-table" style="margin-bottom:1.2rem">'+
+    prospects.map(function(s){return '<div class="subs-row">'+
+      '<div class="subs-main"><b>'+esc(s.institution||s.name||s.email)+'</b><span class="subs-name">'+esc(s.email)+'</span></div>'+
+      '<select class="subs-sel" onchange="updateProspect(\''+s.id+'\',{target_tier:this.value})">Target: '+tierOpt(s.target_tier)+'</select>'+
+      '<select class="subs-sel" onchange="updateProspect(\''+s.id+'\',{prospect_status:this.value})">'+statOpt(s.prospect_status)+'</select>'+
+      '<button class="subs-un" title="Remove from pipeline" onclick="updateProspect(\''+s.id+'\',{is_prospect:false})">✕</button>'+
+    '</div>';}).join('')+'</div>';
+  }
+  if(!signups.length){html+='<p style="font-size:.85rem;color:var(--muted)">No new sign-ups.</p>';}
+  else{html+='<div class="subs-table">'+signups.map(function(s){
     return '<div class="subs-row">'+
       '<div class="subs-main"><b>'+esc(s.email)+'</b>'+(s.name?'<span class="subs-name">'+esc(s.name)+'</span>':'')+'</div>'+
       (s.institution?'<span class="subs-inst">🏢 '+esc(s.institution)+'</span>':'<span class="subs-inst subs-ind">Individual</span>')+
+      (s.institution?'<button class="subs-mk" onclick="updateProspect(\''+s.id+'\',{is_prospect:true,prospect_status:\'New\'})">→ Make prospect</button>':'')+
       '<span class="subs-date">'+new Date(s.created_at).toLocaleDateString()+'</span>'+
     '</div>';
-  }).join('')+'</div>';
+  }).join('')+'</div>';}
+  el.innerHTML=html;
+}
+async function updateProspect(id,patch){
+  const s=SUBSCRIBERS.find(x=>x.id===id);if(s)Object.assign(s,patch);
+  renderSubscribersAdmin();
+  const{error}=await sb.from('subscribers').update(patch).eq('id',id);
+  if(error){console.error('updateProspect',error);toast('⚠ Could not update.');await loadSubscribers();renderSubscribersAdmin();return}
+  if(patch.is_prospect===true)toast('🎯 Added to the prospect pipeline.');
 }
 function exportSubscribers(){
   if(!SUBSCRIBERS.length){toast('No subscribers to export yet.');return}
