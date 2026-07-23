@@ -1593,6 +1593,8 @@
     </div>
     <div id="chat-thread" class="chat-thread"></div>
     <div class="chat-inputbar">
+      <button class="chat-attach" title="Share a file or photo" onclick="document.getElementById('chat-file').click()">📎</button>
+      <input type="file" id="chat-file" style="display:none" accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" onchange="chatAttach(this)"/>
       <input id="chat-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"/>
       <button onclick="sendChatMsg()">➤</button>
     </div>

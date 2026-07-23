@@ -616,9 +616,35 @@ function renderChatThread(){
   const msgs=MSGS.filter(m=>(m.from_id===_chatWith&&m.to_id===currentUser.id)||(m.from_id===currentUser.id&&m.to_id===_chatWith));
   el.innerHTML=msgs.length?msgs.map(m=>{
     const mine=m.from_id===currentUser.id;
-    return '<div class="chat-b '+(mine?'me':'them')+'"><div class="chat-bubble">'+escHtml(m.body)+'</div><span class="chat-t">'+_timeAgo(m.created_at)+'</span></div>';
+    let inner='';
+    if(m.file_url){inner+=_chatFileHTML(m);}
+    if(m.body&&m.body.trim())inner+='<div class="chat-bubble">'+escHtml(m.body)+'</div>';
+    return '<div class="chat-b '+(mine?'me':'them')+'">'+inner+'<span class="chat-t">'+_timeAgo(m.created_at)+'</span></div>';
   }).join(''):'<p style="font-size:.82rem;color:var(--muted);text-align:center;padding:1.2rem 0">Say hello 👋 — this conversation is private between the two of you.</p>';
   el.scrollTop=el.scrollHeight;
+}
+function _chatFileHTML(m){
+  const url=esc(m.file_url),name=esc(m.file_name||'file'),t=m.file_type||'';
+  if(t.indexOf('image')===0)return '<a href="'+url+'" target="_blank" rel="noopener"><img class="chat-img" src="'+url+'" alt="'+name+'"/></a>';
+  if(t.indexOf('video')===0)return '<video class="chat-img" src="'+url+'" controls preload="metadata"></video>';
+  const ico=t.indexOf('pdf')>-1?'📄':(/(sheet|excel|csv)/.test(t)?'📊':(/(word|document)/.test(t)?'📝':'📎'));
+  return '<a class="chat-file" href="'+url+'" target="_blank" rel="noopener" download><span class="cf-ico">'+ico+'</span><span style="min-width:0"><span class="cf-name">'+name+'</span><span class="cf-sub">Tap to open</span></span></a>';
+}
+async function chatAttach(input){
+  if(!currentUser||!_chatWith)return;
+  const f=input.files&&input.files[0];input.value='';
+  if(!f)return;
+  if(f.size>25*1024*1024){toast('⚠ File too large (max 25 MB).');return}
+  toast('📎 Sending '+f.name+'…');
+  const path='chat/'+currentUser.id+'-'+Date.now()+'-'+f.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const{error:upErr}=await sb.storage.from('content-files').upload(path,f,{contentType:f.type});
+  if(upErr){console.error('chat upload',upErr);toast('⚠ File upload failed — check your connection.');return}
+  const url=sb.storage.from('content-files').getPublicUrl(path).data.publicUrl;
+  const rec={from_id:currentUser.id,to_id:_chatWith,body:'',file_url:url,file_name:f.name,file_type:f.type||''};
+  const local=Object.assign({id:'tmp-'+Date.now(),read:false,created_at:new Date().toISOString()},rec);
+  MSGS.push(local);renderChatThread();_buzz();
+  const{error}=await sb.from('member_messages').insert(rec);
+  if(error){console.error('sendChatFile',error);toast('⚠ Could not send file.');MSGS=MSGS.filter(m=>m.id!==local.id);renderChatThread();}
 }
 async function sendChatMsg(){
   if(!currentUser||!_chatWith)return;
@@ -1737,30 +1763,19 @@ function appNav(tab){
   document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   if(tab==='chats'){openChats();return}
   if(tab==='alerts'){openNotifications();return}
-  document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode');
+  // Clean reset — leaving Explore (or the public shell) must never leave the member app half-dressed
+  document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode','shell-mode','shell-open');
+  document.body.classList.add('app-mode');
+  if(typeof closeShell==='function')closeShell(true);
   {const b=document.getElementById('explore-back');if(b)b.style.display='none';}
   let screen=null;
-  if(tab==='home'){
-    // Member Home = the real homescreen everyone sees: side shell + hero + gallery + ads, centered.
-    document.body.classList.remove('app-mode');
-    document.body.classList.add('shell-mode');
-    if(typeof closeShell==='function')closeShell(true);
-    showView('main');
-    window.scrollTo(0,0);
-    renderAdRail();
-    startAdPopupCycle();
-    return;
-  }
-  // Every other tab uses the focused app view
-  document.body.classList.add('app-mode');
-  document.body.classList.remove('shell-mode');
-  if(typeof closeShell==='function')closeShell(true);
-  if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
+  if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}
+  else if(tab==='learn'){document.body.classList.add('tab-learn');showView('main');screen=document.getElementById('learn');}
   else if(tab==='profile'){showView('member');screen=document.getElementById('view-member');}
   window.scrollTo(0,0);
   if(screen){screen.classList.remove('app-anim');void screen.offsetWidth;screen.classList.add('app-anim');}
   renderAdRail();
-  stopAdPopupCycle();
+  if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
 }
 /* EXPLORE — members browse the full website while staying signed in */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
@@ -1922,12 +1937,11 @@ function updateNav(){
   if(in_)document.getElementById('n-mem-name').textContent=currentUser.name.split(' ')[0]+' →';
   // App shell: signed-in members get the full-screen app (marketing site hidden)
   const memberMode=in_&&!adm;
-  // A signed-in member on the Home tab sees the same shell homescreen everyone sees.
-  const memberHome=memberMode&&_appTab==='home';
   document.body.classList.toggle('has-tabbar',memberMode);
-  document.body.classList.toggle('app-mode',memberMode&&!memberHome);
-  document.body.classList.toggle('shell-mode',!memberMode||memberHome);
-  if(memberMode&&!memberHome)closeShell(true);
+  document.body.classList.toggle('app-mode',memberMode);
+  // Side shell is the public visitor experience — off for signed-in members.
+  if(memberMode)closeShell(true);
+  document.body.classList.toggle('shell-mode',!memberMode);
   // Logged-out visitors navigate via the side shell, so declutter the top nav for them.
   document.body.classList.toggle('guest',!in_);
   if(!memberMode)document.body.classList.remove('tab-home','tab-learn');
