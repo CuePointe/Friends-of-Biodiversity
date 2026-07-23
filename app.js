@@ -197,6 +197,12 @@ function lockedBenefitsHTML(){
   '</div>';
 }
 function goToPayment(){
+  // Public shell: the payment/enrol sections live inside the Green Card panel
+  if(document.body.classList.contains('shell-mode')){
+    if(typeof openShell==='function')openShell('greencard','Green Card');
+    setTimeout(function(){const e=document.getElementById('payment');if(e)e.scrollIntoView({behavior:'smooth'});},420);
+    return;
+  }
   if(document.body.classList.contains('app-mode')){
     // In app mode the marketing sections are hidden — surface just the payment screen
     document.body.classList.remove('tab-home','tab-learn');
