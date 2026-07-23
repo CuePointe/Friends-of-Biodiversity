@@ -197,6 +197,12 @@ function lockedBenefitsHTML(){
   '</div>';
 }
 function goToPayment(){
+  // Public shell: the payment/enrol sections live inside the Green Card panel
+  if(document.body.classList.contains('shell-mode')){
+    if(typeof openShell==='function')openShell('greencard','Green Card');
+    setTimeout(function(){const e=document.getElementById('payment');if(e)e.scrollIntoView({behavior:'smooth'});},420);
+    return;
+  }
   if(document.body.classList.contains('app-mode')){
     // In app mode the marketing sections are hidden — surface just the payment screen
     document.body.classList.remove('tab-home','tab-learn');
@@ -616,9 +622,35 @@ function renderChatThread(){
   const msgs=MSGS.filter(m=>(m.from_id===_chatWith&&m.to_id===currentUser.id)||(m.from_id===currentUser.id&&m.to_id===_chatWith));
   el.innerHTML=msgs.length?msgs.map(m=>{
     const mine=m.from_id===currentUser.id;
-    return '<div class="chat-b '+(mine?'me':'them')+'"><div class="chat-bubble">'+escHtml(m.body)+'</div><span class="chat-t">'+_timeAgo(m.created_at)+'</span></div>';
+    let inner='';
+    if(m.file_url){inner+=_chatFileHTML(m);}
+    if(m.body&&m.body.trim())inner+='<div class="chat-bubble">'+escHtml(m.body)+'</div>';
+    return '<div class="chat-b '+(mine?'me':'them')+'">'+inner+'<span class="chat-t">'+_timeAgo(m.created_at)+'</span></div>';
   }).join(''):'<p style="font-size:.82rem;color:var(--muted);text-align:center;padding:1.2rem 0">Say hello 👋 — this conversation is private between the two of you.</p>';
   el.scrollTop=el.scrollHeight;
+}
+function _chatFileHTML(m){
+  const url=esc(m.file_url),name=esc(m.file_name||'file'),t=m.file_type||'';
+  if(t.indexOf('image')===0)return '<a href="'+url+'" target="_blank" rel="noopener"><img class="chat-img" src="'+url+'" alt="'+name+'"/></a>';
+  if(t.indexOf('video')===0)return '<video class="chat-img" src="'+url+'" controls preload="metadata"></video>';
+  const ico=t.indexOf('pdf')>-1?'📄':(/(sheet|excel|csv)/.test(t)?'📊':(/(word|document)/.test(t)?'📝':'📎'));
+  return '<a class="chat-file" href="'+url+'" target="_blank" rel="noopener" download><span class="cf-ico">'+ico+'</span><span style="min-width:0"><span class="cf-name">'+name+'</span><span class="cf-sub">Tap to open</span></span></a>';
+}
+async function chatAttach(input){
+  if(!currentUser||!_chatWith)return;
+  const f=input.files&&input.files[0];input.value='';
+  if(!f)return;
+  if(f.size>25*1024*1024){toast('⚠ File too large (max 25 MB).');return}
+  toast('📎 Sending '+f.name+'…');
+  const path='chat/'+currentUser.id+'-'+Date.now()+'-'+f.name.replace(/[^a-zA-Z0-9._-]/g,'_');
+  const{error:upErr}=await sb.storage.from('content-files').upload(path,f,{contentType:f.type});
+  if(upErr){console.error('chat upload',upErr);toast('⚠ File upload failed — check your connection.');return}
+  const url=sb.storage.from('content-files').getPublicUrl(path).data.publicUrl;
+  const rec={from_id:currentUser.id,to_id:_chatWith,body:'',file_url:url,file_name:f.name,file_type:f.type||''};
+  const local=Object.assign({id:'tmp-'+Date.now(),read:false,created_at:new Date().toISOString()},rec);
+  MSGS.push(local);renderChatThread();_buzz();
+  const{error}=await sb.from('member_messages').insert(rec);
+  if(error){console.error('sendChatFile',error);toast('⚠ Could not send file.');MSGS=MSGS.filter(m=>m.id!==local.id);renderChatThread();}
 }
 async function sendChatMsg(){
   if(!currentUser||!_chatWith)return;
@@ -1712,6 +1744,16 @@ function closeShell(silent){
   }
 }
 function shellHome(){closeShell();}
+// Create a new account — the enrollment form lives in the Green Card panel behind the shell
+function goEnroll(){
+  closeModal('m-login');
+  if(document.body.classList.contains('shell-mode')){
+    openShell('greencard','Green Card');
+    setTimeout(function(){const e=document.getElementById('enroll');if(e)e.scrollIntoView({behavior:'smooth',block:'start'});},420);
+  }else{
+    const e=document.getElementById('enroll');if(e)e.scrollIntoView({behavior:'smooth'});
+  }
+}
 // Donate without joining — send them to the Conservation Gallery, where any species/place can be supported
 function openDonateGallery(){
   closeShell(true);
@@ -1727,7 +1769,10 @@ function appNav(tab){
   document.querySelectorAll('#app-tabbar .app-tab').forEach(b=>b.classList.toggle('on',b.dataset.tab===tab));
   if(tab==='chats'){openChats();return}
   if(tab==='alerts'){openNotifications();return}
-  document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode');
+  // Clean reset — leaving Explore (or the public shell) must never leave the member app half-dressed
+  document.body.classList.remove('tab-home','tab-learn','tab-pay','explore-mode','shell-mode','shell-open');
+  document.body.classList.add('app-mode');
+  if(typeof closeShell==='function')closeShell(true);
   {const b=document.getElementById('explore-back');if(b)b.style.display='none';}
   let screen=null;
   if(tab==='home'){document.body.classList.add('tab-home');showView('main');screen=document.getElementById('learn');}

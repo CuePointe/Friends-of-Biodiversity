@@ -148,13 +148,13 @@
 
 <!-- SIDE SHELL — app-style left rail; home shows only the hero + gallery, the rest lives behind these buttons -->
 <nav class="side-shell" id="side-shell" aria-label="Sections">
-  <button class="shell-btn on" data-shell="home" onclick="shellHome();return false"><span class="i">⌂</span><span class="t">Home</span></button>
+  <button class="shell-btn on" data-shell="home" onclick="shellHome();return false"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10.2V19.5h12V10.2"/><path d="M9.8 19.5v-4.8h4.4v4.8"/></svg></span><span class="t">Home</span></button>
   <button class="shell-btn" data-panel="programmes" onclick="openShell('programmes','Programmes');return false"><span class="i">🌿</span><span class="t">Programmes</span></button>
   <button class="shell-btn" data-panel="learning" onclick="openShell('learning','Learning Exchange');return false"><span class="i">📚</span><span class="t">Learning</span></button>
   <button class="shell-btn" data-panel="greencard" onclick="openShell('greencard','Green Card');return false"><span class="i">💳</span><span class="t">Green Card</span></button>
   <button class="shell-btn" data-panel="wallfame" onclick="openShell('wallfame','Wall of Fame');return false"><span class="i">🏅</span><span class="t">Wall of Fame</span></button>
   <button class="shell-btn" data-panel="footprint" onclick="openShell('footprint','Our Footprint');return false"><span class="i">📊</span><span class="t">Footprint</span></button>
-  <button class="shell-btn join" onclick="openModal('m-login');return false"><span class="i">➜</span><span class="t">Join</span></button>
+  <button class="shell-btn join" onclick="openModal('m-login');return false"><span class="i"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 4H18a1.5 1.5 0 0 1 1.5 1.5v13A1.5 1.5 0 0 1 18 20h-4.5"/><path d="M4 12h10"/><path d="M10.5 8.5 14 12l-3.5 3.5"/></svg></span><span class="t">Join</span></button>
 </nav>
 
 <!-- SIDE-SHELL DRAWER — a chosen section slides in here over the page -->
@@ -1167,7 +1167,7 @@
     <div class="fg"><label>Password</label><div class="pw-field"><input id="li-pass" type="password" placeholder="Your password"/><button type="button" class="pw-eye" onclick="togglePw('li-pass',this)" title="Show password">👁</button></div></div>
     <button class="btn btn-canopy btn-full" onclick="doLogin()">Sign In</button>
     <div class="dtext">or</div>
-    <button class="btn btn-gold btn-full" onclick="closeModal('m-login');document.getElementById('enroll').scrollIntoView({behavior:'smooth'})">Create a New Account →</button>
+    <button class="btn btn-gold btn-full" onclick="goEnroll()">Create a New Account →</button>
     <div class="auth-sw">Admin? <a onclick="openModal('m-admin-login');closeModal('m-login')">Admin sign in →</a></div>
   </div>
 </div>
@@ -1593,6 +1593,8 @@
     </div>
     <div id="chat-thread" class="chat-thread"></div>
     <div class="chat-inputbar">
+      <button class="chat-attach" title="Share a file or photo" onclick="document.getElementById('chat-file').click()">📎</button>
+      <input type="file" id="chat-file" style="display:none" accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv" onchange="chatAttach(this)"/>
       <input id="chat-input" placeholder="Write a message…" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChatMsg()}"/>
       <button onclick="sendChatMsg()">➤</button>
     </div>
