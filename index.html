@@ -203,6 +203,7 @@
       <button class="protect-tab on" id="protect-tab-species" onclick="setProtectTab('species')">Endangered species</button>
       <button class="protect-tab" id="protect-tab-place" onclick="setProtectTab('place')">Threatened places</button>
     </div>
+    <div class="protect-theme-filter reveal" id="protect-theme-filter"></div>
     <div class="protect-grid" id="protect-grid"></div>
   </div>
 </section>
@@ -443,6 +444,20 @@
         <div class="fp-media-fallback"><img src="footprint-globe.jpg" alt="Uganda's landscapes"/><div class="fp-media-cap">Uganda's landscapes — Albertine Rift to Karamoja</div></div>
       </div>
     </div>
+    <div class="fp-products reveal">
+      <div class="fp-prod">
+        <div class="fp-prod-k">For EIA consultants · developers · researchers</div>
+        <h3>Biodiversity Baseline Data Pack</h3>
+        <p>Verified citizen-science sightings, species lists &amp; IUCN status for any Ugandan landscape — export-ready for EIA &amp; ESG reporting.</p>
+        <button class="btn btn-gold btn-sm" onclick="openEnquiry('datapack')">Request a Data Pack →</button>
+      </div>
+      <div class="fp-prod">
+        <div class="fp-prod-k">Partners &amp; brands</div>
+        <h3>Sponsor the movement</h3>
+        <p>Reach Friends of Biodiversity members &amp; visitors through in-feed, side-rail, pop-up and Footprint placements — fully managed by UBF.</p>
+        <button class="btn btn-ghost btn-sm" onclick="openEnquiry('sponsor')">Become a sponsor →</button>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -676,6 +691,7 @@
         <div class="adm-group-items">
           <button class="adm-nav-item" data-ap="ap-email" onclick="showAdminPanel(this)">✉ Email Campaigns</button>
           <button class="adm-nav-item" data-ap="ap-subscribers" onclick="showAdminPanel(this)">🌱 Subscribers <span id="subs-nav-badge" class="subs-badge" style="display:none">0</span></button>
+          <button class="adm-nav-item" data-ap="ap-briefings" onclick="showAdminPanel(this)">🗂 Steward Briefings</button>
         </div>
       </div>
     </nav>
@@ -792,6 +808,10 @@
       <div class="fg"><label>Link to a Green Card tier (optional)</label>
         <select id="pf-tier"><option value="">Not linked — show in gallery only</option><option value="student">Student / Youth</option><option value="silver">Silver</option><option value="gold">Gold</option><option value="platinum">Platinum</option><option value="diamond">Diamond</option></select>
       </div>
+      <div class="fg"><label>Thematic area</label><select id="pf-theme"></select></div>
+      <div class="fg"><label>Story — Challenge (optional)</label><textarea id="pf-challenge" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="The specific threat it faces."></textarea></div>
+      <div class="fg"><label>Story — Solution (optional)</label><textarea id="pf-solution" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="How the Green Card / UBF intervenes."></textarea></div>
+      <div class="fg"><label>Story — Achievement (optional)</label><textarea id="pf-achievement" rows="2" style="width:100%;padding:.6rem;border:1px solid var(--border);border-radius:8px;box-sizing:border-box;font-family:inherit" placeholder="The measurable outcome."></textarea></div>
       <div class="fg"><label>Link to a fundraising cause (optional)</label>
         <select id="pf-cause"><option value="">— Donations go to the default cause —</option></select>
         <span style="font-size:.75rem;color:var(--muted)">When a visitor taps “Help protect” on this card, their donation goes to this cause.</span>
@@ -976,6 +996,27 @@
       <div class="fg"><label>Confirm new password</label><div class="pw-field"><input id="pw-confirm" type="password" placeholder="Re-type new password"/><button type="button" class="pw-eye" onclick="togglePw('pw-confirm',this)" title="Show password">👁</button></div></div>
       <div style="display:flex;gap:.6rem;flex-wrap:wrap;align-items:center"><button class="btn btn-gold" id="pw-save" onclick="changeAdminPassword()">Update password</button><button type="button" class="btn btn-ghost btn-sm" onclick="revealMyPassword('pw-current-view',this)">👁 Show my current password</button></div>
       <div id="pw-current-view" style="font-size:.82rem;color:var(--muted);margin-top:.6rem;font-family:var(--ff-m)"></div>
+    </div>
+  </div>
+
+  <div id="ap-briefings" class="adm-panel">
+    <div class="adm-sec"><span>Steward Briefings — gated impact &amp; finance library (Gold &amp; above)</span></div>
+    <div class="agrid2">
+      <div class="adm-card" id="brief-form-card">
+        <h4 id="bf-formtitle">Post a briefing</h4>
+        <div style="background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:.75rem;font-size:.76rem;color:var(--canopy);margin-bottom:1rem;line-height:1.55">Members access these in-app — no meeting needed. <b>Recommended tiers:</b> impact reports &amp; recordings = <b>Gold+</b>; pre-release finance, ED roundtables, named sponsorship &amp; live sessions = <b>Platinum</b>; board/CEO briefings = <b>Diamond</b>.</div>
+        <div class="fg"><label>Title</label><input id="bf-title" placeholder="e.g. Q1 2026 Impact Report"/></div>
+        <div class="fg"><label>Type</label><select id="bf-kind"><option value="report">📄 Impact report</option><option value="finance">📈 Finance report</option><option value="pdf">📄 PDF document</option><option value="excel">📊 Spreadsheet</option><option value="audio">🎧 Audio</option><option value="video">🎬 Video</option><option value="news">📰 News note</option><option value="live">🎟 Live session</option></select></div>
+        <div class="fg"><label>Minimum tier</label><select id="bf-tier"><option value="gold">Gold &amp; above</option><option value="platinum">Platinum &amp; above</option><option value="diamond">Diamond only</option></select></div>
+        <div class="fg"><label>Description</label><textarea id="bf-body" rows="3" placeholder="What this briefing covers."></textarea></div>
+        <div class="fg"><label>Upload file (PDF, Excel, audio, video…)</label><input type="file" id="bf-file" accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,audio/*,video/*,image/*"/><input type="hidden" id="bf-filename"/></div>
+        <div class="fg"><label>…or external link (Drive, YouTube, etc.)</label><input id="bf-link" placeholder="https://…"/></div>
+        <div class="fg"><label>Live session date &amp; time (for live sessions)</label><input id="bf-session" type="datetime-local"/></div>
+        <div class="fg"><label>Recording link (added after a live session)</label><input id="bf-recording" placeholder="https://… — members watch/download later"/></div>
+        <button class="btn btn-gold btn-sm" id="bf-save" onclick="saveBriefing()">Publish briefing</button>
+        <button class="btn btn-ghost btn-sm" style="margin-left:.4rem" onclick="briefFormReset()">Clear</button>
+      </div>
+      <div class="adm-card"><h4>📚 Published briefings</h4><div id="briefings-list"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div></div>
     </div>
   </div>
 
@@ -1368,6 +1409,20 @@
   </div>
 </div>
 
+<!-- ENQUIRY — Data Pack requests & sponsorship enquiries -->
+<div class="overlay" id="m-enquiry">
+  <div class="modal" style="max-width:440px">
+    <button class="modal-close" onclick="closeModal('m-enquiry')">✕</button>
+    <h3 class="modal-title" id="enq-title">Request</h3>
+    <p style="font-size:.85rem;color:var(--muted);margin-bottom:1rem" id="enq-sub">Tell us a little and the UBF team will respond.</p>
+    <div class="fg"><label>Name</label><input id="enq-name" placeholder="Your name"/></div>
+    <div class="fg"><label>Email</label><input id="enq-email" type="email" placeholder="you@example.com"/></div>
+    <div class="fg"><label>Organisation (optional)</label><input id="enq-org" placeholder="Company / institution"/></div>
+    <div class="fg"><label id="enq-msg-label">Message</label><textarea id="enq-msg" rows="3" placeholder="What do you need?"></textarea></div>
+    <button class="btn btn-gold btn-full" onclick="submitEnquiry()">Send request</button>
+  </div>
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
@@ -1543,7 +1598,7 @@
 <!-- ═══ APP SHELL — compact app header + fixed bottom tabs (members) + compose FAB ═══ -->
 <div id="app-header">
   <span class="ah-logo"><img src="fob-logo.png" alt="Friends of Biodiversity" onerror="this.parentNode.textContent='🌿'"/></span><b class="ah-name">Friends of Biodiversity</b>
-  <button class="ah-ex" onclick="toggleExplore(true)" aria-label="Explore the website">🌍 Explore</button>
+  <button class="ah-ex" onclick="openExplore()" aria-label="Explore the app">🌍 Explore</button>
   <button class="ah-bell" onclick="openNotifications()" aria-label="Notifications">🔔<span id="ah-badge" style="display:none"></span></button>
   <button class="ah-av" id="ah-avatar" onclick="appNav('profile')" aria-label="My profile">👤</button>
 </div>
@@ -1564,7 +1619,7 @@
     </div>
   </div>
 </div>
-<button id="explore-back" onclick="exitExplore()">← Back to app</button>
+<button id="explore-back" onclick="exitExplore()">← Back to my account</button>
 <button id="app-fab" onclick="openModal('m-create-post')" aria-label="Create a post">+</button>
 <nav id="app-tabbar" aria-label="Primary">
   <button class="app-tab" data-tab="home" onclick="appNav('home')"><span class="ic">🏠</span><span>Home</span></button>

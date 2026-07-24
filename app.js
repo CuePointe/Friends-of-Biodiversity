@@ -172,6 +172,22 @@ async function loadDashboard(){
   if(error){console.error('loadDashboard',error);return}
   DASH_ITEMS=items||[];
 }
+/* Five UBF thematic areas — used to tag & filter content across the app */
+const FOB_THEMES=[
+  {id:'landscapes',icon:'🌿',label:'Resilient Landscapes'},
+  {id:'food',icon:'🌾',label:'Nature-Positive Food'},
+  {id:'onehealth',icon:'🩺',label:'One Health & Bioeconomy'},
+  {id:'circular',icon:'♻️',label:'Circular & Green Cities'},
+  {id:'finance',icon:'💰',label:'Nature Finance'}
+];
+function themeLabel(id){const t=FOB_THEMES.find(x=>x.id===id);return t?t.icon+' '+t.label:'';}
+function themeOptions(sel){return '<option value="">— Thematic area —</option>'+FOB_THEMES.map(t=>'<option value="'+t.id+'"'+(sel===t.id?' selected':'')+'>'+t.icon+' '+t.label+'</option>').join('');}
+/* #1 Referral — remember who invited this visitor (persist across the session) */
+try{const _r=new URLSearchParams(location.search).get('ref');if(_r)sessionStorage.setItem('fob_ref',_r);}catch(e){}
+function myRefBy(){try{return sessionStorage.getItem('fob_ref')||null;}catch(e){return null;}}
+function myInviteLink(){return (location.origin||'https://www.ugandabiodiversityfund.org')+'/?ref='+(currentUser?currentUser.id:'');}
+function myReferralCount(){return currentUser?(MEMBERS||[]).filter(m=>m.referred_by===currentUser.id).length:0;}
+function copyInvite(){const url=myInviteLink();navigator.clipboard?navigator.clipboard.writeText(url).then(()=>toast('✅ Invite link copied — share it!')):toast(url);}
 let PROTECT=[];
 async function loadProtect(){
   const {data,error}=await sb.from('protect_gallery').select('*').order('sort',{ascending:true});
@@ -318,6 +334,13 @@ function copyPayNum(btn){
 /* ═══ CONSERVATION GALLERY — "What you're protecting" (data-driven) ═══ */
 let _protectTab='species';
 function setProtectTab(kind){_protectTab=kind;renderProtectGallery();}
+let _protectTheme='';
+function setProtectTheme(id){_protectTheme=id;renderProtectGallery();}
+function renderProtectThemeFilter(){
+  const el=document.getElementById('protect-theme-filter');if(!el)return;
+  const chips=[{id:'',icon:'',label:'All themes'}].concat(FOB_THEMES);
+  el.innerHTML=chips.map(t=>'<button class="pth-chip'+((_protectTheme||'')===t.id?' on':'')+'" onclick="setProtectTheme(\''+t.id+'\')">'+(t.icon?t.icon+' ':'')+esc(t.label)+'</button>').join('');
+}
 function protectStatusClass(s){
   s=(s||'').toLowerCase();
   if(s.includes('critical'))return 'b-cr';
@@ -327,7 +350,8 @@ function protectStatusClass(s){
 }
 function renderProtectGallery(){
   const wrap=document.getElementById('protect-grid');if(!wrap)return;
-  const items=PROTECT.filter(p=>p.active!==false && p.kind===_protectTab);
+  renderProtectThemeFilter();
+  const items=PROTECT.filter(p=>p.active!==false && p.kind===_protectTab && (!_protectTheme || p.theme===_protectTheme));
   const spN=PROTECT.filter(p=>p.active!==false&&p.kind==='species').length;
   const plN=PROTECT.filter(p=>p.active!==false&&p.kind==='place').length;
   const tS=document.getElementById('protect-tab-species'),tP=document.getElementById('protect-tab-place');
@@ -355,7 +379,7 @@ function renderProtectGallery(){
     const hasMedia=isVid||imgs.length;
     const badge=p.status?'<span class="pg-badge '+protectStatusClass(p.status)+'">'+esc(p.status)+'</span>':'';
     return '<article class="pg-card pg-click"'+(imgs.length>1?' data-auto="1" data-idx="0"':'')+' data-pid="'+esc(p.id)+'" role="button" tabindex="0" onclick="openProtect(\''+p.id+'\')" onkeydown="if(event.key===\'Enter\')openProtect(\''+p.id+'\')"'+(hasMedia?'':' style="background:linear-gradient(160deg,#174530,#0c2a19)"')+'>'+media+extra+
-      '<div class="pg-body">'+badge+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
+      '<div class="pg-body">'+badge+(p.theme?'<span class="pg-theme">'+esc(themeLabel(p.theme))+'</span>':'')+'<h3>'+esc(p.name||'')+'</h3>'+(p.blurb?'<p>'+esc(p.blurb)+'</p>':'')+
       (p.region?'<span class="pg-region">📍 '+esc(p.region)+'</span>':'')+'<span class="pg-more">Tap to learn more →</span></div></article>';
   }).join('');
   renderTierProtect();
@@ -379,7 +403,10 @@ function openProtect(id){
       (p.region?'<span class="dtl-region">📍 '+esc(p.region)+'</span>':'')+'</div>'+badge+'</div>'+
     '<div class="dtl-body">'+
       strip+
+      (p.theme?'<span class="dtl-theme">'+esc(themeLabel(p.theme))+'</span>':'')+
       (p.blurb?'<p class="dtl-blurb">'+esc(p.blurb)+'</p>':'')+
+      (function(){var arc=[['Challenge',p.s_challenge],['Solution',p.s_solution],['Achievement',p.s_achievement]].filter(a=>a[1]&&a[1].trim());
+        return arc.length?'<div class="dtl-arc">'+arc.map(a=>'<div class="dtl-arc-row"><span class="dtl-arc-l">'+a[0]+'</span><span class="dtl-arc-t">'+esc(a[1])+'</span></div>').join('')+'</div>':'';})()+
       '<p class="dtl-give-note">💚 “Help protect” makes a <b>donation</b> to this cause, paid through UBF’s official channels (MTN, Airtel or Stanbic).</p>'+
       '<div class="dtl-cta-row">'+
         '<button class="btn btn-gold" onclick="donateForProtect(\''+p.id+'\')">💚 Help protect '+esc((p.name||'this').split(' ')[0])+'</button>'+
@@ -446,6 +473,10 @@ function fillProtectForm(p){
   if(g('pf-region'))g('pf-region').value=p.region||'';
   if(g('pf-imgurl'))g('pf-imgurl').value=(p.media_type==='video')?'':(Array.isArray(p.images)&&p.images.length?p.images.join(', '):(p.image_url||''));
   if(g('pf-tier'))g('pf-tier').value=p.tier||'';
+  if(g('pf-theme'))g('pf-theme').innerHTML=themeOptions(p.theme||'');
+  if(g('pf-challenge'))g('pf-challenge').value=p.s_challenge||'';
+  if(g('pf-solution'))g('pf-solution').value=p.s_solution||'';
+  if(g('pf-achievement'))g('pf-achievement').value=p.s_achievement||'';
   const cs=g('pf-cause');
   if(cs)cs.innerHTML='<option value="">— Donations go to the default cause —</option>'+(CAMPAIGNS||[]).filter(c=>c.active!==false).map(c=>'<option value="'+c.id+'"'+(p.cause_campaign_id===c.id?' selected':'')+'>'+esc(c.title)+'</option>').join('');
   if(g('pf-active'))g('pf-active').checked=p.active!==false;
@@ -483,6 +514,10 @@ async function saveProtectItem(){
     blurb:(document.getElementById('pf-blurb').value||'').trim(),
     region:(document.getElementById('pf-region').value||'').trim(),
     tier:document.getElementById('pf-tier').value||null,
+    theme:(document.getElementById('pf-theme')?document.getElementById('pf-theme').value||null:null),
+    s_challenge:(document.getElementById('pf-challenge')?document.getElementById('pf-challenge').value.trim():''),
+    s_solution:(document.getElementById('pf-solution')?document.getElementById('pf-solution').value.trim():''),
+    s_achievement:(document.getElementById('pf-achievement')?document.getElementById('pf-achievement').value.trim():''),
     cause_campaign_id:(document.getElementById('pf-cause')?document.getElementById('pf-cause').value||null:null),
     active:document.getElementById('pf-active').checked};
   if(_protectEditId)row.id=_protectEditId;
@@ -1221,9 +1256,59 @@ async function submitDonation(){
       kv('Amount','UGX '+amount.toLocaleString())+
       kv('Reference',ref)+
       kv('Status','Awaiting payment verification 🕓')+
-      '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
+      '<div class="dtl-cta-row" style="margin-top:1rem"><button class="btn btn-gold" onclick="impactReceiptFor(\''+esc((_donateSource||(c?c.title:'')).replace(/'/g,""))+'\',\''+esc(donor.replace(/'/g,""))+'\')">🎫 Get my impact card</button><button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button></div>'+
     '</div>';
   openModal('m-detail');
+}
+/* #5/#6 Enquiries — Data Pack requests & sponsorship enquiries */
+let _enqKind='datapack';
+function openEnquiry(kind){
+  _enqKind=kind;
+  const t=document.getElementById('enq-title'),s=document.getElementById('enq-sub'),ml=document.getElementById('enq-msg-label');
+  if(kind==='sponsor'){if(t)t.textContent='Become a sponsor';if(s)s.textContent='Reach FoB members & visitors. Tell us your goals and budget range.';if(ml)ml.textContent='Placements of interest / budget';}
+  else{if(t)t.textContent='Request a Data Pack';if(s)s.textContent='Verified biodiversity data for a landscape. Tell us which area and purpose.';if(ml)ml.textContent='Landscape & purpose';}
+  ['enq-name','enq-email','enq-org','enq-msg'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  openModal('m-enquiry');
+}
+async function submitEnquiry(){
+  const name=(document.getElementById('enq-name').value||'').trim();
+  const email=(document.getElementById('enq-email').value||'').trim();
+  const org=(document.getElementById('enq-org').value||'').trim();
+  const message=(document.getElementById('enq-msg').value||'').trim();
+  if(!email||!email.includes('@')){toast('⚠ Enter a valid email.');return}
+  const{error}=await sb.from('enquiries').insert({kind:_enqKind,name:name||null,email,org:org||null,message:message||null});
+  if(error){console.error('enquiry',error);toast('⚠ Could not send — please try again.');return}
+  await logEmail((_enqKind==='sponsor'?'Sponsorship enquiry':'Data Pack request'),email+(org?' · '+org:'')+' · '+new Date().toLocaleDateString());
+  closeModal('m-enquiry');
+  toast('✅ Sent! The UBF team will be in touch.');
+}
+/* #8 Impact receipt — a shareable card celebrating a gift */
+function impactReceiptFor(subject,name){
+  const pit=(PROTECT||[]).find(p=>p.name===subject);
+  impactReceipt(name||'A Friend of Biodiversity',subject||"Uganda's wild places",pit&&pit.image_url);
+}
+function impactReceipt(name,subject,photo){
+  document.getElementById('detail-body').innerHTML=
+    '<div id="impact-card" class="impact-card">'+
+      '<div class="ic-photo" style="'+(photo?'background-image:url(\''+esc(photo)+'\')':'background:linear-gradient(135deg,#153d28,#2D6A4F 60%,#0B2618)')+'">'+
+        '<div class="ic-cap"><span class="ic-k">I stood with Uganda\'s wild places</span><h3>I protected '+esc(subject)+'</h3></div></div>'+
+      '<div class="ic-foot"><img src="fob-logo.png" alt="" crossorigin="anonymous"/><div class="ic-who"><b>'+esc(name)+'</b><span>Friend of Biodiversity · '+new Date().getFullYear()+'</span></div></div>'+
+    '</div>'+
+    '<div class="dtl-cta-row" style="margin:1rem;padding-bottom:.5rem"><button class="btn btn-gold" onclick="downloadImpactCard()">⬇ Download</button>'+
+    '<button class="btn btn-ghost" onclick="shareImpactCard(\''+esc(subject.replace(/'/g,""))+'\')">↗ Share</button></div>';
+  openModal('m-detail');
+}
+function downloadImpactCard(){
+  const el=document.getElementById('impact-card');
+  if(!el||!window.html2canvas){toast('Preparing…');return;}
+  html2canvas(el,{useCORS:true,scale:2,backgroundColor:null}).then(function(cv){
+    const a=document.createElement('a');a.href=cv.toDataURL('image/png');a.download='my-impact-card.png';a.click();
+  }).catch(function(e){console.error(e);toast('⚠ Could not render the card.');});
+}
+function shareImpactCard(subject){
+  const t='I just helped protect '+subject+' with the Uganda Biodiversity Fund. Join me 🌿';
+  if(navigator.share){navigator.share({title:'Friends of Biodiversity',text:t,url:(location.origin||'')}).catch(function(){});}
+  else if(navigator.clipboard){navigator.clipboard.writeText(t+' '+(location.origin||''));toast('✅ Message copied — share it!');}
 }
 async function approveDonation(id){
   const{data:dn}=await sb.from('donations').select('*').eq('id',id).single();
@@ -1588,7 +1673,7 @@ function renderSightingsAdmin(){
 async function bootstrapApp(){
   preloadSlides(); // start downloading all slide images immediately in background
   showSkeletons(); // app-like: layout-matched placeholders instead of a spinner
-  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents(),loadSightings(),loadSubscribers()]);
+  await Promise.all([loadMembers(),loadContent(),loadAnnouncements(),loadFinReports(),loadFame(),loadPayment(),loadPosts(),loadDashboard(),loadProtect(),loadAds(),loadCampaigns(),loadEvents(),loadSightings(),loadSubscribers(),loadBriefings()]);
   await initAdmins();
   await loadMembers(); // refresh in case admins were just inserted
   renderPaymentUI();
@@ -1628,6 +1713,7 @@ function subscribeRealtime(){
   sb.channel('public:member_messages').on('postgres_changes',{event:'*',schema:'public',table:'member_messages'},async()=>{await loadMessages();updateChatBadge();renderChats();renderChatThread();}).subscribe();
   sb.channel('public:ads').on('postgres_changes',{event:'*',schema:'public',table:'ads'},async()=>{await loadAds();renderPosts();renderAdsAdmin();renderFootprintMedia();}).subscribe();
   sb.channel('public:subscribers').on('postgres_changes',{event:'*',schema:'public',table:'subscribers'},async()=>{await loadSubscribers();renderSubscribersAdmin();}).subscribe();
+  sb.channel('public:briefings').on('postgres_changes',{event:'*',schema:'public',table:'briefings'},async()=>{await loadBriefings();renderBriefingsAdmin();if(currentUser&&currentUser.role==='member')renderMemberView();}).subscribe();
   sb.channel('public:sightings').on('postgres_changes',{event:'*',schema:'public',table:'sightings'},async()=>{await loadSightings();renderSightingsAdmin();if(document.getElementById('m-sightmap').classList.contains('open'))renderSightMap();}).subscribe();
 }
 
@@ -1783,21 +1869,26 @@ function appNav(tab){
   renderAdRail();
   if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
 }
-/* EXPLORE — members browse the full website while staying signed in */
-function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
-function exploreGo(sec){
-  toggleExplore(false);
-  document.body.classList.remove('tab-home','tab-learn','tab-pay');
-  document.body.classList.add('explore-mode');
+/* EXPLORE — members browse the app the same clean side-shell way visitors do */
+function openExplore(){
+  document.body.classList.remove('app-mode','tab-home','tab-learn','tab-pay','explore-mode');
+  document.body.classList.add('shell-mode','exploring');
+  if(typeof closeShell==='function')closeShell(true);
   showView('main');
+  window.scrollTo(0,0);
+  renderAdRail();
   const back=document.getElementById('explore-back');if(back)back.style.display='flex';
-  setTimeout(()=>{
-    if(sec==='top'){window.scrollTo({top:0,behavior:'smooth'});return}
-    const e=document.getElementById(sec);if(e)e.scrollIntoView({behavior:'smooth'});
-  },140);
+}
+// kept for any old callers — route them into the shell (optionally opening a panel)
+function toggleExplore(open){if(open)openExplore();}
+function exploreGo(sec){
+  openExplore();
+  const map={themes:['programmes','Programmes'],learn:['learning','Learning Exchange'],greencard:['greencard','Green Card'],payment:['greencard','Green Card'],impact:['footprint','Our Footprint'],wallfame:['wallfame','Wall of Fame']};
+  if(map[sec]&&typeof openShell==='function')setTimeout(()=>openShell(map[sec][0],map[sec][1]),60);
 }
 function exitExplore(){
-  document.body.classList.remove('explore-mode');
+  document.body.classList.remove('shell-mode','exploring','shell-open');
+  if(typeof closeShell==='function')closeShell(true);
   const b=document.getElementById('explore-back');if(b)b.style.display='none';
   appNav('home');
 }
@@ -2057,9 +2148,11 @@ document.getElementById('enroll-form').addEventListener('submit',async function(
   if(MEMBERS.find(m=>m.email.toLowerCase()===email)){toast('⚠ This email is already registered. Please sign in.');return}
   const interests=Array.from(_wizInterests||[]);
   const engageText=[interests.join(', '),document.getElementById('ef-engage').value.trim()].filter(Boolean).join(' — ');
+  const _refBy=myRefBy();
   const nm={name:name.trim(),email,pass,tel,type,tier,amount,year,payref,
     org:document.getElementById('ef-org').value.trim(),
     engage:engageText,engage_prefs:interests.length?interests:null,
+    referred_by:(_refBy&&_refBy.length>20)?_refBy:null,
     role:'member',status:'pending'};
   const {data:created,error}=await sb.from('members').insert(nm).select().single();
   if(error){toast('⚠ Could not register — please try again.');console.error(error);return}
@@ -2498,6 +2591,40 @@ function renderPublicAnnounces(){
 }
 
 /* ═══ MEMBER DASHBOARD ═══ */
+/* Tier rank helpers for tier-differentiated experience (#4) */
+const TIER_ORDER=['student','silver','gold','platinum','diamond'];
+function tierRank(t){const i=TIER_ORDER.indexOf((t||'silver').toLowerCase());return i<0?1:i;}
+function tierRibbonHTML(u){
+  const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
+  const gold=tierRank(u.tier)>=tierRank('gold');
+  return '<div class="tier-ribbon tr-'+(u.tier||'silver')+'">'+
+    '<span class="tr-badge">'+(td.emoji||'🌿')+'</span>'+
+    '<div><b>'+esc(td.label||'Member')+(gold?' Steward':' Member')+'</b>'+
+    '<span>'+(gold?'Your tier unlocks exclusive Steward access':'Upgrade to unlock Steward Briefings')+'</span></div>'+
+    (gold?'':'<button class="tr-up" onclick="openTierModal()">Upgrade ↑</button>')+'</div>';
+}
+function briefingHTML(u){
+  const gold=tierRank(u.tier)>=tierRank('gold');
+  if(gold){
+    return '<div class="mem-brief"><div class="mb-k">Steward Briefing · '+esc(TIERS_DATA[u.tier]?TIERS_DATA[u.tier].label:'Gold')+' access</div>'+
+      '<h3>Field &amp; finance briefings</h3>'+
+      '<p class="mb-note" style="margin:0 0 .6rem">Impact reports, recordings and live sessions your tier unlocks — open or download any time.</p>'+
+      briefingListHTML(u)+'</div>';
+  }
+  return '<div class="mem-brief mem-brief-locked"><div class="mb-k">Steward Briefing · locked</div>'+
+    '<h3>Exclusive briefings open at Gold+</h3>'+
+    '<p class="mb-note">Pre-release reports, ED roundtables and named sponsorships unlock at Gold and above. '+
+    '<a href="#" onclick="openTierModal();return false">Upgrade your tier →</a></p></div>';
+}
+function referralCardHTML(u){
+  const n=myReferralCount();
+  return '<div class="ref-card"><div class="ref-top"><div class="ref-k">Grow the movement</div>'+
+    '<h3>Bring a Friend of Biodiversity</h3><p>Share your personal link. Every friend who joins is credited to you.</p></div>'+
+    '<div class="ref-body"><div class="ref-link"><span class="ref-url">'+esc(myInviteLink())+'</span>'+
+    '<button class="ref-copy" onclick="copyInvite()">Copy</button></div>'+
+    '<div class="ref-prog"><div class="ref-count">'+n+'</div><div class="ref-txt"><b>'+n+' Friend'+(n===1?'':'s')+' joined</b> through you.'+
+    (n<5?'<br>'+(5-n)+' more to reach <b>Community Champion</b>.':'<br>🏅 You\'re a <b>Community Champion</b> — thank you!')+'</div></div></div></div>';
+}
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -2563,6 +2690,9 @@ function renderMemberView(){
   document.getElementById('mem-body').innerHTML=
     '<div class="mem-main">'+
     renewBannerHTML(u)+
+    tierRibbonHTML(u)+
+    briefingHTML(u)+
+    referralCardHTML(u)+
     // Benefits — clean chips
     '<div class="mem-sec-title">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
@@ -3334,7 +3464,7 @@ function downloadCert(){
 }
 
 /* ═══ ADMIN PANEL ═══ */
-function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();renderSightingsAdmin();renderSubscribersAdmin();}
+function renderAdminAll(){renderAdminOverview();renderAdminMembers();renderAdminContent();renderAdminFame();renderAdminAnnounces();renderFinancials();renderEmailLog();loadPaymentAdmin();renderFootprintAdmin();renderAdminPosts();renderDashboardAdmin();renderProtectAdmin();resetProtectForm();renderAdsAdmin();resetAdForm();renderEventsAdmin();resetEventForm();renderCampaignsAdmin();resetCampForm();renderAuditLog();renderSightingsAdmin();renderSubscribersAdmin();renderBriefingsAdmin();}
 
 /* ═══ ACCOUNTABILITY DASHBOARD — ADMIN EDITOR ═══ */
 function _dashSectionName(s){return({kpi:'KPI Card',allocation:'Allocation Item',window:'Programme Window',impact:'Impact Metric'})[s]||'Item'}
@@ -4100,14 +4230,37 @@ function renderSubscribersAdmin(){
   if(document.getElementById('ap-subscribers')&&document.getElementById('ap-subscribers').classList.contains('active')){
     LS.set('subs_seen_count',String(SUBSCRIBERS.length));if(badge)badge.style.display='none';
   }
-  if(!SUBSCRIBERS.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">No sign-ups yet.</p>';return}
-  el.innerHTML='<div class="subs-table">'+SUBSCRIBERS.map(function(s){
+  const prospects=SUBSCRIBERS.filter(s=>s.is_prospect);
+  const signups=SUBSCRIBERS.filter(s=>!s.is_prospect);
+  const tierOpt=function(sel){return ['Silver','Gold','Platinum','Diamond'].map(t=>'<option'+(sel===t?' selected':'')+'>'+t+'</option>').join('');};
+  const statOpt=function(sel){return ['New','Contacted','Proposal sent','Won','Parked'].map(t=>'<option'+(sel===t?' selected':'')+'>'+t+'</option>').join('');};
+  let html='';
+  if(prospects.length){
+    html+='<div class="mem-sec-title" style="font-size:1rem;margin:.2rem 0 .6rem">🎯 Institution prospects ('+prospects.length+')</div><div class="subs-table" style="margin-bottom:1.2rem">'+
+    prospects.map(function(s){return '<div class="subs-row">'+
+      '<div class="subs-main"><b>'+esc(s.institution||s.name||s.email)+'</b><span class="subs-name">'+esc(s.email)+'</span></div>'+
+      '<select class="subs-sel" onchange="updateProspect(\''+s.id+'\',{target_tier:this.value})">Target: '+tierOpt(s.target_tier)+'</select>'+
+      '<select class="subs-sel" onchange="updateProspect(\''+s.id+'\',{prospect_status:this.value})">'+statOpt(s.prospect_status)+'</select>'+
+      '<button class="subs-un" title="Remove from pipeline" onclick="updateProspect(\''+s.id+'\',{is_prospect:false})">✕</button>'+
+    '</div>';}).join('')+'</div>';
+  }
+  if(!signups.length){html+='<p style="font-size:.85rem;color:var(--muted)">No new sign-ups.</p>';}
+  else{html+='<div class="subs-table">'+signups.map(function(s){
     return '<div class="subs-row">'+
       '<div class="subs-main"><b>'+esc(s.email)+'</b>'+(s.name?'<span class="subs-name">'+esc(s.name)+'</span>':'')+'</div>'+
       (s.institution?'<span class="subs-inst">🏢 '+esc(s.institution)+'</span>':'<span class="subs-inst subs-ind">Individual</span>')+
+      (s.institution?'<button class="subs-mk" onclick="updateProspect(\''+s.id+'\',{is_prospect:true,prospect_status:\'New\'})">→ Make prospect</button>':'')+
       '<span class="subs-date">'+new Date(s.created_at).toLocaleDateString()+'</span>'+
     '</div>';
-  }).join('')+'</div>';
+  }).join('')+'</div>';}
+  el.innerHTML=html;
+}
+async function updateProspect(id,patch){
+  const s=SUBSCRIBERS.find(x=>x.id===id);if(s)Object.assign(s,patch);
+  renderSubscribersAdmin();
+  const{error}=await sb.from('subscribers').update(patch).eq('id',id);
+  if(error){console.error('updateProspect',error);toast('⚠ Could not update.');await loadSubscribers();renderSubscribersAdmin();return}
+  if(patch.is_prospect===true)toast('🎯 Added to the prospect pipeline.');
 }
 function exportSubscribers(){
   if(!SUBSCRIBERS.length){toast('No subscribers to export yet.');return}
@@ -4118,6 +4271,133 @@ function exportSubscribers(){
   const blob=new Blob([csv],{type:'text/csv'});const url=URL.createObjectURL(blob);
   const a=document.createElement('a');a.href=url;a.download='ubf-subscribers.csv';a.click();URL.revokeObjectURL(url);
   toast('✅ Subscribers exported.');
+}
+
+/* ═══ STEWARD BRIEFINGS — gated content library for Gold & above ═══ */
+let BRIEFINGS=[];
+const BRIEF_ICON={report:'📄',finance:'📈',audio:'🎧',video:'🎬',pdf:'📄',excel:'📊',news:'📰',live:'🎟'};
+function briefIcon(k){return BRIEF_ICON[k]||'📄';}
+function briefTierLabel(t){t=(t||'gold').toLowerCase();return t.charAt(0).toUpperCase()+t.slice(1);}
+async function loadBriefings(){
+  const{data,error}=await sb.from('briefings').select('*').order('created_at',{ascending:false});
+  if(error){console.error('loadBriefings',error);return}
+  BRIEFINGS=data||[];
+}
+/* Member — the gated, clickable list (used inside briefingHTML for Gold+) */
+function briefingListHTML(u){
+  const rank=tierRank(u.tier);
+  const items=(BRIEFINGS||[]).filter(b=>rank>=tierRank(b.min_tier||'gold'));
+  const locked=(BRIEFINGS||[]).filter(b=>rank<tierRank(b.min_tier||'gold'));
+  if(!items.length&&!locked.length)return '<p class="mb-note">No briefings posted yet — the UBF team will publish impact &amp; finance updates here.</p>';
+  const now=Date.now();
+  const rowsHTML=items.map(function(b){
+    const isLive=b.kind==='live';
+    const upcoming=isLive&&b.session_at&&new Date(b.session_at).getTime()>now-3600000&&!b.recording_url;
+    const act=upcoming?'Join →':(b.recording_url||b.kind==='video'?'Watch →':(b.kind==='audio'?'Play →':(b.file_url?'Open →':'View →')));
+    const isNew=(now-new Date(b.created_at).getTime())<7*864e5;
+    const sub=(isLive&&b.session_at?('Live · '+new Date(b.session_at).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})):(b.kind||'report').charAt(0).toUpperCase()+(b.kind||'report').slice(1)+' · '+_timeAgo(b.created_at));
+    return '<div class="brow" onclick="openBriefing(\''+b.id+'\')" role="button" tabindex="0" onkeydown="if(event.key===\'Enter\')openBriefing(\''+b.id+'\')">'+
+      '<div class="bi">'+briefIcon(b.kind)+'</div>'+
+      '<div class="bm"><div class="bt">'+esc(b.title||'')+'</div><div class="bs">'+esc(sub)+'</div></div>'+
+      (isNew?'<span class="bnew">New</span>':'')+'<span class="bact">'+act+'</span></div>';
+  }).join('');
+  const lockedHTML=locked.map(function(b){
+    return '<div class="brow locked"><div class="bi">'+briefIcon(b.kind)+'</div>'+
+      '<div class="bm"><div class="bt">'+esc(b.title||'')+'</div><div class="bs">'+esc((b.kind||'').charAt(0).toUpperCase()+(b.kind||'').slice(1))+' · restricted</div></div>'+
+      '<span class="blk">'+esc(briefTierLabel(b.min_tier))+'+</span></div>';
+  }).join('');
+  return '<div class="brief-list">'+rowsHTML+lockedHTML+'</div>';
+}
+function openBriefing(id){
+  const b=(BRIEFINGS||[]).find(x=>x.id===id);if(!b)return;_buzz&&_buzz();
+  const isLive=b.kind==='live';
+  const now=Date.now();
+  const upcoming=isLive&&b.session_at&&new Date(b.session_at).getTime()>now-3600000&&!b.recording_url;
+  let actions='';
+  if(upcoming&&b.link_url){actions='<a class="btn btn-canopy" href="'+esc(b.link_url)+'" target="_blank" rel="noopener">▶ Join live session</a>';}
+  if(b.recording_url){actions+='<a class="btn btn-gold" href="'+esc(b.recording_url)+'" target="_blank" rel="noopener">▶ Watch recording</a>';}
+  if(b.file_url){actions+='<a class="btn btn-gold" href="'+esc(b.file_url)+'" target="_blank" rel="noopener" download>⬇ Download</a>';}
+  if(!b.file_url&&!b.recording_url&&b.link_url&&!upcoming){actions+='<a class="btn btn-gold" href="'+esc(b.link_url)+'" target="_blank" rel="noopener">Open →</a>';}
+  actions+='<button class="btn btn-ghost" onclick="closeModal(\'m-detail\')">Close</button>';
+  const when=isLive&&b.session_at?'<div class="brief-when">🗓 '+esc(new Date(b.session_at).toLocaleString([], {dateStyle:'full',timeStyle:'short'}))+'</div>':'';
+  const file=b.file_url?'<div class="brief-file"><span class="bf-i">'+briefIcon(b.kind)+'</span><div><div class="bf-n">'+esc(b.file_name||'file')+'</div><div class="bf-s">'+esc((b.file_type||'')||'file')+'</div></div></div>':'';
+  document.getElementById('detail-body').innerHTML=
+    '<div class="dtl-hero" style="height:96px;background:'+(isLive?'linear-gradient(120deg,#2E7D9A,#5BC4BF)':'linear-gradient(120deg,#174530,#2D6A4F)')+'"><div class="dtl-hero-grad"></div>'+
+      '<div class="dtl-hero-txt"><span class="dtl-kind">'+(isLive?'Live session':'Steward Briefing')+' · '+esc(briefTierLabel(b.min_tier))+' &amp; above</span><h2>'+esc(b.title||'')+'</h2></div></div>'+
+    '<div class="dtl-body">'+
+      (b.body?'<p class="dtl-blurb">'+esc(b.body)+'</p>':'')+
+      when+file+
+      '<div class="dtl-cta-row" style="margin-top:1rem">'+actions+'</div>'+
+    '</div>';
+  openModal('m-detail');
+}
+/* Admin CRUD */
+let _briefEditId=null;
+function renderBriefingsAdmin(){
+  const el=document.getElementById('briefings-list');if(!el)return;
+  if(!BRIEFINGS.length){el.innerHTML='<p style="font-size:.85rem;color:var(--muted)">No briefings yet.</p>';return}
+  el.innerHTML='<div class="subs-table">'+BRIEFINGS.map(function(b){
+    return '<div class="subs-row">'+
+      '<div class="subs-main"><b>'+briefIcon(b.kind)+' '+esc(b.title||'')+'</b><span class="subs-name">'+esc((b.kind||'')+' · '+briefTierLabel(b.min_tier)+'+ · '+new Date(b.created_at).toLocaleDateString())+'</span></div>'+
+      '<button class="subs-mk" onclick="editBriefing(\''+b.id+'\')">✏ Edit</button>'+
+      '<button class="subs-un" onclick="deleteBriefing(\''+b.id+'\')">✕</button>'+
+    '</div>';
+  }).join('')+'</div>';
+}
+function briefFormReset(){
+  _briefEditId=null;
+  ['bf-title','bf-body','bf-link','bf-session','bf-recording','bf-filename'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  const fi=document.getElementById('bf-file');if(fi)fi.value='';
+  const k=document.getElementById('bf-kind');if(k)k.value='report';
+  const mt=document.getElementById('bf-tier');if(mt)mt.value='gold';
+  const t=document.getElementById('bf-formtitle');if(t)t.textContent='Post a briefing';
+  const s=document.getElementById('bf-save');if(s)s.textContent='Publish briefing';
+}
+function editBriefing(id){
+  const b=BRIEFINGS.find(x=>x.id===id);if(!b)return;
+  _briefEditId=id;
+  const g=id2=>document.getElementById(id2);
+  if(g('bf-title'))g('bf-title').value=b.title||'';
+  if(g('bf-kind'))g('bf-kind').value=b.kind||'report';
+  if(g('bf-tier'))g('bf-tier').value=b.min_tier||'gold';
+  if(g('bf-body'))g('bf-body').value=b.body||'';
+  if(g('bf-link'))g('bf-link').value=b.link_url||'';
+  if(g('bf-session'))g('bf-session').value=b.session_at?new Date(b.session_at).toISOString().slice(0,16):'';
+  if(g('bf-recording'))g('bf-recording').value=b.recording_url||'';
+  if(g('bf-filename'))g('bf-filename').value=b.file_name||'';
+  if(g('bf-formtitle'))g('bf-formtitle').textContent='Editing: '+(b.title||'');
+  if(g('bf-save'))g('bf-save').textContent='Update briefing';
+  const card=document.getElementById('brief-form-card');if(card)card.scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function saveBriefing(){
+  const title=(document.getElementById('bf-title').value||'').trim();
+  if(!title){toast('⚠ A title is required.');return}
+  const btn=document.getElementById('bf-save');if(btn){btn.disabled=true;btn.textContent='Saving…';}
+  const cur=_briefEditId?BRIEFINGS.find(b=>b.id===_briefEditId):null;
+  let file_url=cur?cur.file_url:null,file_name=cur?cur.file_name:null,file_type=cur?cur.file_type:null;
+  const fi=document.getElementById('bf-file');
+  const f=fi&&fi.files?fi.files[0]:null;
+  if(f){const up=await _uploadFile(f,'briefing');if(up){file_url=up.url;file_name=f.name;file_type=f.type||'';}}
+  const sess=(document.getElementById('bf-session').value||'').trim();
+  const row={title,kind:document.getElementById('bf-kind').value||'report',min_tier:document.getElementById('bf-tier').value||'gold',
+    body:(document.getElementById('bf-body').value||'').trim(),
+    link_url:(document.getElementById('bf-link').value||'').trim()||null,
+    session_at:sess?new Date(sess).toISOString():null,
+    recording_url:(document.getElementById('bf-recording').value||'').trim()||null,
+    file_url,file_name,file_type};
+  if(_briefEditId)row.id=_briefEditId;
+  const{error}=await sb.from('briefings').upsert(row);
+  if(btn){btn.disabled=false;btn.textContent=_briefEditId?'Update briefing':'Publish briefing';}
+  if(error){toast('⚠ Could not save the briefing.');console.error(error);return}
+  await loadBriefings();renderBriefingsAdmin();briefFormReset();
+  audit('Published Steward Briefing',title);toast('✅ Briefing published.');
+}
+async function deleteBriefing(id){
+  const b=BRIEFINGS.find(x=>x.id===id);
+  if(!confirm('Delete "'+((b&&b.title)||'this briefing')+'"?'))return;
+  const{error}=await sb.from('briefings').delete().eq('id',id);
+  if(error){toast('⚠ Could not delete.');console.error(error);return}
+  await loadBriefings();renderBriefingsAdmin();toast('Briefing deleted.');
 }
 
 /* ═══ COMMUNITY POSTS ═══ */
