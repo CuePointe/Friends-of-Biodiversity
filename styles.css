@@ -128,10 +128,6 @@ body.shell-mode .side-shell{display:flex;flex-direction:column;align-items:cente
 .shell-btn.join:hover{background:var(--gold-lt)}
 /* Signed-in members already belong — no "Join" button on their shell home */
 body.has-tabbar .side-shell .shell-btn.join{display:none}
-/* Member exploring the app: the side shell is the only nav; a floating button returns to their account */
-body.exploring .side-shell .shell-btn.join{display:none}
-body.exploring #app-tabbar,body.exploring #app-fab{display:none!important}
-body.exploring #explore-back{display:flex!important}
 /* main home content shifts right of the rail */
 body.shell-mode #view-main>.hero,
 body.shell-mode #view-main>#protect,

@@ -1869,25 +1869,33 @@ function appNav(tab){
   renderAdRail();
   if(tab==='home'||tab==='learn')startAdPopupCycle();else stopAdPopupCycle();
 }
-/* EXPLORE — members browse the app the same clean side-shell way visitors do */
-function openExplore(){
+/* EXPLORE — members browse the full website while staying signed in (drawer kept as-is) */
+function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
+function exploreGo(sec){
+  toggleExplore(false);
+  document.body.classList.remove('tab-home','tab-learn','tab-pay','shell-mode','exploring');
+  document.body.classList.add('explore-mode');
+  showView('main');
+  const back=document.getElementById('explore-back');if(back)back.style.display='flex';
+  setTimeout(()=>{
+    if(sec==='top'){window.scrollTo({top:0,behavior:'smooth'});return}
+    const e=document.getElementById(sec);if(e)e.scrollIntoView({behavior:'smooth'});
+  },140);
+}
+/* The ONLY fix: the drawer's "Homepage" button now opens the homepage WITH the side-shell,
+   not the awkward shell-less old homepage. Everything else in Explore is unchanged. */
+function exploreHome(){
+  toggleExplore(false);
   document.body.classList.remove('app-mode','tab-home','tab-learn','tab-pay','explore-mode');
-  document.body.classList.add('shell-mode','exploring');
+  document.body.classList.add('shell-mode');
   if(typeof closeShell==='function')closeShell(true);
   showView('main');
   window.scrollTo(0,0);
   renderAdRail();
   const back=document.getElementById('explore-back');if(back)back.style.display='flex';
 }
-// kept for any old callers — route them into the shell (optionally opening a panel)
-function toggleExplore(open){if(open)openExplore();}
-function exploreGo(sec){
-  openExplore();
-  const map={themes:['programmes','Programmes'],learn:['learning','Learning Exchange'],greencard:['greencard','Green Card'],payment:['greencard','Green Card'],impact:['footprint','Our Footprint'],wallfame:['wallfame','Wall of Fame']};
-  if(map[sec]&&typeof openShell==='function')setTimeout(()=>openShell(map[sec][0],map[sec][1]),60);
-}
 function exitExplore(){
-  document.body.classList.remove('shell-mode','exploring','shell-open');
+  document.body.classList.remove('explore-mode','shell-mode','shell-open');
   if(typeof closeShell==='function')closeShell(true);
   const b=document.getElementById('explore-back');if(b)b.style.display='none';
   appNav('home');
