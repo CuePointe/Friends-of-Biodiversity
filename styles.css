@@ -1547,17 +1547,19 @@ body.shell-open #ad-rail{display:none!important}
 
 /* ═══ MEMBER PROFILE — Discover lifted up level with the wallpaper (LinkedIn/FB) ═══ */
 .mem-main{min-width:0}
-/* Discover card (right rail on desktop, stacked card on mobile) */
+/* Discover (left rail) — its own card */
 #mem-discover{background:var(--white,#fff);border:1px solid var(--border);border-radius:18px;
   padding:1.15rem 1.2rem;box-shadow:0 14px 40px -24px rgba(0,0,0,.35);margin-bottom:1.4rem}
 #mem-discover:empty{display:none}
-/* Desktop: two columns — profile + feed on the left, Discover lifted to the top-right */
+#mem-right:empty{display:none}
+/* Desktop: three columns — Discover (left) · feed & benefits (centre) · the four cards (right) */
 @media(min-width:1040px){
-  .mem-shell{display:grid;grid-template-columns:minmax(0,1fr) 320px;column-gap:2.4rem;align-items:start;max-width:1160px;margin:0 auto;padding:1.5rem}
-  .mem-shell .mem-hdr{grid-column:1;grid-row:1}
-  .mem-shell #mem-discover{grid-column:2;grid-row:1 / span 3;position:sticky;top:84px;margin-bottom:0}
-  .mem-shell .mem-body{grid-column:1;grid-row:2;padding:1.4rem 0 0;max-width:none;margin:0}
-  #mem-discover .members-dir{max-height:52vh;overflow-y:auto}
+  .mem-shell{display:grid;grid-template-columns:300px minmax(0,1fr) 320px;column-gap:1.8rem;align-items:start;max-width:1280px;margin:0 auto;padding:1.5rem}
+  .mem-shell .mem-hdr{grid-column:1 / -1;grid-row:1}
+  .mem-shell #mem-discover{grid-column:1;grid-row:2;position:sticky;top:84px;margin-bottom:0}
+  .mem-shell .mem-body{grid-column:2;grid-row:2;padding:1.4rem 0 0;max-width:none;margin:0}
+  .mem-shell #mem-right{grid-column:3;grid-row:2;position:sticky;top:84px}
+  #mem-discover .members-dir{max-height:46vh;overflow-y:auto}
 }
 
 /* Clickable, scrollable Announcements & Financial Reports (latest on top) */
@@ -1710,3 +1712,16 @@ body.shell-open #ad-rail{display:none!important}
 .brief-file .bf-i{font-size:1.4rem}
 .brief-file .bf-n{font-size:.82rem;font-weight:700;color:var(--canopy)}
 .brief-file .bf-s{font-size:.68rem;color:var(--muted)}
+
+/* EIA Biodiversity Data Pack card (Platinum & Diamond) — right rail */
+.eia-card{background:#fff;border:1px solid var(--border);border-left:4px solid #2E7D9A;border-radius:14px;padding:14px 16px;margin-bottom:1rem}
+.eia-card.eia-locked{border-left-color:#c9c9c9}
+.eia-card .eia-k{font-family:var(--ff-m);font-size:.56rem;letter-spacing:.12em;text-transform:uppercase;color:#2E7D9A;font-weight:700}
+.eia-card.eia-locked .eia-k{color:var(--muted)}
+.eia-card h3{font-family:var(--ff-d);color:var(--canopy);font-size:1.05rem;margin:.2rem 0 .4rem}
+.eia-card.eia-locked h3{color:var(--muted)}
+.eia-card p{font-size:.8rem;color:var(--muted);line-height:1.5;margin-bottom:.7rem}
+.eia-card p a{color:var(--canopy-lt);font-weight:700}
+/* right-rail card spacing */
+#mem-right>.cs-panel,#mem-right>.mem-brief,#mem-right>.ref-card{margin-bottom:1rem}
+.fp-products-single{grid-template-columns:1fr!important;max-width:540px}

@@ -444,13 +444,7 @@
         <div class="fp-media-fallback"><img src="footprint-globe.jpg" alt="Uganda's landscapes"/><div class="fp-media-cap">Uganda's landscapes — Albertine Rift to Karamoja</div></div>
       </div>
     </div>
-    <div class="fp-products reveal">
-      <div class="fp-prod">
-        <div class="fp-prod-k">For EIA consultants · developers · researchers</div>
-        <h3>Biodiversity Baseline Data Pack</h3>
-        <p>Verified citizen-science sightings, species lists &amp; IUCN status for any Ugandan landscape — export-ready for EIA &amp; ESG reporting.</p>
-        <button class="btn btn-gold btn-sm" onclick="openEnquiry('datapack')">Request a Data Pack →</button>
-      </div>
+    <div class="fp-products fp-products-single reveal">
       <div class="fp-prod">
         <div class="fp-prod-k">Partners &amp; brands</div>
         <h3>Sponsor the movement</h3>
@@ -636,6 +630,8 @@
     <h1 id="mem-greeting" style="display:none">Welcome back</h1>
     <p id="mem-sub" style="display:none">Your membership dashboard</p>
     <div class="mem-body" id="mem-body"></div>
+    <!-- RIGHT rail — Steward Briefing, Bring a Friend, EIA Data Pack, Citizen Science -->
+    <aside id="mem-right"></aside>
   </div>
 </div>
 
@@ -1006,7 +1002,7 @@
         <h4 id="bf-formtitle">Post a briefing</h4>
         <div style="background:rgba(45,106,79,.08);border:1px solid rgba(45,106,79,.2);border-radius:var(--r-sm);padding:.75rem;font-size:.76rem;color:var(--canopy);margin-bottom:1rem;line-height:1.55">Members access these in-app — no meeting needed. <b>Recommended tiers:</b> impact reports &amp; recordings = <b>Gold+</b>; pre-release finance, ED roundtables, named sponsorship &amp; live sessions = <b>Platinum</b>; board/CEO briefings = <b>Diamond</b>.</div>
         <div class="fg"><label>Title</label><input id="bf-title" placeholder="e.g. Q1 2026 Impact Report"/></div>
-        <div class="fg"><label>Type</label><select id="bf-kind"><option value="report">📄 Impact report</option><option value="finance">📈 Finance report</option><option value="pdf">📄 PDF document</option><option value="excel">📊 Spreadsheet</option><option value="audio">🎧 Audio</option><option value="video">🎬 Video</option><option value="news">📰 News note</option><option value="live">🎟 Live session</option></select></div>
+        <div class="fg"><label>Type</label><select id="bf-kind"><option value="report">📄 Impact report</option><option value="finance">📈 Finance report</option><option value="pdf">📄 PDF document</option><option value="excel">📊 Spreadsheet</option><option value="audio">🎧 Audio</option><option value="video">🎬 Video</option><option value="news">📰 News note</option><option value="live">🎟 Live session</option><option value="datapack">🗂 EIA Data Pack</option></select></div>
         <div class="fg"><label>Minimum tier</label><select id="bf-tier"><option value="gold">Gold &amp; above</option><option value="platinum">Platinum &amp; above</option><option value="diamond">Diamond only</option></select></div>
         <div class="fg"><label>Description</label><textarea id="bf-body" rows="3" placeholder="What this briefing covers."></textarea></div>
         <div class="fg"><label>Upload file (PDF, Excel, audio, video…)</label><input type="file" id="bf-file" accept="application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,audio/*,video/*,image/*"/><input type="hidden" id="bf-filename"/></div>

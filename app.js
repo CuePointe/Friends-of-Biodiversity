@@ -1871,6 +1871,8 @@ function appNav(tab){
 }
 /* EXPLORE — members browse the full website while staying signed in (drawer kept as-is) */
 function toggleExplore(open){const d=document.getElementById('explore-drawer');if(d)d.style.display=open?'flex':'none';}
+// Back-compat alias: older index.html builds call openExplore() on the button — keep it opening the drawer.
+function openExplore(){toggleExplore(true);}
 function exploreGo(sec){
   toggleExplore(false);
   document.body.classList.remove('tab-home','tab-learn','tab-pay','shell-mode','exploring');
@@ -2633,6 +2635,33 @@ function referralCardHTML(u){
     '<div class="ref-prog"><div class="ref-count">'+n+'</div><div class="ref-txt"><b>'+n+' Friend'+(n===1?'':'s')+' joined</b> through you.'+
     (n<5?'<br>'+(5-n)+' more to reach <b>Community Champion</b>.':'<br>🏅 You\'re a <b>Community Champion</b> — thank you!')+'</div></div></div></div>';
 }
+/* EIA Biodiversity Data Pack — a Platinum & Diamond members-only card (right rail) */
+function dataPackCardHTML(u){
+  const ok=tierRank(u.tier)>=tierRank('platinum');
+  if(!ok){
+    return '<div class="eia-card eia-locked"><div class="eia-k">Platinum &amp; Diamond only</div>'+
+      '<h3>🗂 EIA Biodiversity Data Pack</h3>'+
+      '<p>Export-ready EIA/ESG biodiversity data for any Ugandan landscape — a Platinum &amp; Diamond benefit. '+
+      '<a href="#" onclick="openTierModal();return false">Upgrade your tier →</a></p></div>';
+  }
+  const packs=(BRIEFINGS||[]).filter(b=>b.kind==='datapack'&&tierRank(u.tier)>=tierRank(b.min_tier||'platinum'));
+  return '<div class="eia-card"><div class="eia-k">🗂 Platinum &amp; Diamond benefit</div>'+
+    '<h3>EIA Biodiversity Data Pack</h3>'+
+    '<p>Verified sightings, species lists &amp; IUCN status for any Ugandan landscape — export-ready for EIA &amp; ESG reporting.</p>'+
+    (packs.length?'<div class="brief-list" style="margin-bottom:.7rem">'+packs.map(b=>'<div class="brow" role="button" tabindex="0" onclick="openBriefing(\''+b.id+'\')" onkeydown="if(event.key===\'Enter\')openBriefing(\''+b.id+'\')"><div class="bi">🗂</div><div class="bm"><div class="bt">'+esc(b.title||'')+'</div><div class="bs">Data pack · '+_timeAgo(b.created_at)+'</div></div><span class="bact">Download →</span></div>').join('')+'</div>':'')+
+    '<button class="btn btn-canopy btn-sm" onclick="openEnquiry(\'datapack\')">Request a Data Pack →</button></div>';
+}
+function citizenPanelHTML(u){
+  const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);
+  return '<div class="cs-panel">'+
+    '<div class="cs-head"><div><div class="cs-title">🔬 Citizen Science</div><div class="cs-sub">Log what you see in the wild. Every sighting grows Uganda’s open biodiversity record.</div></div>'+
+      '<div class="cs-count"><b>'+ms+'</b><span>logged</span></div></div>'+
+    '<div class="cs-actions"><button class="btn btn-canopy" onclick="openSighting()">🔍 Log a sighting</button>'+
+      '<button class="btn btn-ghost" onclick="openSightMap()">🗺 Sightings map</button></div>'+
+    '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
+    '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
+  '</div>';
+}
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -2695,23 +2724,17 @@ function renderMemberView(){
       '<div id="members-directory" class="members-dir"><p style="font-size:.85rem;color:var(--muted)">Loading…</p></div>'+
       (CAMPAIGNS.filter(c=>c.active!==false).length?'<div class="mem-sec-title" style="margin-top:1.5rem">🎯 Fundraisers</div><div class="camp-grid camp-grid-rail">'+CAMPAIGNS.filter(c=>c.active!==false).map(campaignCardHTML).join('')+'</div>':'')+
       '';
+  // CENTRE — benefits, certificate, actions, feed, announcements, reports, leave
   document.getElementById('mem-body').innerHTML=
     '<div class="mem-main">'+
     renewBannerHTML(u)+
-    tierRibbonHTML(u)+
-    briefingHTML(u)+
-    referralCardHTML(u)+
-    // Benefits — clean chips
-    '<div class="mem-sec-title">Your Green Card Benefits</div>'+
+    '<div class="mem-sec-title" style="margin-top:0">Your Green Card Benefits</div>'+
     '<div class="perk-chips">'+perks.map(p=>'<div class="perk-chip"><span class="pc-ico">'+p.split(' ')[0]+'</span><span class="pc-txt">'+p.replace(/^[^\s]+\s/,'')+'</span></div>').join('')+'</div>'+
-    // Certificate
     '<div class="mem-cert-row">'+
       '<div><div class="mem-cert-title">Green Card Certificate</div><div class="mem-cert-sub">Your official UBF Friends of Biodiversity membership certificate</div></div>'+
       '<div style="display:flex;gap:.4rem;flex-wrap:wrap"><button class="btn btn-gold btn-sm" onclick="openCertModal()">⬇ Certificate</button>'+
       '<button class="btn btn-ghost btn-sm" onclick="downloadReceipt()">🧾 Receipt</button></div>'+
     '</div>'+
-    // Actions
-    // Actions — primary up front, the rest tucked into a tidy menu (LinkedIn-style)
     '<div class="mem-action-row">'+
       '<button class="btn btn-canopy btn-sm" onclick="openEditProfile()">✏ Edit Profile</button>'+
       '<button class="btn btn-gold btn-sm" onclick="openModal(\'m-create-post\')">✍ Post</button>'+
@@ -2724,29 +2747,23 @@ function renderMemberView(){
         '</div>'+
       '</div>'+
     '</div>'+
-    // Citizen science — log sightings, view the map, earn the badge
-    (function(){const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);return ''+
-      '<div class="cs-panel">'+
-        '<div class="cs-head"><div><div class="cs-title">🔬 Citizen Science</div><div class="cs-sub">Log what you see in the wild. Every sighting grows Uganda’s open biodiversity record.</div></div>'+
-          '<div class="cs-count"><b>'+ms+'</b><span>logged</span></div></div>'+
-        '<div class="cs-actions"><button class="btn btn-canopy" onclick="openSighting()">🔍 Log a sighting</button>'+
-          '<button class="btn btn-ghost" onclick="openSightMap()">🗺 Sightings map</button></div>'+
-        '<div class="cs-prog"><div class="cs-bar" style="width:'+Math.min(100,vs/10*100)+'%"></div></div>'+
-        '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
-      '</div>';})()+
-    // Central feed continues: sponsored banner, events, then updates
     bannerStripHTML()+
     eventsCarouselHTML()+
-    // Announcements — clickable, scrollable, latest on top
     announcementsListHTML()+
-    // Financial Reports — clickable, scrollable, latest on top
     reportsListHTML()+
-    // Leave
     '<div class="leave-row">'+
       '<p>Need to leave or unsubscribe from UBF communications?</p>'+
       '<button class="btn-leave" onclick="openModal(\'m-leave\')">Leave Membership</button>'+
     '</div>'+
     '</div>'; // close .mem-main
+  // RIGHT rail — Steward Briefing, Bring a Friend, EIA Data Pack, Citizen Science
+  const rightEl=document.getElementById('mem-right');
+  if(rightEl)rightEl.innerHTML=
+    tierRibbonHTML(u)+
+    briefingHTML(u)+
+    referralCardHTML(u)+
+    dataPackCardHTML(u)+
+    citizenPanelHTML(u);
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
@@ -4283,7 +4300,7 @@ function exportSubscribers(){
 
 /* ═══ STEWARD BRIEFINGS — gated content library for Gold & above ═══ */
 let BRIEFINGS=[];
-const BRIEF_ICON={report:'📄',finance:'📈',audio:'🎧',video:'🎬',pdf:'📄',excel:'📊',news:'📰',live:'🎟'};
+const BRIEF_ICON={report:'📄',finance:'📈',audio:'🎧',video:'🎬',pdf:'📄',excel:'📊',news:'📰',live:'🎟',datapack:'🗂'};
 function briefIcon(k){return BRIEF_ICON[k]||'📄';}
 function briefTierLabel(t){t=(t||'gold').toLowerCase();return t.charAt(0).toUpperCase()+t.slice(1);}
 async function loadBriefings(){
