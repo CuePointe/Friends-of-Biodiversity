@@ -1725,3 +1725,12 @@ body.shell-open #ad-rail{display:none!important}
 /* right-rail card spacing */
 #mem-right>.cs-panel,#mem-right>.mem-brief,#mem-right>.ref-card{margin-bottom:1rem}
 .fp-products-single{grid-template-columns:1fr!important;max-width:540px}
+
+/* Crafted line icons inside member right-rail card headings */
+.card-ico{display:inline-block;vertical-align:-4px;margin-right:.45rem;flex-shrink:0}
+.mem-brief h3 .card-ico{color:var(--canopy-lt)}
+.mem-brief.mem-brief-locked h3 .card-ico{color:var(--muted)}
+.ref-card .ref-top h3 .card-ico{color:var(--gold-lt)}
+.eia-card h3 .card-ico{color:#2E7D9A}
+.eia-card.eia-locked h3 .card-ico{color:var(--muted)}
+.cs-panel .cs-title .card-ico{color:var(--gold-lt)}

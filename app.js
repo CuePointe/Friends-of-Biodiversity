@@ -2604,6 +2604,12 @@ function renderPublicAnnounces(){
 /* Tier rank helpers for tier-differentiated experience (#4) */
 const TIER_ORDER=['student','silver','gold','platinum','diamond'];
 function tierRank(t){const i=TIER_ORDER.indexOf((t||'silver').toLowerCase());return i<0?1:i;}
+/* Hand-drawn line icons for the member right-rail cards (human-crafted, not stock emoji) */
+function _ico(p,size){return '<svg class="card-ico" viewBox="0 0 24 24" width="'+(size||22)+'" height="'+(size||22)+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
+const ICO_BRIEF=_ico('<path d="M6.5 3.5h8L18.5 7v13.5h-12z"/><path d="M14.5 3.5V7h4"/><path d="M9 12h6M9 15.5h6"/>');
+const ICO_FRIEND=_ico('<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19.5c0-3 2.5-5 5.5-5s5.5 2 5.5 5"/><path d="M17.5 8.5v5M20 11h-5"/>');
+const ICO_DATA=_ico('<path d="M3.5 7.5 12 3.5l8.5 4v9L12 20.5 3.5 16.5z"/><path d="M3.5 7.5 12 11.5l8.5-4M12 11.5v9"/>');
+const ICO_SCIENCE=_ico('<path d="M9.5 3.5h5M10.5 3.5v6.2L5.9 17a2 2 0 0 0 1.7 3h8.8a2 2 0 0 0 1.7-3l-4.6-7.3V3.5"/><path d="M8.4 14.5h7.2"/>');
 function tierRibbonHTML(u){
   const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
   const gold=tierRank(u.tier)>=tierRank('gold');
@@ -2617,19 +2623,19 @@ function briefingHTML(u){
   const gold=tierRank(u.tier)>=tierRank('gold');
   if(gold){
     return '<div class="mem-brief"><div class="mb-k">Steward Briefing · '+esc(TIERS_DATA[u.tier]?TIERS_DATA[u.tier].label:'Gold')+' access</div>'+
-      '<h3>Field &amp; finance briefings</h3>'+
+      '<h3>'+ICO_BRIEF+'Field &amp; finance briefings</h3>'+
       '<p class="mb-note" style="margin:0 0 .6rem">Impact reports, recordings and live sessions your tier unlocks — open or download any time.</p>'+
       briefingListHTML(u)+'</div>';
   }
   return '<div class="mem-brief mem-brief-locked"><div class="mb-k">Steward Briefing · locked</div>'+
-    '<h3>Exclusive briefings open at Gold+</h3>'+
+    '<h3>'+ICO_BRIEF+'Exclusive briefings open at Gold+</h3>'+
     '<p class="mb-note">Pre-release reports, ED roundtables and named sponsorships unlock at Gold and above. '+
     '<a href="#" onclick="openTierModal();return false">Upgrade your tier →</a></p></div>';
 }
 function referralCardHTML(u){
   const n=myReferralCount();
   return '<div class="ref-card"><div class="ref-top"><div class="ref-k">Grow the movement</div>'+
-    '<h3>Bring a Friend of Biodiversity</h3><p>Share your personal link. Every friend who joins is credited to you.</p></div>'+
+    '<h3>'+ICO_FRIEND+'Bring a Friend of Biodiversity</h3><p>Share your personal link. Every friend who joins is credited to you.</p></div>'+
     '<div class="ref-body"><div class="ref-link"><span class="ref-url">'+esc(myInviteLink())+'</span>'+
     '<button class="ref-copy" onclick="copyInvite()">Copy</button></div>'+
     '<div class="ref-prog"><div class="ref-count">'+n+'</div><div class="ref-txt"><b>'+n+' Friend'+(n===1?'':'s')+' joined</b> through you.'+
@@ -2640,13 +2646,13 @@ function dataPackCardHTML(u){
   const ok=tierRank(u.tier)>=tierRank('platinum');
   if(!ok){
     return '<div class="eia-card eia-locked"><div class="eia-k">Platinum &amp; Diamond only</div>'+
-      '<h3>🗂 EIA Biodiversity Data Pack</h3>'+
+      '<h3>'+ICO_DATA+'EIA Biodiversity Data Pack</h3>'+
       '<p>Export-ready EIA/ESG biodiversity data for any Ugandan landscape — a Platinum &amp; Diamond benefit. '+
       '<a href="#" onclick="openTierModal();return false">Upgrade your tier →</a></p></div>';
   }
   const packs=(BRIEFINGS||[]).filter(b=>b.kind==='datapack'&&tierRank(u.tier)>=tierRank(b.min_tier||'platinum'));
   return '<div class="eia-card"><div class="eia-k">🗂 Platinum &amp; Diamond benefit</div>'+
-    '<h3>EIA Biodiversity Data Pack</h3>'+
+    '<h3>'+ICO_DATA+'EIA Biodiversity Data Pack</h3>'+
     '<p>Verified sightings, species lists &amp; IUCN status for any Ugandan landscape — export-ready for EIA &amp; ESG reporting.</p>'+
     (packs.length?'<div class="brief-list" style="margin-bottom:.7rem">'+packs.map(b=>'<div class="brow" role="button" tabindex="0" onclick="openBriefing(\''+b.id+'\')" onkeydown="if(event.key===\'Enter\')openBriefing(\''+b.id+'\')"><div class="bi">🗂</div><div class="bm"><div class="bt">'+esc(b.title||'')+'</div><div class="bs">Data pack · '+_timeAgo(b.created_at)+'</div></div><span class="bact">Download →</span></div>').join('')+'</div>':'')+
     '<button class="btn btn-canopy btn-sm" onclick="openEnquiry(\'datapack\')">Request a Data Pack →</button></div>';
@@ -2654,7 +2660,7 @@ function dataPackCardHTML(u){
 function citizenPanelHTML(u){
   const vs=myVerifiedSightings(u.id),ms=mySightings(u.id);
   return '<div class="cs-panel">'+
-    '<div class="cs-head"><div><div class="cs-title">🔬 Citizen Science</div><div class="cs-sub">Log what you see in the wild. Every sighting grows Uganda’s open biodiversity record.</div></div>'+
+    '<div class="cs-head"><div><div class="cs-title">'+ICO_SCIENCE+'Citizen Science</div><div class="cs-sub">Log what you see in the wild. Every sighting grows Uganda’s open biodiversity record.</div></div>'+
       '<div class="cs-count"><b>'+ms+'</b><span>logged</span></div></div>'+
     '<div class="cs-actions"><button class="btn btn-canopy" onclick="openSighting()">🔍 Log a sighting</button>'+
       '<button class="btn btn-ghost" onclick="openSightMap()">🗺 Sightings map</button></div>'+
@@ -2757,7 +2763,12 @@ function renderMemberView(){
     '</div>'+
     '</div>'; // close .mem-main
   // RIGHT rail — Steward Briefing, Bring a Friend, EIA Data Pack, Citizen Science
-  const rightEl=document.getElementById('mem-right');
+  // Self-healing: if an older index.html is live without #mem-right, create it so the cards never vanish.
+  let rightEl=document.getElementById('mem-right');
+  if(!rightEl){
+    const shell=document.querySelector('.mem-shell')||document.getElementById('view-member');
+    if(shell){rightEl=document.createElement('aside');rightEl.id='mem-right';shell.appendChild(rightEl);}
+  }
   if(rightEl)rightEl.innerHTML=
     tierRibbonHTML(u)+
     briefingHTML(u)+
