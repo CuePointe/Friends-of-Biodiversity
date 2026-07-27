@@ -1734,3 +1734,25 @@ body.shell-open #ad-rail{display:none!important}
 .eia-card h3 .card-ico{color:#2E7D9A}
 .eia-card.eia-locked h3 .card-ico{color:var(--muted)}
 .cs-panel .cs-title .card-ico{color:var(--gold-lt)}
+
+/* Right rail collapsed to four clickable icons (declutter) */
+.rail-icons{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.rail-ico-btn{display:flex;flex-direction:column;align-items:center;gap:.4rem;background:var(--white,#fff);border:1px solid var(--border);border-radius:14px;padding:.85rem .5rem;cursor:pointer;font-family:inherit;transition:transform .16s,border-color .16s,box-shadow .16s;box-shadow:0 8px 22px -18px rgba(0,0,0,.4)}
+.rail-ico-btn:hover{transform:translateY(-2px);border-color:rgba(200,168,75,.6);box-shadow:0 12px 26px -16px rgba(0,0,0,.45)}
+.rail-ico-circle{position:relative;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:rgba(45,106,79,.1);color:var(--canopy-lt)}
+.rail-ico-circle .card-ico{margin:0;vertical-align:middle}
+.rail-ico-cap{font-size:.68rem;font-weight:700;color:var(--canopy);text-align:center;line-height:1.2}
+.rail-ico-badge{position:absolute;top:-3px;right:-4px;min-width:17px;height:17px;padding:0 4px;border-radius:99px;background:var(--gold);color:var(--canopy);font-size:.6rem;font-weight:800;display:grid;place-items:center}
+.rail-ico-lock{position:absolute;top:-3px;right:-4px;font-size:.66rem}
+.rail-ico-btn.locked{opacity:.62}
+.rail-ico-btn.locked .rail-ico-circle{background:var(--mist);color:var(--muted)}
+/* the opened card inside the shared detail modal */
+.rail-detail{padding:1rem 1.1rem 1.2rem}
+.rail-detail>.mem-brief,.rail-detail>.ref-card,.rail-detail>.eia-card,.rail-detail>.cs-panel{margin-bottom:.6rem}
+/* Mobile: one row of four under the profile */
+@media(max-width:1039px){
+  .rail-icons{grid-template-columns:repeat(4,1fr);gap:.45rem}
+  .rail-ico-btn{padding:.7rem .25rem}
+  .rail-ico-circle{width:40px;height:40px}
+  .rail-ico-cap{font-size:.6rem}
+}

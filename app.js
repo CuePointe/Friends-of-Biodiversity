@@ -2668,6 +2668,37 @@ function citizenPanelHTML(u){
     '<div class="cs-note">'+(vs>=10?'🔬 <b>Citizen Scientist</b> unlocked — thank you!':'<b>'+vs+'/10</b> verified sightings to unlock the free 🔬 Citizen Scientist badge.')+'</div>'+
   '</div>';
 }
+/* Right rail collapsed to four clickable icons — tap one to open its full card in #m-detail */
+function railIconsHTML(u){
+  const goldOK=tierRank(u.tier)>=tierRank('gold');
+  const platOK=tierRank(u.tier)>=tierRank('platinum');
+  const now=Date.now();
+  const newBriefs=(BRIEFINGS||[]).filter(b=>tierRank(u.tier)>=tierRank(b.min_tier||'gold')&&(now-new Date(b.created_at).getTime())<7*864e5).length;
+  const refs=myReferralCount();
+  const sights=mySightings(u.id);
+  const btn=function(key,ico,cap,badge,locked){
+    return '<button class="rail-ico-btn'+(locked?' locked':'')+'" onclick="openRailCard(\''+key+'\')" aria-label="'+esc(cap)+'">'+
+      '<span class="rail-ico-circle">'+ico+
+        (locked?'<span class="rail-ico-lock">🔒</span>':(badge?'<span class="rail-ico-badge">'+badge+'</span>':''))+
+      '</span><span class="rail-ico-cap">'+esc(cap)+'</span></button>';
+  };
+  return '<div class="rail-icons">'+
+    btn('brief',ICO_BRIEF,'Briefings',newBriefs||'',!goldOK)+
+    btn('friend',ICO_FRIEND,'Bring a Friend',refs||'',false)+
+    btn('data',ICO_DATA,'EIA Data Pack','',!platOK)+
+    btn('science',ICO_SCIENCE,'Citizen Science',sights||'',false)+
+  '</div>';
+}
+function openRailCard(which){
+  if(!currentUser)return;_buzz&&_buzz();
+  const u=currentUser;
+  const body={brief:briefingHTML,friend:referralCardHTML,data:dataPackCardHTML,science:citizenPanelHTML}[which];
+  if(!body)return;
+  document.getElementById('detail-body').innerHTML=
+    '<div class="rail-detail">'+body(u)+
+    '<div class="dtl-cta-row" style="margin-top:.4rem"><button class="btn btn-ghost btn-sm" onclick="closeModal(\'m-detail\')">Close</button></div></div>';
+  openModal('m-detail');
+}
 function renderMemberView(){
   if(!currentUser)return;
   const u=currentUser;const td=TIERS_DATA[u.tier]||TIERS_DATA.silver;
@@ -2771,10 +2802,7 @@ function renderMemberView(){
   }
   if(rightEl)rightEl.innerHTML=
     tierRibbonHTML(u)+
-    briefingHTML(u)+
-    referralCardHTML(u)+
-    dataPackCardHTML(u)+
-    citizenPanelHTML(u);
+    railIconsHTML(u);
   populateMembersDirectory();
   updateNotifBadge();
   renderAdRail();
