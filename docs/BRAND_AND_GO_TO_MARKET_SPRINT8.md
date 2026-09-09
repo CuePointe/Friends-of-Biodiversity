@@ -1,26 +1,25 @@
-# Friends of Biodiversity — Brand & Go-to-Market Sprint 8
+# Friends of Biodiversity — Sprint 8 rollout notes
 
-## Product hierarchy
+The Sprint 8 branch is now a visible product release, not only a database foundation.
 
-**Uganda Biodiversity Fund (UBF)** → **Friends of Biodiversity** → **Green Card** → **app** → **Citizen Science** → **Biodiversity Intelligence**
+## User-facing capabilities
+
+- Green Card membership workspace
+- Citizen Science observation capture with GPS/evidence fields
+- Verified biodiversity observation feed
+- Biodiversity Intelligence product catalogue and structured institutional enquiries
+- Staff intelligence cockpit for membership, revenue, observations, institutional pipeline, product orders and analytics
 
 ## Product story
 
 **Join. Learn. Observe. Contribute. Protect.**
 
-The app should feel like a participation network rather than a static NGO website. Members join through Green Card, learn through the Learning Exchange, contribute biodiversity observations, and see how verified evidence can support conservation decisions.
+The new layer is additive to the existing SPA. It uses the live Supabase foundation while keeping the current application shell and business flows intact.
 
 ## Institutional proposition
 
-Friends of Biodiversity can provide verified community-generated biodiversity evidence to researchers, EIA practitioners, conservation organisations and responsible institutions. Commercial products should be scoped and delivered from verified records, with sensitive species locations protected through database access controls.
+Verified community-generated biodiversity evidence can support EIA, research, conservation planning and monitoring. Commercial delivery should be based on verified evidence and appropriate data controls.
 
-## Sprint 8 visible features
+## Deployment
 
-The visible feature layer exposes four clear entry points:
-
-1. **Green Card** — membership status and tier positioning.
-2. **Citizen Science** — observation capture with GPS/evidence fields and a verified-record feed.
-3. **Biodiversity Intelligence** — catalogue of institutional evidence products and a structured enquiry path.
-4. **Staff Intelligence Cockpit** — operational metrics for membership, successful revenue, observations, institutional pipeline, product demand and analytics.
-
-These are additive to the current SPA and provide a bridge from the existing community experience to the next product architecture.
+The intended release branch is **`fob-8-sprint`**. The PWA service-worker cache has been bumped to `fob-app-v10` to invalidate the previous cached application shell.
