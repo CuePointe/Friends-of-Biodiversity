@@ -1,22 +1,21 @@
 /* ═══════════════════════════════════════════
    FRIENDS OF BIODIVERSITY — SERVICE WORKER
    Uganda Biodiversity Fund
-   
+
    Caches core app files for offline access.
    Members can open the app even without internet
    and see the last loaded content.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v5';
+// Sprint 8: bump cache so new runtime assets are picked up cleanly.
+const CACHE_NAME = 'fob-app-v6';
 
-// Core files to cache immediately on install.
-// RELATIVE paths so the app works under a GitHub project subpath
-// (e.g. /friends-of-biodiversity/) as well as a custom domain root.
 const CORE_FILES = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  './sprint8-runtime.js',
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -29,8 +28,6 @@ const CORE_FILES = [
   './slide3sm.jpg',
 ];
 
-// ── INSTALL: cache core files (each independently, so one missing
-// file can never break the whole install) ──
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -39,7 +36,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// ── ACTIVATE: clean up old caches ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -52,15 +48,11 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── FETCH ──
-// App code (HTML/CSS/JS) = NETWORK-FIRST so updates appear immediately after deploy.
-// Images & other static assets = CACHE-FIRST for speed and offline use.
 self.addEventListener('fetch', event => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
-  // Always go to network for live/external data — never cache these
   const url = new URL(event.request.url);
+  // Never cache live backend/API traffic or third-party dynamic resources.
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('jsdelivr.net')) return;
@@ -70,7 +62,8 @@ self.addEventListener('fetch', event => {
   const isCode = event.request.destination === 'document' ||
                  /\.(?:html|css|js)$/i.test(url.pathname);
 
-  // NETWORK-FIRST for the app shell and code so new deploys show up right away
+  // App code = network first, cache fallback. This preserves fast repeat loads
+  // without trapping users on stale application logic after a deployment.
   if (sameOrigin && isCode) {
     event.respondWith(
       fetch(event.request)
@@ -88,7 +81,7 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // CACHE-FIRST for images and everything else
+  // Images and other stable local assets = cache first.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -109,7 +102,6 @@ self.addEventListener('fetch', event => {
   );
 });
 
-// ── PUSH NOTIFICATIONS (future use) ──
 self.addEventListener('push', event => {
   if (!event.data) return;
   const data = event.data.json();
@@ -123,7 +115,5 @@ self.addEventListener('push', event => {
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url || './')
-  );
+  event.waitUntil(clients.openWindow(event.notification.data.url || './'));
 });
