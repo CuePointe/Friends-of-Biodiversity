@@ -16,7 +16,7 @@ Friends of Biodiversity can provide verified community-generated biodiversity ev
 
 ## Sprint 8 visible features
 
-The live feature layer exposes four clear entry points:
+The visible feature layer exposes four clear entry points:
 
 1. **Green Card** — membership status and tier positioning.
 2. **Citizen Science** — observation capture with GPS/evidence fields and a verified-record feed.
