@@ -5,117 +5,83 @@ progressive web app (PWA) where members join, pay, learn, post, message each
 other and follow UBF's conservation impact — and where UBF staff run the whole
 programme from a built-in admin console.
 
-**Live site:** served by GitHub Pages from the `main` branch of this repository.
+**Live site:** served by the configured deployment from `fob-8-sprint` for the Sprint 8 release.
 
----
+## Sprint 8 product architecture
+
+**UBF** — the institution → **Friends of Biodiversity** — the membership movement → **Green Card** — your membership → **FoB App** — your digital relationship → **Citizen Science** — your opportunity to contribute biodiversity intelligence → **Conservation Intelligence** — the institutional data product.
+
+Lead message: **Become part of Uganda's biodiversity intelligence network.**
+
+The member journey is designed as: **Care → Join → Learn → Observe → Contribute evidence → UBF verifies → Better biodiversity understanding → Better institutional information → Better conservation decisions.**
+
+The platform deliberately serves three markets: **Citizens** (Protect what you love), **Institutions** (Put biodiversity into practice), and **Technical buyers** (Better biodiversity evidence for better decisions).
 
 ## What the app does
 
 ### For visitors (marketing site)
 - Hero slideshow, programme windows and themes
-- **"What you're protecting"** conservation gallery (endangered species & places)
-- Green Card tiers with linked species ("You help protect …")
-- **How to Pay** — Stanbic / MTN MoMo / Airtel with step-by-step guides and an
-  admin-editable "Where your money goes" impact panel
-- Guided 5-step enrollment wizard with email verification (6-digit code)
+- **"What you're protecting"** conservation gallery
+- Green Card tiers with linked conservation propositions
+- How to Pay — Stanbic / MTN MoMo / Airtel
+- Guided enrollment wizard with email verification
+- Sprint 8 product hierarchy, market pathways, tier progression, badges, storytelling formats, Uganda Biodiversity Pulse and accountability trust engine
 
-### For members (full-screen app mode)
-Signing in hides the marketing site and opens an app shell — compact header,
-bottom tabs (**Home · Learn · Chats · Alerts · Profile**), compose button:
-- **Home** — community digest feed (titles + authors, tap to open), sort,
-  pinned posts, Sponsored campaign cards
-- **Learn** — the Learning Exchange content library (grid/list)
-- **Chats** — private member-to-member messages with unread badges
-- **Alerts** — clickable notifications that deep-link to the exact item
-- **Profile** — Green Card certificate & PDF receipt, impact badges,
-  tier changes (with history), events & RSVP, fundraisers, interests,
-  password, sign out
-- Membership **renewals**: lapsed members get a banner + alert and renew in-app
+### For members
+- Home, learning, chats, alerts and profile app shell
+- Green Card membership and renewal experience
+- Citizen Science observation workflow
+- Conservation identity badges
+- Sprint 8 feature workspace for observations, intelligence products and membership
 
-### For admins (console)
-Overview KPIs & revenue-by-tier, member approval & verification, renewals,
-content library, Wall of Fame, announcements, financial reports, payment
-details, conservation gallery, **ad campaigns with scheduling + view/click
-metrics**, events, fundraisers & donation confirmation, audit log, password.
-Open the in-app **📖 Admin Guide** panel for step-by-step instructions.
+### For institutions and technical buyers
+- Institutional partnership pathway
+- Conservation Intelligence catalogue
+- Structured intelligence enquiries
+- Data-pack, research and monitoring positioning
 
-### Sprint 8 product layer
-The `fob-8-sprint` branch also adds a visible Sprint 8 workspace without
-rewriting the existing SPA:
-- **Green Card** membership snapshot and tier positioning
-- **Citizen Science** observation capture with GPS/evidence fields and a
-  verified observation feed
-- **Biodiversity Intelligence** product catalogue and structured institutional
-  enquiry workflow
-- **Staff Intelligence Cockpit** for membership, revenue, observations,
-  institutional pipeline, data-product orders and analytics
-
----
+### For admins
+- Overview KPIs & revenue-by-tier
+- Member approval & verification
+- Renewals, content, Wall of Fame, announcements and reports
+- Payment details, conservation gallery, ads, events and fundraisers
+- Audit log
+- Sprint 8 growth/intelligence cockpit
 
 ## Architecture
 
 | Layer | Technology |
 |---|---|
-| Front end | Vanilla HTML/CSS/JS single-page app (`index.html`, `styles.css`, `app.js`) + Sprint 8 feature layer |
-| Backend | [Supabase](https://supabase.com) — PostgreSQL, Realtime, Storage, Auth (email OTP) |
-| Hosting | GitHub Pages (static, from the configured deployment branch) |
-| PWA | `manifest.json` + `sw.js` (network-first code, cache-first images) |
+| Front end | Vanilla HTML/CSS/JS single-page app (`index.html`, `styles.css`, `app.js`) |
+| Backend | Supabase — PostgreSQL, Realtime, Storage, Auth |
+| Hosting | Configured deployment target using `fob-8-sprint` for Sprint 8 |
+| PWA | `manifest.json` + `sw.js` with versioned network-first code cache |
 
-## Images — two systems (important)
+## Deployment
 
-1. **Repo image files** (this repository): hero slides (`slide-N.jpg` originals
-   **and** `slideNsm.jpg` 900px mobile versions — keep both), logos, favicons.
-   Upload via GitHub → *Add file → Upload files* (drag & drop, never "Create
-   new file").
-2. **Admin-panel uploads** (Supabase Storage): gallery photos/videos, payment
-   logos, welcome media, post attachments, profile photos. No GitHub needed.
+Deploy from **`fob-8-sprint`**. The Sprint 8 service worker cache is now `fob-app-v12` and injects the runtime, Auth bridge, visible feature layer, strategic product layer and interactive Pulse filter layer. After the deployment updates, hard-refresh once (`Ctrl+Shift+R`) so the new worker can install.
 
-## Deploying changes
+## Data integrity
 
-Deploy from the branch configured in your hosting provider. For the Sprint 8
-branch, use **`fob-8-sprint`**. Because the app is a PWA, an already-open tab
-may retain an older service worker until it activates; after deployment,
-reopen the site or hard-refresh (Ctrl+Shift+R) so the new `fob-app-v10` cache
-is installed.
-
-The Sprint 8 service worker injects the runtime, Auth bridge and visible UI
-layer into HTML responses and caches those modules with the app shell.
+Public impact metrics are rendered from published UBF programme records. Missing figures remain unreported rather than being invented. Uganda Biodiversity Pulse uses live biodiversity evidence where available; Region and Threat are shown as planned dimensions until those fields are populated in the source data.
 
 ## Repository layout
 
 ```
-index.html      All markup: marketing site, app shell, admin console, modals
-styles.css      Full design system (canopy green #0B2618 · gold #C8A84B)
-app.js          All logic: views, feed, chats, admin, Supabase calls
-sw.js           Service worker (offline cache + Sprint 8 feature injection)
-sprint8-ui.js   Visible Sprint 8 feature workspace
-sprint8-runtime.js / sprint8-auth-profile.js   Sprint 8 application bridges
-manifest.json   PWA install metadata
-llms.txt / robots.txt / sitemap.xml   SEO & AI discoverability
-slide-*.jpg / slideNsm.jpg            Hero slideshow (desktop / mobile)
+index.html
+styles.css
+app.js
+sw.js
+manifest.json
+sprint8-runtime.js
+sprint8-auth-profile.js
+sprint8-ui.js
+sprint8-strategy.js
+sprint8-pulse-filters.js
+supabase/migrations/*
+docs/*
 ```
 
 ---
 
-## Project lead & attribution
-
-This project — its strategy, product direction, marketing approach and the
-citizen-science data-product concept — was conceived and led by
-**Thomas Otieno**, Strategy & Marketing Development Expert.
-
-Thomas shaped the platform end to end: the membership and monetisation model,
-the go-to-market and audience strategy (EIA consultancies, researchers and
-conservation NGOs), the in-app marketing/ads system, and the positioning of the
-Biodiversity Baseline Data Pack. This work draws on his **IBM Data Science**
-and **Digital Marketing** training — applying data-science thinking to turn
-members' field observations into a licensable dataset, and digital-marketing
-craft to member acquisition, engagement and retention.
-
-- **Project lead & strategy:** Thomas Otieno — Strategy & Marketing Development
-  Expert · IBM Data Science · Digital Marketing
-- **Organisation:** Uganda Biodiversity Fund — Friends of Biodiversity Programme
-
----
-
-Maintained by the Uganda Biodiversity Fund ·
-info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org
+Maintained by the Uganda Biodiversity Fund · info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org
