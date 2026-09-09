@@ -1,26 +1,117 @@
-# Friends of Biodiversity — Citizen Science
+# Citizen Science — User Guide
 
-Citizen Science turns community observations into structured biodiversity evidence that can support conservation decisions.
+**Friends of Biodiversity · Uganda Biodiversity Fund**
 
-## Member workflow
+This feature turns every member into a field observer. Each wildlife sighting they log
+becomes one row of open biodiversity data — and thousands of those rows become a dataset
+that EIA consultancies, researchers and conservation NGOs can actually use. This guide
+explains it for **members**, **administrators**, and **your target buyers**.
 
-1. Open **Explore FoB** in the Sprint 8 workspace.
-2. Choose **Citizen Science**.
-3. Enter the species, observation date, count band, activity, habitat and evidence notes.
-4. Capture GPS when available.
-5. Submit the observation while signed in so the record can be linked to the member.
-6. The submitted record enters the shared `sightings` dataset with `verified=false` and remains subject to verification.
+---
 
-The visible feed in the Sprint 8 workspace shows **verified** records only.
+## 1. What it is, in one line
 
-## Evidence quality
+> Members photograph what they see in the wild → the app records the species, GPS location
+> and date → those records plot on a map and export as a species list for any project site.
 
-The Sprint 8 database includes `observation_quality`, a quality-scoring layer covering photo evidence, GPS, observer confidence, duplicate risk, verification and completeness. Paid biodiversity-intelligence products should be assembled from verified records.
+Nobody "logs in as a bird." A member **reports** an animal they saw. That report is the data.
 
-## Institutional use
+---
 
-Potential users include EIA practitioners, researchers, conservation organisations and other responsible institutions. The product catalogue provides a structured enquiry path rather than exposing sensitive species locations indiscriminately.
+## 2. For members — how to log a sighting
 
-## Data fields
+1. Open your **Profile** tab and find the green **🔬 Citizen Science** panel.
+2. Tap **🔍 Log a sighting**.
+3. **Add a photo** — the app opens your camera or gallery.
+4. **Pick the species** — the options are drawn straight from the Conservation Gallery
+   (so admins control the species list simply by managing that gallery).
+5. The app **auto-fills** your GPS location, the date/time, and your name. You type nothing.
+6. Add an optional note (e.g. *"two adults near the river"*) and tap **✓ Submit sighting**.
 
-Each sighting can include species, latitude/longitude, observed date, member/observer, photo URL, notes, verification state, count band, activity and habitat.
+> **Location off?** If the phone can't share GPS, the sighting still saves — but it won't
+> appear on the map until location is available. The screen tells the member this honestly.
+
+### The reward — Citizen Scientist badge
+- **1 sighting** → 🔭 *Observer* badge.
+- **10 verified sightings** → 🔬 *Citizen Scientist* badge (shown on their profile).
+- The progress bar in the Citizen Science panel shows how close they are.
+
+Only **admin-verified** sightings count toward the badge — this keeps the data credible.
+
+---
+
+## 3. For members & admins — the Sightings map
+
+Tap **🗺 Sightings map** in the Citizen Science panel.
+
+- Every located sighting is a **coloured dot** (🔴 birds · 🟢 mammals · 🔵 amphibians).
+- **Tap anywhere** on the map to drop a survey **pin**.
+- Drag the **Radius** slider (1–50 km) to draw a circle around that pin.
+- The info bar shows how many sightings and how many **distinct species** fall inside it.
+
+The map is fully self-contained — it needs no external map service, so it loads instantly
+and works even on a weak connection.
+
+---
+
+## 4. For admins — verifying sightings & selling the data
+
+Go to **Admin → 🔬 Sightings & Data**.
+
+- You'll see every logged sighting with its photo, species, location, member and date.
+- Tap **✓ Verify** on genuine ones. Verified sightings power members' badges and make the
+  dataset trustworthy. Use **Unverify** to reverse, **Delete** to remove spam.
+- The summary strip shows totals: *logged · verified · mapped · distinct species*.
+
+### Exporting an EIA data pack (the revenue step)
+1. Open the **🗺 Sightings map** (from any profile — admins see the export button).
+2. Tap the project site on the map to drop a pin; set the radius (e.g. 5 km).
+3. Tap **⬇ Export species list near pin · EIA data pack**.
+4. A **CSV** downloads containing every sighting in that radius:
+   `species, lat, lng, observed_at, verified, logged_by, notes`.
+
+That CSV is the product. Every export is recorded in the **Audit Log**.
+
+---
+
+## 5. How this serves your three audiences
+
+| Audience | What they need | How the app delivers it |
+|---|---|---|
+| **EIA consultancies** | A legally-required list of species near a proposed dam, road or factory | Drop a pin on the site, set a radius, export the species list as a data pack |
+| **Researchers** | Georeferenced, dated occurrence records to cite | The same table, filtered by species or area, exported to CSV |
+| **Conservation NGOs** | Trends over seasons and hotspots | The map plus repeated exports show change over time |
+
+---
+
+## 6. Honest limits (say these to buyers)
+
+- **The app does not auto-identify species.** The *member* picks the species from the
+  gallery. Automatic photo-ID would need an AI model and funding — a later phase.
+- **Value compounds with volume and time.** A handful of sightings isn't sellable; a few
+  thousand across regions and seasons is. This is an asset you build, not day-one income.
+- **Verification matters.** Only verified records should ever back a paid data pack.
+
+---
+
+## 7. Where the data lives
+
+All sightings are stored in the Supabase table `public.sightings`:
+
+| Column | Meaning |
+|---|---|
+| `species` | Species name (from the gallery) |
+| `lat`, `lng` | GPS coordinates (nullable if location was off) |
+| `observed_at` | When it was seen |
+| `member_id`, `member_name` | Who logged it |
+| `photo_url` | Uploaded photo |
+| `notes` | Optional free text |
+| `verified` | Admin-confirmed flag |
+
+Nothing is ever deleted automatically — the record is the asset.
+
+---
+
+## 8. Sprint 8 visible workspace
+
+The Sprint 8 **Explore FoB** workspace adds a second visible entry point for Citizen Science. It provides observation capture with GPS, date, species, count band, activity, habitat, optional photo URL and evidence notes. New submissions are stored as unverified records and the workspace feed is intended to show verified records only.
