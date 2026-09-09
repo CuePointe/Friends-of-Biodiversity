@@ -1,103 +1,15 @@
-# Friends of Biodiversity — Uganda Biodiversity Fund 🌿
+# Friends of Biodiversity — Uganda Biodiversity Fund
 
-The **Green Card membership app** of the Uganda Biodiversity Fund (UBF): a
-progressive web app (PWA) where members join, pay, learn, post, message each
-other and follow UBF's conservation impact — and where UBF staff run the whole
-programme from a built-in admin console.
+Friends of Biodiversity is the Uganda Biodiversity Fund membership and participation platform.
 
-**Live site:** served by GitHub Pages from the `main` branch of this repository.
+## Sprint 8 application capabilities
 
----
+The `fob-8-sprint` branch now contains a visible Sprint 8 product layer in addition to the existing SPA and Supabase foundation:
 
-## What the app does
+- Green Card membership workspace
+- Citizen Science observation capture with GPS and evidence fields
+- Verified biodiversity observation feed
+- Biodiversity Intelligence catalogue and institutional enquiry workflow
+- Staff intelligence cockpit for membership, revenue, observations, institutional pipeline, product demand and analytics
 
-### For visitors (marketing site)
-- Hero slideshow, programme windows and themes
-- **"What you're protecting"** conservation gallery (endangered species & places)
-- Green Card tiers with linked species ("You help protect …")
-- **How to Pay** — Stanbic / MTN MoMo / Airtel with step-by-step guides and an
-  admin-editable "Where your money goes" impact panel
-- Guided 5-step enrollment wizard with email verification (6-digit code)
-
-### For members (full-screen app mode)
-Signing in hides the marketing site and opens an app shell — compact header,
-bottom tabs (**Home · Learn · Chats · Alerts · Profile**), compose button:
-- **Home** — community digest feed (titles + authors, tap to open), sort,
-  pinned posts, Sponsored campaign cards
-- **Learn** — the Learning Exchange content library (grid/list)
-- **Chats** — private member-to-member messages with unread badges
-- **Alerts** — clickable notifications that deep-link to the exact item
-- **Profile** — Green Card certificate & PDF receipt, impact badges,
-  tier changes (with history), events & RSVP, fundraisers, interests,
-  password, sign out
-- Membership **renewals**: lapsed members get a banner + alert and renew in-app
-
-### For admins (console)
-Overview KPIs & revenue-by-tier, member approval & verification, renewals,
-content library, Wall of Fame, announcements, financial reports, payment
-details, conservation gallery, **ad campaigns with scheduling + view/click
-metrics**, events, fundraisers & donation confirmation, audit log, password.
-Open the in-app **📖 Admin Guide** panel for step-by-step instructions.
-
----
-
-## Architecture
-
-| Layer | Technology |
-|---|---|
-| Front end | Vanilla HTML/CSS/JS single-page app (`index.html`, `styles.css`, `app.js`) |
-| Backend | [Supabase](https://supabase.com) — PostgreSQL, Realtime, Storage, Auth (email OTP) |
-| Hosting | GitHub Pages (static, from `main`) |
-| PWA | `manifest.json` + `sw.js` (network-first code, cache-first images) |
-
-## Images — two systems (important)
-
-1. **Repo image files** (this repository): hero slides (`slide-N.jpg` originals
-   **and** `slideNsm.jpg` 900px mobile versions — keep both), logos, favicons.
-   Upload via GitHub → *Add file → Upload files* (drag & drop, never "Create
-   new file").
-2. **Admin-panel uploads** (Supabase Storage): gallery photos/videos, payment
-   logos, welcome media, post attachments, profile photos. No GitHub needed.
-
-## Deploying changes
-
-Upload changed files to the **`main` branch**, then hard-refresh
-(Ctrl+Shift+R). The service worker fetches fresh HTML/CSS/JS on every load;
-images may need one extra refresh after a cache-version bump.
-
-## Repository layout
-
-```
-index.html      All markup: marketing site, app shell, admin console, modals
-styles.css      Full design system (canopy green #0B2618 · gold #C8A84B)
-app.js          All logic: views, feed, chats, admin, Supabase calls
-sw.js           Service worker (offline cache)
-manifest.json   PWA install metadata
-llms.txt / robots.txt / sitemap.xml   SEO & AI discoverability
-slide-*.jpg / slideNsm.jpg            Hero slideshow (desktop / mobile)
-```
-
----
-
-## Project lead & attribution
-
-This project — its strategy, product direction, marketing approach and the
-citizen-science data-product concept — was conceived and led by
-**Thomas Otieno**, Strategy & Marketing Development Expert.
-
-Thomas shaped the platform end to end: the membership and monetisation model,
-the go-to-market and audience strategy (EIA consultancies, researchers and
-conservation NGOs), the in-app marketing/ads system, and the positioning of the
-Biodiversity Baseline Data Pack. This work draws on his **IBM Data Science**
-and **Digital Marketing** training — applying data-science thinking to turn
-members' field observations into a licensable dataset, and digital-marketing
-craft to member acquisition, engagement and retention.
-
-- **Project lead & strategy:** Thomas Otieno — Strategy & Marketing Development
-  Expert · IBM Data Science · Digital Marketing
-- **Organisation:** Uganda Biodiversity Fund — Friends of Biodiversity Programme
-
----
-
-Maintained by the Uganda Biodiversity Fund ·
-info@ugandabiodiversityfund.org · www.ugandabiodiversityfund.org
+The visible layer is implemented in `sprint8-ui.js` and wired through the PWA service worker. It is additive to the existing application rather than a framework rewrite.
