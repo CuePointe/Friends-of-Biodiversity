@@ -3,13 +3,14 @@
    Uganda Biodiversity Fund
 
    Caches core app files for offline access.
-   Sprint 8 runtime is injected into the HTML response so the legacy SPA can
-   adopt the new Auth, analytics and performance layer without a monolithic rewrite.
+   Sprint 8 runtime, auth bridge and visible feature layer are injected into
+   the HTML response so the legacy SPA can adopt the new product features.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v8';
+const CACHE_NAME = 'fob-app-v9';
 const RUNTIME_SRC = './sprint8-runtime.js';
 const PROFILE_SRC = './sprint8-auth-profile.js';
+const UI_SRC = './sprint8-ui.js';
 
 const CORE_FILES = [
   './',
@@ -18,6 +19,7 @@ const CORE_FILES = [
   './app.js',
   RUNTIME_SRC,
   PROFILE_SRC,
+  UI_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -48,14 +50,14 @@ self.addEventListener('activate', event => {
   );
 });
 
-async function injectSprint8Runtime(response) {
+async function injectSprint8Layer(response) {
   if (!response || !response.ok) return response;
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
   try {
     const html = await response.text();
-    if (/sprint8-runtime\.js/i.test(html)) return new Response(html, response);
-    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script>';
+    if (/sprint8-ui\.js/i.test(html)) return new Response(html, response);
+    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script>';
     const updated = html.includes('</body>')
       ? html.replace('</body>', tags + '</body>')
       : html + tags;
@@ -73,7 +75,7 @@ async function injectSprint8Runtime(response) {
 
 async function networkCodeRequest(request) {
   const network = await fetch(request);
-  const transformed = await injectSprint8Runtime(network.clone());
+  const transformed = await injectSprint8Layer(network.clone());
   if (transformed && transformed.ok) {
     caches.open(CACHE_NAME).then(cache => cache.put(request, transformed.clone())).catch(() => {});
   }
