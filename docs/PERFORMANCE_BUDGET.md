@@ -1,53 +1,21 @@
-# Friends of Biodiversity — Performance Budget
+# Sprint 8 Performance Budget
 
-The current app is a large vanilla SPA, so performance work should reduce what the browser must parse, execute and download before the visitor can act.
+The existing Friends of Biodiversity SPA is intentionally preserved, so Sprint 8 uses an additive feature layer rather than a framework rewrite.
 
-## Initial budgets
+## Primary constraints
 
-| Metric | Target |
-|---|---:|
-| Largest Contentful Paint | ≤ 2.5 s on a mid-range mobile connection |
-| Cumulative Layout Shift | ≤ 0.10 |
-| First JavaScript payload | ≤ 180 KB compressed |
-| Admin code on public page | 0 KB until needed |
-| Heavy third-party libraries on first paint | 0 where avoidable |
-| Hero image above-the-fold | responsive/mobile variant |
-| API requests required for public first paint | ≤ 3 |
+- Keep the existing app shell usable while new workflows are introduced.
+- Load Sprint 8 features only as part of the app shell after the service worker update.
+- Keep database/network work inside explicit user workflows or lightweight dashboard refreshes.
+- Use lazy-loading for noncritical images.
+- Do not cache Supabase API responses or third-party API traffic in the service worker.
 
-## Architecture sequence
+## Visible Sprint 8 layer
 
-### Now
-- Keep the current PWA network-first code strategy.
-- Cache stable image assets.
-- Track LCP/layout shift with the isolated Sprint 8 runtime.
-- Keep public content usable even when optional analytics fail.
+`sprint8-ui.js` is a small, dependency-free enhancement module. It loads the product UI only after the main page is available and fetches products, species references and verified observation records when the user opens the Sprint 8 workspace.
 
-### Next
-Split the monolith into independently loaded modules:
-- public marketing
-- member experience
-- admin console
-- citizen-science map/data tools
-- institutional/data-product tools
+The module provides Citizen Science capture, Biodiversity Intelligence enquiries, Green Card status and a staff-only operational cockpit. It does not replace the legacy `app.js` navigation or global data loaders.
 
-### Later
-Move to route-level bundles if complexity continues to grow. The goal is not “rewrite in a framework”; the goal is to stop every visitor downloading and parsing functionality they are not using.
+## PWA cache
 
-## Image rules
-
-- Prefer responsive `sm` variants on mobile.
-- Use explicit width/height where possible to reduce layout shift.
-- Lazy-load below-the-fold images.
-- Avoid preloading more than the true critical images.
-- Use modern compressed formats when the hosting pipeline supports them.
-
-## Data rules
-
-- Do not query private/admin tables on public first paint.
-- Prefer aggregate views for dashboard cards instead of downloading all rows.
-- Paginate feeds, posts, events and observations.
-- Never load the full citizen-science dataset merely to display a count.
-
-## Deployment rule
-
-Every performance change should be measured before and after. A faster hosting edge does not compensate for a browser that is still forced to download and execute a large application bundle.
+The service worker cache is versioned (`fob-app-v10`) so feature-layer changes invalidate the prior app shell. HTML is transformed at the service-worker boundary to include the Sprint 8 runtime, Auth bridge and UI module when the source page has not already included them.
