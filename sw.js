@@ -7,8 +7,9 @@
    adopt the new Auth, analytics and performance layer without a monolithic rewrite.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v7';
+const CACHE_NAME = 'fob-app-v8';
 const RUNTIME_SRC = './sprint8-runtime.js';
+const PROFILE_SRC = './sprint8-auth-profile.js';
 
 const CORE_FILES = [
   './',
@@ -16,6 +17,7 @@ const CORE_FILES = [
   './styles.css',
   './app.js',
   RUNTIME_SRC,
+  PROFILE_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -46,17 +48,17 @@ self.addEventListener('activate', event => {
   );
 });
 
-async function injectRuntime(response) {
+async function injectSprint8Runtime(response) {
   if (!response || !response.ok) return response;
   const type = response.headers.get('content-type') || '';
   if (!type.includes('text/html')) return response;
   try {
     const html = await response.text();
     if (/sprint8-runtime\.js/i.test(html)) return new Response(html, response);
-    const tag = '<script src="' + RUNTIME_SRC + '" defer></script>';
+    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script>';
     const updated = html.includes('</body>')
-      ? html.replace('</body>', tag + '</body>')
-      : html + tag;
+      ? html.replace('</body>', tags + '</body>')
+      : html + tags;
     const headers = new Headers(response.headers);
     headers.delete('content-length');
     return new Response(updated, {
@@ -71,10 +73,9 @@ async function injectRuntime(response) {
 
 async function networkCodeRequest(request) {
   const network = await fetch(request);
-  const transformed = await injectRuntime(network.clone());
+  const transformed = await injectSprint8Runtime(network.clone());
   if (transformed && transformed.ok) {
-    const clone = transformed.clone();
-    caches.open(CACHE_NAME).then(cache => cache.put(request, clone)).catch(() => {});
+    caches.open(CACHE_NAME).then(cache => cache.put(request, transformed.clone())).catch(() => {});
   }
   return transformed;
 }
@@ -83,7 +84,6 @@ self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
 
   const url = new URL(event.request.url);
-  // Never cache live backend/API traffic or third-party dynamic resources.
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('jsdelivr.net')) return;
@@ -105,8 +105,7 @@ self.addEventListener('fetch', event => {
       return fetch(event.request)
         .then(response => {
           if (response && response.ok && response.type === 'basic' && sameOrigin) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone)).catch(() => {});
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone())).catch(() => {});
           }
           return response;
         })
