@@ -3,19 +3,19 @@
    Uganda Biodiversity Fund
 
    Caches core app files for offline access.
-   Members can open the app even without internet
-   and see the last loaded content.
+   Sprint 8 runtime is injected into the HTML response so the legacy SPA can
+   adopt the new Auth, analytics and performance layer without a monolithic rewrite.
 ═══════════════════════════════════════════ */
 
-// Sprint 8: bump cache so new runtime assets are picked up cleanly.
-const CACHE_NAME = 'fob-app-v6';
+const CACHE_NAME = 'fob-app-v7';
+const RUNTIME_SRC = './sprint8-runtime.js';
 
 const CORE_FILES = [
   './',
   './index.html',
   './styles.css',
   './app.js',
-  './sprint8-runtime.js',
+  RUNTIME_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -40,13 +40,44 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
+        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
       )
     ).then(() => self.clients.claim())
   );
 });
+
+async function injectRuntime(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  try {
+    const html = await response.text();
+    if (/sprint8-runtime\.js/i.test(html)) return new Response(html, response);
+    const tag = '<script src="' + RUNTIME_SRC + '" defer></script>';
+    const updated = html.includes('</body>')
+      ? html.replace('</body>', tag + '</body>')
+      : html + tag;
+    const headers = new Headers(response.headers);
+    headers.delete('content-length');
+    return new Response(updated, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  } catch (_) {
+    return response;
+  }
+}
+
+async function networkCodeRequest(request) {
+  const network = await fetch(request);
+  const transformed = await injectRuntime(network.clone());
+  if (transformed && transformed.ok) {
+    const clone = transformed.clone();
+    caches.open(CACHE_NAME).then(cache => cache.put(request, clone)).catch(() => {});
+  }
+  return transformed;
+}
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
@@ -59,29 +90,15 @@ self.addEventListener('fetch', event => {
   if (url.hostname.includes('cloudflare')) return;
 
   const sameOrigin = url.origin === self.location.origin;
-  const isCode = event.request.destination === 'document' ||
-                 /\.(?:html|css|js)$/i.test(url.pathname);
+  const isCode = event.request.destination === 'document' || /\.(?:html|css|js)$/i.test(url.pathname);
 
-  // App code = network first, cache fallback. This preserves fast repeat loads
-  // without trapping users on stale application logic after a deployment.
   if (sameOrigin && isCode) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(event.request).then(c => c || caches.match('./index.html'))
-        )
+      networkCodeRequest(event.request).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
     );
     return;
   }
 
-  // Images and other stable local assets = cache first.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -89,15 +106,11 @@ self.addEventListener('fetch', event => {
         .then(response => {
           if (response && response.ok && response.type === 'basic' && sameOrigin) {
             const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone)).catch(() => {});
           }
           return response;
         })
-        .catch(() => {
-          if (event.request.destination === 'document') {
-            return caches.match('./index.html');
-          }
-        });
+        .catch(() => event.request.destination === 'document' ? caches.match('./index.html') : undefined);
     })
   );
 });
