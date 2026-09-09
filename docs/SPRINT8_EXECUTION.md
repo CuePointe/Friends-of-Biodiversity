@@ -21,12 +21,12 @@ The live Supabase project now contains the Sprint 8 foundation for profiles/RBAC
 
 ## Deployment
 
-Deploy from the `fob-8-sprint` branch. The service worker cache is bumped to `fob-app-v10` so updated HTML and the visible Sprint 8 module are fetched after activation.
+Deploy from the configured hosting branch **`fob-8-sprint`** for this Sprint 8 release. The service worker cache is bumped to `fob-app-v10` so updated HTML and the visible Sprint 8 module are fetched after activation.
 
-Because this application uses a PWA service worker, an already-open browser tab may retain a previous controlled worker until it refreshes or the worker activates. A hard refresh or reopening the site after deployment forces the new application shell to be evaluated.
+Because this application uses a PWA service worker, an already-open browser tab may retain a previous controlled worker until the worker activates. Reopen the site or hard-refresh (Ctrl+Shift+R) after deployment so the new app shell is evaluated.
 
 ## Safety boundaries
 
-The public observation feed should expose only records permitted by the database RLS policies. Commercial biodiversity intelligence should be generated from verified evidence rather than exposing sensitive species locations indiscriminately.
+The public observation feed exposes only verified records. Commercial biodiversity intelligence should be generated from verified evidence rather than exposing sensitive species locations indiscriminately.
 
-Payment revenue displayed by the staff cockpit is sourced from successful canonical ledger transactions only.
+Payment figures in the staff cockpit are sourced from successful canonical ledger transactions only.
