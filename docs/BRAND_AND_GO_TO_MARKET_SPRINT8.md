@@ -1,87 +1,26 @@
-# Friends of Biodiversity — Brand & Go-to-Market System
+# Friends of Biodiversity — Brand & Go-to-Market Sprint 8
 
-## Brand architecture
+## Product hierarchy
 
-**Uganda Biodiversity Fund (UBF)**
-Institution: the conservation trust and accountable programme owner.
+**Uganda Biodiversity Fund (UBF)** → **Friends of Biodiversity** → **Green Card** → **app** → **Citizen Science** → **Biodiversity Intelligence**
 
-**Friends of Biodiversity**
-Movement: the community and membership programme people join.
+## Product story
 
-**Green Card**
-Identity: the membership people receive and use to understand their role and benefits.
+**Join. Learn. Observe. Contribute. Protect.**
 
-**Friends of Biodiversity app**
-Relationship layer: membership, learning, community, impact, events and participation.
+The app should feel like a participation network rather than a static NGO website. Members join through Green Card, learn through the Learning Exchange, contribute biodiversity observations, and see how verified evidence can support conservation decisions.
 
-**Citizen Science**
-Participation mechanism: members help build biodiversity evidence.
+## Institutional proposition
 
-**Biodiversity Intelligence**
-Institutional service layer: verified evidence packaged for decisions, research and monitoring.
+Friends of Biodiversity can provide verified community-generated biodiversity evidence to researchers, EIA practitioners, conservation organisations and responsible institutions. Commercial products should be scoped and delivered from verified records, with sensitive species locations protected through database access controls.
 
-## Public acquisition narrative
+## Sprint 8 visible features
 
-Lead with belonging and visible contribution:
+The live feature layer exposes four clear entry points:
 
-> Join. Learn. Observe. Contribute. Protect.
+1. **Green Card** — membership status and tier positioning.
+2. **Citizen Science** — observation capture with GPS/evidence fields and a verified-record feed.
+3. **Biodiversity Intelligence** — catalogue of institutional evidence products and a structured enquiry path.
+4. **Staff Intelligence Cockpit** — operational metrics for membership, successful revenue, observations, institutional pipeline, product demand and analytics.
 
-Then prove the proposition through:
-- what the member is protecting;
-- where contributions go;
-- visible programme outcomes;
-- transparent accountability;
-- opportunities to participate.
-
-Avoid opening the public experience with technical language such as “data marketplace”, “geospatial dataset” or “monitoring service”. Those are downstream institutional propositions.
-
-## Institutional narrative
-
-For EIA firms, researchers, NGOs and corporates, use:
-
-> **Better biodiversity evidence for better decisions.**
-
-The institutional journey is:
-`discover → trust → capability → scope → proposal → verified delivery → renewal`
-
-### Institutional offers
-
-| Buyer | Main need | Offer |
-|---|---|---|
-| EIA / infrastructure | evidence near projects | Biodiversity Intelligence Pack |
-| Research / universities | georeferenced occurrences | Research data access |
-| Conservation NGOs | monitoring and hotspots | Monitoring Partnership |
-| Corporates | credible biodiversity engagement | Institutional membership + CSR campaign |
-| Government / programmes | landscape intelligence | Snapshot + monitoring |
-
-## Content pillars
-
-**Meet the Species** — make biodiversity personal.
-
-**One Number** — turn accountability into a recurring proof format.
-
-**Field Notes** — show what members and field teams are actually seeing.
-
-**Behind the Impact** — show how money becomes conservation activity.
-
-**Biodiversity Intelligence** — teach institutional buyers what high-quality evidence looks like without overclaiming certainty.
-
-## Conversion events to instrument
-
-Every major CTA should map to a measurable event. At minimum:
-- membership CTA view
-- membership start
-- enrollment submit
-- verified payment
-- first learning interaction
-- first community post
-- first citizen-science sighting
-- institution enquiry
-- data-product enquiry
-- renewal
-
-## Growth flywheel
-
-Members → participation → observations → verified evidence → intelligence products → institutional demand → revenue → conservation action → visible impact → trust → more members.
-
-The strategic advantage is not any single feature. It is the compounding network effect between community participation and institutional value.
+These are additive to the current SPA and provide a bridge from the existing community experience to the next product architecture.
