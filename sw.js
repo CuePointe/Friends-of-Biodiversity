@@ -7,7 +7,7 @@
    the HTML response so the legacy SPA can adopt the new product features.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v9';
+const CACHE_NAME = 'fob-app-v10';
 const RUNTIME_SRC = './sprint8-runtime.js';
 const PROFILE_SRC = './sprint8-auth-profile.js';
 const UI_SRC = './sprint8-ui.js';
