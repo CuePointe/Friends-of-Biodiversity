@@ -27,6 +27,6 @@ Because this application uses a PWA service worker, an already-open browser tab 
 
 ## Safety boundaries
 
-The public observation feed exposes only verified records. Commercial biodiversity intelligence should be generated from verified evidence rather than exposing sensitive species locations indiscriminately.
+The public observation feed is intended to expose only verified records. Commercial biodiversity intelligence should be generated from verified evidence rather than exposing sensitive species locations indiscriminately.
 
 Payment figures in the staff cockpit are sourced from successful canonical ledger transactions only.
