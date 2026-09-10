@@ -3,13 +3,14 @@
    Uganda Biodiversity Fund
 
    Caches core app files for offline access.
-   Sprint 8 now exposes only the member-side Biodiversity Intelligence shell.
+   Sprint 8 exposes only the member-side Biodiversity Intelligence package.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v13';
+const CACHE_NAME = 'fob-app-v14';
 const RUNTIME_SRC = './sprint8-runtime.js';
 const PROFILE_SRC = './sprint8-auth-profile.js';
 const UI_SRC = './sprint8-ui.js';
+const PACKAGE_SRC = './sprint8-member-package.js';
 
 const CORE_FILES = [
   './',
@@ -19,6 +20,7 @@ const CORE_FILES = [
   RUNTIME_SRC,
   PROFILE_SRC,
   UI_SRC,
+  PACKAGE_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -42,9 +44,7 @@ self.addEventListener('install', event => {
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
@@ -55,18 +55,12 @@ async function injectSprint8Layer(response) {
   if (!type.includes('text/html')) return response;
   try {
     const html = await response.text();
-    if (/sprint8-ui\.js/i.test(html)) return new Response(html, response);
-    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script>';
-    const updated = html.includes('</body>')
-      ? html.replace('</body>', tags + '</body>')
-      : html + tags;
+    if (/sprint8-member-package\.js/i.test(html)) return new Response(html, response);
+    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script><script src="' + PACKAGE_SRC + '" defer></script>';
+    const updated = html.includes('</body>') ? html.replace('</body>', tags + '</body>') : html + tags;
     const headers = new Headers(response.headers);
     headers.delete('content-length');
-    return new Response(updated, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
+    return new Response(updated, { status: response.status, statusText: response.statusText, headers });
   } catch (_) {
     return response;
   }
@@ -83,23 +77,17 @@ async function networkCodeRequest(request) {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
-
   const url = new URL(event.request.url);
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('jsdelivr.net')) return;
   if (url.hostname.includes('cloudflare')) return;
-
   const sameOrigin = url.origin === self.location.origin;
   const isCode = event.request.destination === 'document' || /\.(?:html|css|js)$/i.test(url.pathname);
-
   if (sameOrigin && isCode) {
-    event.respondWith(
-      networkCodeRequest(event.request).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html')))
-    );
+    event.respondWith(networkCodeRequest(event.request).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html'))));
     return;
   }
-
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
@@ -118,12 +106,12 @@ self.addEventListener('fetch', event => {
 self.addEventListener('push', event => {
   if (!event.data) return;
   const data = event.data.json();
-  self.registration.showNotification(data.title || 'Friends of Biodiversity', {
+  event.waitUntil(self.registration.showNotification(data.title || 'Friends of Biodiversity', {
     body: data.body || 'New update from Uganda Biodiversity Fund',
     icon: './icon192.png',
     badge: './icon192.png',
     data: { url: data.url || './' }
-  });
+  }));
 });
 
 self.addEventListener('notificationclick', event => {
