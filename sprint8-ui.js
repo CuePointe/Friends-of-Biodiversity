@@ -1,13 +1,12 @@
-/* Friends of Biodiversity — Sprint 8 visible product layer
- * Adds real user-facing features without rewriting the legacy SPA.
+/* Friends of Biodiversity — Sprint 8 member intelligence shell
+ * Focused product layer: Biodiversity Intelligence belongs inside the member account.
+ * Public homepage remains the public acquisition/education experience.
  *
- * Features:
- * - Sprint 8 navigation rail
- * - Green Card membership snapshot
- * - Citizen Science observation submission + live observation feed
- * - Biodiversity Intelligence product catalogue + enquiry capture
- * - Admin intelligence cockpit for staff
- * - Progressive enhancement: never blocks the legacy app
+ * Intelligence workspace contains exactly four member actions:
+ * - Steward Briefings
+ * - EIA Biodiversity Data Pack
+ * - Citizen Science
+ * - Bring a Member
  */
 (function (global) {
   'use strict';
@@ -20,262 +19,178 @@
     style: 'currency', currency: 'UGX', maximumFractionDigits: 0
   }).format(Number(value) || 0);
 
+  const TIER_RANK = { student: 1, silver: 1, gold: 2, platinum: 3, diamond: 4, partner: 2 };
+
   const css = `
-  #fob-s8-rail{position:fixed;right:18px;bottom:18px;z-index:99990;font-family:Inter,system-ui,sans-serif}
-  #fob-s8-launch{border:0;border-radius:999px;padding:13px 17px;background:#0b2618;color:#fff;font-weight:800;box-shadow:0 10px 30px rgba(0,0,0,.22);cursor:pointer}
-  #fob-s8-panel{display:none;position:fixed;inset:0;background:rgba(5,18,11,.55);backdrop-filter:blur(3px);padding:20px;overflow:auto}
-  #fob-s8-panel.open{display:block}
-  .fob-s8-shell{max-width:1180px;margin:35px auto;background:#f6f1e7;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.25);overflow:hidden}
-  .fob-s8-head{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:24px 28px;background:#0b2618;color:#fff}
-  .fob-s8-head h2{margin:0;font:800 28px/1.1 Georgia,serif}.fob-s8-head p{margin:7px 0 0;opacity:.78}
-  .fob-s8-close{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:10px;padding:9px 12px;cursor:pointer}
-  .fob-s8-nav{display:flex;gap:8px;flex-wrap:wrap;padding:14px 20px;background:#123a25;border-bottom:1px solid rgba(255,255,255,.08)}
-  .fob-s8-tab{border:0;background:rgba(255,255,255,.08);color:#fff;border-radius:999px;padding:9px 14px;font-weight:750;cursor:pointer}.fob-s8-tab.active{background:#d8b55a;color:#0b2618}
-  .fob-s8-body{padding:24px}.fob-s8-view{display:none}.fob-s8-view.active{display:block}
-  .fob-s8-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.fob-s8-grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .fob-s8-card{background:#fff;border:1px solid #e4ddce;border-radius:18px;padding:19px;box-shadow:0 8px 28px rgba(54,39,15,.06)}
-  .fob-s8-card h3{margin:0 0 8px;color:#173522}.fob-s8-card p{color:#59665d;line-height:1.55}.fob-s8-kpi{font-size:30px;font-weight:900;color:#0b2618;margin-top:7px}
-  .fob-s8-pill{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 9px;background:#edf5ee;color:#27583a;font-size:12px;font-weight:800}
-  .fob-s8-muted{color:#6f786f;font-size:13px}.fob-s8-btn{border:0;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;background:#0b2618;color:#fff}.fob-s8-btn.secondary{background:#e9e3d7;color:#173522}.fob-s8-btn.gold{background:#d8b55a;color:#0b2618}.fob-s8-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-  .fob-s8-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fob-s8-field{display:flex;flex-direction:column;gap:6px}.fob-s8-field.full{grid-column:1/-1}.fob-s8-field label{font-size:12px;font-weight:800;color:#39463c}.fob-s8-field input,.fob-s8-field select,.fob-s8-field textarea{width:100%;box-sizing:border-box;border:1px solid #d7d0c4;background:#fff;border-radius:10px;padding:11px;font:inherit}.fob-s8-field textarea{min-height:100px;resize:vertical}
-  .fob-s8-banner{padding:18px 20px;border-radius:16px;background:linear-gradient(135deg,#183e29,#0b2618);color:#fff;margin-bottom:18px}.fob-s8-banner h3{margin:0 0 6px;color:#fff}.fob-s8-banner p{margin:0;opacity:.83}
-  .fob-s8-observation{display:grid;grid-template-columns:88px 1fr auto;gap:14px;align-items:center;padding:13px 0;border-bottom:1px solid #ece7dc}.fob-s8-observation:last-child{border-bottom:0}.fob-s8-thumb{width:88px;height:64px;border-radius:10px;object-fit:cover;background:#e8e2d6}.fob-s8-empty{text-align:center;padding:40px 10px;color:#6d756d}
-  .fob-s8-product{display:flex;flex-direction:column;height:100%}.fob-s8-product .price{font-size:21px;font-weight:900;color:#0b2618;margin:11px 0}.fob-s8-product .buyer{font-size:12px;font-weight:800;color:#677267;text-transform:uppercase;letter-spacing:.06em}.fob-s8-table{width:100%;border-collapse:collapse;font-size:13px}.fob-s8-table th,.fob-s8-table td{text-align:left;padding:10px 8px;border-bottom:1px solid #e8e2d6}.fob-s8-table th{color:#526057}.fob-s8-status{font-weight:800}.fob-s8-note{padding:11px 13px;border-radius:10px;background:#f5f0e5;color:#4f5d53;font-size:13px;margin-top:12px}
-  @media(max-width:850px){.fob-s8-grid,.fob-s8-grid.two,.fob-s8-form{grid-template-columns:1fr}.fob-s8-shell{margin:8px auto}.fob-s8-body{padding:16px}.fob-s8-head{padding:18px}.fob-s8-observation{grid-template-columns:64px 1fr}.fob-s8-observation>.actions{grid-column:2}.fob-s8-thumb{width:64px;height:54px}}
+  #fob-bi-rail{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:1800;font-family:Inter,system-ui,sans-serif}
+  #fob-bi-launch{width:62px;min-height:150px;border:1px solid rgba(200,168,75,.45);border-radius:18px;background:linear-gradient(180deg,#123a25,#0b2618);color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.22);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 9px}
+  #fob-bi-launch .ico{font-size:24px;line-height:1}
+  #fob-bi-launch .txt{font-size:11px;font-weight:900;line-height:1.15;text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.04em}
+  #fob-bi-panel{display:none;position:fixed;inset:0;background:rgba(5,18,11,.56);backdrop-filter:blur(3px);padding:18px;overflow:auto;z-index:1801}
+  #fob-bi-panel.open{display:block}
+  .fob-bi-shell{width:min(940px,100%);margin:34px auto;background:#f6f1e7;border-radius:22px;box-shadow:0 26px 78px rgba(0,0,0,.28);overflow:hidden}
+  .fob-bi-head{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:22px 24px;background:#0b2618;color:#fff}
+  .fob-bi-head h2{margin:0;font:900 27px/1.08 Georgia,serif}.fob-bi-head p{margin:6px 0 0;color:rgba(255,255,255,.7);font-size:13px}
+  .fob-bi-close{border:1px solid rgba(255,255,255,.25);background:transparent;color:#fff;border-radius:10px;padding:8px 11px;cursor:pointer}
+  .fob-bi-body{padding:20px}
+  .fob-bi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+  .fob-bi-card{background:#fff;border:1px solid #e4ddce;border-radius:17px;padding:20px;min-height:190px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(54,39,15,.05)}
+  .fob-bi-card .eyebrow{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#788277;font-weight:900}.fob-bi-card h3{margin:7px 0 6px;font:900 21px/1.12 Georgia,serif;color:#173522}.fob-bi-card p{margin:0;color:#5d685f;font-size:13px;line-height:1.6}.fob-bi-card .meta{margin-top:9px;font-size:12px;color:#718077}.fob-bi-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto;padding-top:15px}.fob-bi-btn{border:0;border-radius:10px;padding:10px 13px;font-weight:850;cursor:pointer;background:#0b2618;color:#fff}.fob-bi-btn.gold{background:#d8b55a;color:#0b2618}.fob-bi-btn.soft{background:#ece6db;color:#173522}
+  .fob-bi-list{margin-top:15px;border-top:1px solid #ece6dc}.fob-bi-item{padding:12px 0;border-bottom:1px solid #ece6dc}.fob-bi-item:last-child{border-bottom:0}.fob-bi-item strong{display:block;color:#173522;font-size:13px}.fob-bi-item span{display:block;color:#6b756d;font-size:12px;line-height:1.5;margin-top:3px}.fob-bi-empty{padding:18px 0;color:#737d75;font-size:13px}
+  .fob-bi-topline{padding:14px 16px;margin-bottom:16px;border-radius:13px;background:linear-gradient(135deg,#173f29,#0b2618);color:#fff}.fob-bi-topline strong{font-size:15px}.fob-bi-topline span{display:block;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5;margin-top:4px}
+  .fob-bi-note{margin-top:15px;padding:11px 13px;border-radius:11px;background:#f0eadf;color:#526057;font-size:12px;line-height:1.55}
+  @media(max-width:760px){#fob-bi-rail{right:10px;top:auto;bottom:84px;transform:none}#fob-bi-launch{width:58px;min-height:58px;border-radius:50%;padding:0;gap:0}.fob-bi-launch .txt{display:none}.fob-bi-shell{margin:10px auto;border-radius:17px}.fob-bi-head{padding:17px}.fob-bi-body{padding:14px}.fob-bi-grid{grid-template-columns:1fr}.fob-bi-card{min-height:0}}
   `;
 
-  const state = { tab: 'overview', products: [], species: [], observations: [], staff: false };
+  const state = { briefings: [], products: [], user: null, member: null };
 
-  function injectStyle() {
-    if (document.getElementById('fob-s8-style')) return;
-    const style = document.createElement('style'); style.id = 'fob-s8-style'; style.textContent = css; document.head.appendChild(style);
+  function db(){
+    try{return (typeof sb !== 'undefined' && sb && typeof sb.from === 'function') ? sb : null;}catch(_){return null;}
   }
 
-  function supabase() {
-    try { return (typeof sb !== 'undefined' && sb && typeof sb.from === 'function') ? sb : null; } catch (_) { return null; }
+  function injectStyle(){
+    if(document.getElementById('fob-bi-style')) return;
+    const style=document.createElement('style');style.id='fob-bi-style';style.textContent=css;document.head.appendChild(style);
   }
 
-  async function authUser() {
-    const c = supabase();
-    if (!c || !c.auth) return null;
-    try { return (await c.auth.getUser()).data?.user || null; } catch (_) { return null; }
+  async function authUser(){
+    const c=db();
+    if(!c||!c.auth) return null;
+    try{return (await c.auth.getUser()).data?.user||null;}catch(_){return null;}
   }
 
-  async function memberForUser(user) {
-    if (!user) return null;
-    try {
-      const c = supabase();
-      const { data } = await c.from('members').select('id,name,email,tier,amount,year,role,status,org,photo_url,auth_user_id').or(`auth_user_id.eq.${user.id},email.eq.${String(user.email || '').toLowerCase()}`).limit(5);
-      return (data || []).find(x => x.auth_user_id === user.id) || data?.[0] || null;
-    } catch (_) { return null; }
+  async function memberForUser(user){
+    if(!user) return null;
+    try{
+      const c=db();
+      const {data}=await c.from('members').select('id,name,email,tier,amount,year,role,status,auth_user_id').or(`auth_user_id.eq.${user.id},email.eq.${String(user.email||'').toLowerCase()}`).limit(5);
+      return (data||[]).find(x=>x.auth_user_id===user.id)||data?.[0]||null;
+    }catch(_){return null;}
   }
 
-  async function loadProducts() {
-    const c = supabase(); if (!c) return [];
-    const { data, error } = await c.from('data_products').select('*').eq('active', true).order('created_at', { ascending: true });
-    if (error) { console.warn('[FoB Sprint 8 UI] products', error.message); return []; }
-    state.products = data || []; return state.products;
+  async function loadBriefings(){
+    const c=db(); if(!c) return [];
+    try{
+      const {data,error}=await c.from('briefings').select('id,title,kind,body,file_url,file_name,file_type,link_url,session_at,recording_url,min_tier,created_at').order('created_at',{ascending:false}).limit(24);
+      if(error){console.warn('[FoB BI] briefings',error.message);return []}
+      state.briefings=data||[];return state.briefings;
+    }catch(_){return []}
   }
 
-  async function loadSpecies() {
-    const c = supabase(); if (!c) return [];
-    const { data, error } = await c.from('species').select('common_name,scientific_name,taxon_group,conservation_status,habitat').eq('active', true).order('common_name', { ascending: true }).limit(100);
-    if (error) { console.warn('[FoB Sprint 8 UI] species', error.message); return []; }
-    state.species = data || []; return state.species;
+  async function loadProducts(){
+    const c=db(); if(!c) return [];
+    try{
+      const {data,error}=await c.from('data_products').select('id,slug,name,description,buyer_segment,price_ugx,delivery_format,active').eq('active',true).order('created_at',{ascending:true});
+      if(error){console.warn('[FoB BI] products',error.message);return []}
+      state.products=data||[];return state.products;
+    }catch(_){return []}
   }
 
-  async function loadObservations() {
-    const c = supabase(); if (!c) return [];
-    const { data, error } = await c.from('sightings').select('id,species,lat,lng,observed_at,member_name,photo_url,notes,verified,count_band,activity,habitat,created_at').order('created_at', { ascending: false }).limit(30);
-    if (error) { console.warn('[FoB Sprint 8 UI] sightings', error.message); return []; }
-    state.observations = data || []; return state.observations;
+  function tierAllowed(minTier){
+    const memberTier=String(state.member?.tier||'silver').toLowerCase();
+    return (TIER_RANK[memberTier]||1)>=(TIER_RANK[String(minTier||'gold').toLowerCase()]||2);
   }
 
-  function renderShell() {
-    if (document.getElementById('fob-s8-rail')) return;
-    injectStyle();
-    const rail = document.createElement('div'); rail.id = 'fob-s8-rail';
-    rail.innerHTML = `<button id="fob-s8-launch">🌿 Explore FoB</button>
-      <div id="fob-s8-panel" role="dialog" aria-modal="true" aria-label="Friends of Biodiversity features">
-       <div class="fob-s8-shell">
-        <div class="fob-s8-head"><div><h2>Friends of Biodiversity</h2><p>Join. Learn. Observe. Contribute. Protect.</p></div><button class="fob-s8-close" id="fob-s8-close">Close</button></div>
-        <div class="fob-s8-nav" id="fob-s8-nav">
-          <button class="fob-s8-tab active" data-s8-tab="overview">Overview</button>
-          <button class="fob-s8-tab" data-s8-tab="observe">Citizen Science</button>
-          <button class="fob-s8-tab" data-s8-tab="intelligence">Biodiversity Intelligence</button>
-          <button class="fob-s8-tab" data-s8-tab="membership">Green Card</button>
-          <button class="fob-s8-tab" data-s8-tab="admin" id="fob-s8-admin-tab" style="display:none">Admin Cockpit</button>
-        </div>
-        <div class="fob-s8-body">
-          <section class="fob-s8-view active" id="fob-s8-overview"></section>
-          <section class="fob-s8-view" id="fob-s8-observe"></section>
-          <section class="fob-s8-view" id="fob-s8-intelligence"></section>
-          <section class="fob-s8-view" id="fob-s8-membership"></section>
-          <section class="fob-s8-view" id="fob-s8-admin"></section>
-        </div>
-       </div>
-      </div>`;
-    document.body.appendChild(rail);
-    document.getElementById('fob-s8-launch').addEventListener('click', open);
-    document.getElementById('fob-s8-close').addEventListener('click', close);
-    document.getElementById('fob-s8-panel').addEventListener('click', e => { if (e.target.id === 'fob-s8-panel') close(); });
-    document.getElementById('fob-s8-nav').addEventListener('click', e => {
-      const btn = e.target.closest('[data-s8-tab]'); if (!btn) return; selectTab(btn.dataset.s8Tab);
-    });
+  function findEiaProduct(){
+    return state.products.find(p=>/eia|baseline|data.?pack|biodiversity.*pack/i.test(`${p.slug||''} ${p.name||''} ${p.description||''}`))||state.products[0]||null;
   }
 
-  async function open() {
-    renderShell();
-    document.getElementById('fob-s8-panel').classList.add('open');
-    await refresh();
-  }
-  function close() { document.getElementById('fob-s8-panel')?.classList.remove('open'); }
-
-  async function refresh() {
-    await Promise.allSettled([loadProducts(), loadSpecies(), loadObservations(), checkStaff()]);
-    renderAll();
+  function openExistingSighting(){
+    if(typeof global.openModal==='function'){global.openModal('m-sighting');return}
+    const launch=document.getElementById('app-fab');
+    if(launch) launch.click();
   }
 
-  async function checkStaff() {
-    const user = await authUser();
-    const member = await memberForUser(user);
-    state.staff = !!(member && ['admin','super_admin','finance','moderator','verifier','communications'].includes(member.role));
-    const tab = document.getElementById('fob-s8-admin-tab'); if (tab) tab.style.display = state.staff ? '' : 'none';
-    return state.staff;
+  function openLearning(){
+    if(typeof global.appNav==='function'){global.appNav('learn');return}
+    if(typeof global.showView==='function'){global.showView('member');return}
   }
 
-  function selectTab(tab) {
-    state.tab = tab;
-    document.querySelectorAll('.fob-s8-tab').forEach(x => x.classList.toggle('active', x.dataset.s8Tab === tab));
-    document.querySelectorAll('.fob-s8-view').forEach(x => x.classList.toggle('active', x.id === 'fob-s8-' + tab));
-    if (tab === 'admin') renderAdmin();
+  function bringMember(){
+    if(typeof global.copyInvite==='function'){
+      global.copyInvite();
+      return;
+    }
+    const url=(location.origin||'https://www.ugandabiodiversityfund.org')+'/?ref='+(state.member?.id||'');
+    navigator.clipboard?.writeText(url).then(()=>alert('Invite link copied — share it with a friend.')).catch(()=>alert(url));
   }
 
-  function renderAll() {
-    renderOverview(); renderObserve(); renderIntelligence(); renderMembership(); if (state.staff) renderAdmin();
+  function openProduct(product){
+    if(!product) return;
+    if(typeof global.openEnquiry==='function'){
+      global.openEnquiry('datapack');
+      return;
+    }
+    const c=db(); if(!c) return;
+    const name=prompt(`Request ${product.name}\n\nTell UBF what you need:`,'EIA baseline / biodiversity data pack');
+    if(!name) return;
+    c.from('enquiries').insert({kind:'biodiversity_intelligence',name:state.member?.name||state.user?.email||'Member',email:state.member?.email||state.user?.email||'',org:'',message:name,meta:JSON.stringify({product_id:product.id,product:product.name,source:'member-biodiversity-intelligence'})}).then(({error})=>alert(error?'The request could not be sent: '+error.message:'Request sent to the UBF team.'));
   }
 
-  function renderOverview() {
-    const el = document.getElementById('fob-s8-overview'); if (!el) return;
-    const verified = state.observations.filter(x => x.verified).length;
-    const products = state.products.length;
-    const species = state.species.length;
-    el.innerHTML = `<div class="fob-s8-banner"><h3>A new layer of the FoB app is live</h3><p>Use this workspace to observe biodiversity, discover intelligence products, and follow your Green Card journey.</p><div class="fob-s8-actions"><button class="fob-s8-btn gold" data-jump="observe">Submit an observation</button><button class="fob-s8-btn secondary" data-jump="intelligence">Explore intelligence</button></div></div>
-      <div class="fob-s8-grid">
-       <div class="fob-s8-card"><span class="fob-s8-pill">🦋 Citizen Science</span><div class="fob-s8-kpi">${verified}</div><p>verified observations visible in the shared biodiversity feed.</p></div>
-       <div class="fob-s8-card"><span class="fob-s8-pill">📊 Biodiversity Intelligence</span><div class="fob-s8-kpi">${products}</div><p>data products available for institutional enquiries.</p></div>
-       <div class="fob-s8-card"><span class="fob-s8-pill">🌱 Species library</span><div class="fob-s8-kpi">${species}</div><p>active species references available to guide observations.</p></div>
+  async function renderPanel(){
+    const panel=document.getElementById('fob-bi-panel');if(!panel)return;
+    const eia=findEiaProduct();
+    const allowedBriefings=state.briefings.filter(b=>tierAllowed(b.min_tier));
+    const recent=allowedBriefings.slice(0,4);
+    const briefingsHtml=recent.length?`<div class="fob-bi-list">${recent.map(b=>`<div class="fob-bi-item"><strong>${esc(b.title)}</strong><span>${esc(b.kind||'Briefing')}${b.session_at?' · '+esc(new Date(b.session_at).toLocaleString('en-UG',{dateStyle:'medium',timeStyle:'short'})):''}</span><div class="fob-bi-actions"><button class="fob-bi-btn soft" data-briefing="${esc(b.id)}">Open briefing</button></div></div>`).join('')}</div>`:`<div class="fob-bi-empty">No briefings are currently available for your membership level.</div>`;
+
+    panel.querySelector('.fob-bi-body').innerHTML=`
+      <div class="fob-bi-topline"><strong>Biodiversity Intelligence</strong><span>This is the member-only evidence layer — concise access to UBF briefings, EIA-ready biodiversity data, citizen observations and member growth.</span></div>
+      <div class="fob-bi-grid">
+        <article class="fob-bi-card"><div class="eyebrow">01 · Knowledge</div><h3>Steward Briefings</h3><p>Private UBF briefings, impact reports, finance notes and session recordings appropriate to your Green Card level.</p>${briefingsHtml}</article>
+        <article class="fob-bi-card"><div class="eyebrow">02 · Evidence</div><h3>EIA Biodiversity Data Pack</h3><p>Request a scoped biodiversity baseline pack built from verified observations and species evidence for research, screening and EIA baseline work.</p><div class="meta">${eia?esc(eia.name):'Available to scope'}</div><div class="fob-bi-actions"><button class="fob-bi-btn gold" id="fob-bi-eia">Request data pack</button></div></article>
+        <article class="fob-bi-card"><div class="eyebrow">03 · Field evidence</div><h3>Citizen Science</h3><p>Submit a biodiversity sighting from your member account. Verified records strengthen the shared evidence base.</p><div class="meta">Your observations are reviewed before becoming verified evidence.</div><div class="fob-bi-actions"><button class="fob-bi-btn gold" id="fob-bi-sight">Log a sighting</button></div></article>
+        <article class="fob-bi-card"><div class="eyebrow">04 · Growth</div><h3>Bring a Member</h3><p>Invite someone who cares about Uganda’s biodiversity. Your personal referral link connects their registration back to your member account.</p><div class="meta">${typeof global.myReferralCount==='function'?esc(global.myReferralCount()):'0'} people currently attributed to your referral.</div><div class="fob-bi-actions"><button class="fob-bi-btn soft" id="fob-bi-invite">Copy my invite link</button></div></article>
       </div>
-      <div class="fob-s8-card" style="margin-top:16px"><h3>What changed?</h3><p>The app now exposes the Sprint 8 capabilities instead of leaving them behind the database layer: observation capture, biodiversity data products, membership intelligence and a staff cockpit.</p></div>`;
-    el.querySelectorAll('[data-jump]').forEach(b => b.addEventListener('click', () => selectTab(b.dataset.jump)));
+      <div class="fob-bi-note">Biodiversity Intelligence is deliberately separated from the public homepage. The public site explains the programme; this member workspace is where participation becomes evidence and evidence becomes useful intelligence.</div>`;
+
+    panel.querySelector('#fob-bi-eia')?.addEventListener('click',()=>openProduct(eia));
+    panel.querySelector('#fob-bi-sight')?.addEventListener('click',openExistingSighting);
+    panel.querySelector('#fob-bi-invite')?.addEventListener('click',bringMember);
+    panel.querySelectorAll('[data-briefing]').forEach(btn=>btn.addEventListener('click',()=>openBriefing(btn.dataset.briefing)));
   }
 
-  function renderObserve() {
-    const el = document.getElementById('fob-s8-observe'); if (!el) return;
-    const speciesOptions = state.species.map(s => `<option value="${esc(s.common_name)}">${esc(s.common_name)}${s.scientific_name ? ' — ' + esc(s.scientific_name) : ''}</option>`).join('');
-    const rows = state.observations.map(o => `<div class="fob-s8-observation">
-      ${o.photo_url ? `<img class="fob-s8-thumb" src="${esc(o.photo_url)}" alt="${esc(o.species)}" loading="lazy">` : `<div class="fob-s8-thumb"></div>`}
-      <div><strong>${esc(o.species)}</strong> ${o.verified ? '<span class="fob-s8-pill">✓ verified</span>' : '<span class="fob-s8-muted">awaiting verification</span>'}<br><span class="fob-s8-muted">${esc(o.member_name || 'Community observer')} · ${esc((o.observed_at || o.created_at || '').slice(0,10))}${o.habitat ? ' · ' + esc(o.habitat) : ''}</span><br><span class="fob-s8-muted">${esc(o.notes || '')}</span></div>
-      <div class="actions"><span class="fob-s8-muted">${o.lat != null && o.lng != null ? '📍 GPS captured' : 'No GPS'}</span></div>
-    </div>`).join('');
-    el.innerHTML = `<div class="fob-s8-grid two">
-      <div class="fob-s8-card"><h3>Log a biodiversity observation</h3><p>Capture a species sighting with evidence and location. Verified records can contribute to biodiversity intelligence.</p>
-       <form class="fob-s8-form" id="fob-s8-observation-form">
-        <div class="fob-s8-field full"><label>Species</label><input id="s8-species" list="s8-species-list" required placeholder="e.g. Grey crowned crane"><datalist id="s8-species-list">${speciesOptions}</datalist></div>
-        <div class="fob-s8-field"><label>Observed date</label><input id="s8-observed-at" type="date" value="${new Date().toISOString().slice(0,10)}"></div>
-        <div class="fob-s8-field"><label>Count band</label><select id="s8-count"><option value="1">1</option><option value="2-5">2–5</option><option value="6-20">6–20</option><option value="21+">21+</option></select></div>
-        <div class="fob-s8-field"><label>Activity</label><select id="s8-activity"><option value="feeding">Feeding</option><option value="resting">Resting</option><option value="breeding">Breeding</option><option value="flying">Flying</option><option value="other">Other</option></select></div>
-        <div class="fob-s8-field"><label>Habitat</label><input id="s8-habitat" placeholder="Wetland, forest, garden…"></div>
-        <div class="fob-s8-field full"><label>Photo URL <span class="fob-s8-muted">optional</span></label><input id="s8-photo" type="url" placeholder="Public image URL, if available"></div>
-        <div class="fob-s8-field full"><label>Notes / evidence</label><textarea id="s8-notes" placeholder="What did you observe? What makes the identification credible?"></textarea></div>
-        <div class="fob-s8-actions full"><button type="button" class="fob-s8-btn secondary" id="s8-gps">📍 Capture my location</button><span class="fob-s8-muted" id="s8-gps-status">GPS not captured</span></div>
-        <div class="fob-s8-actions full"><button class="fob-s8-btn gold" type="submit">Submit observation</button></div>
-       </form></div>
-      <div class="fob-s8-card"><h3>Community observation feed</h3><p class="fob-s8-muted">Recent observations from the shared FoB dataset.</p><div>${rows || '<div class="fob-s8-empty">No observations to display yet.</div>'}</div></div>
-    </div>`;
-    let coords = { lat: null, lng: null };
-    document.getElementById('s8-gps')?.addEventListener('click', () => {
-      const status = document.getElementById('s8-gps-status');
-      if (!navigator.geolocation) { status.textContent = 'GPS unavailable on this device'; return; }
-      status.textContent = 'Capturing…'; navigator.geolocation.getCurrentPosition(pos => { coords.lat = pos.coords.latitude; coords.lng = pos.coords.longitude; status.textContent = `GPS captured (${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)})`; }, () => { status.textContent = 'Could not read GPS'; }, { enableHighAccuracy: true, timeout: 10000 });
-    });
-    document.getElementById('fob-s8-observation-form')?.addEventListener('submit', async e => {
-      e.preventDefault(); await submitObservation(coords);
-    });
+  async function openBriefing(id){
+    const b=state.briefings.find(x=>String(x.id)===String(id));if(!b)return;
+    const body=[b.body,b.file_url,b.link_url].filter(Boolean).join('');
+    if(b.link_url){window.open(b.link_url,'_blank','noopener');return}
+    if(b.file_url){window.open(b.file_url,'_blank','noopener');return}
+    alert(b.title+'\n\n'+(body||'This briefing has no published body yet.'));
   }
 
-  async function submitObservation(coords) {
-    const c = supabase(); if (!c) return alert('Connection to the biodiversity database is unavailable.');
-    const user = await authUser(); if (!user) { alert('Please sign in first so the observation can be linked to you.'); return; }
-    const member = await memberForUser(user);
-    const species = document.getElementById('s8-species')?.value.trim();
-    if (!species) return;
-    const payload = { species, lat: coords.lat, lng: coords.lng, observed_at: document.getElementById('s8-observed-at')?.value ? new Date(document.getElementById('s8-observed-at').value).toISOString() : new Date().toISOString(), member_id: member?.id || null, member_name: member?.name || user.email, photo_url: document.getElementById('s8-photo')?.value.trim() || null, notes: document.getElementById('s8-notes')?.value.trim() || null, verified: false, count_band: document.getElementById('s8-count')?.value || null, activity: document.getElementById('s8-activity')?.value || null, habitat: document.getElementById('s8-habitat')?.value.trim() || null };
-    const { data, error } = await c.from('sightings').insert(payload).select('id').single();
-    if (error) { console.error(error); alert('The observation could not be saved: ' + error.message); return; }
-    try { global.FoBSprint8?.track?.('sighting_submit', { sighting_id: data?.id }); } catch (_) {}
-    alert('Observation submitted. It is now awaiting verification.');
-    await loadObservations(); renderObserve();
+  async function refresh(){
+    state.user=await authUser();
+    state.member=await memberForUser(state.user);
+    if(!state.user||!state.member||state.member.status==='removed') return false;
+    await Promise.all([loadBriefings(),loadProducts()]);
+    await renderPanel();
+    return true;
   }
 
-  function renderIntelligence() {
-    const el = document.getElementById('fob-s8-intelligence'); if (!el) return;
-    const cards = state.products.map(p => `<div class="fob-s8-card fob-s8-product"><div class="fob-s8-product"><span class="fob-s8-pill">${esc(p.buyer_segment || 'Institutional')}</span><h3 style="margin-top:11px">${esc(p.name)}</h3><p>${esc(p.description || '')}</p><div class="price">${p.price_ugx ? money(p.price_ugx) : 'Quoted to scope'}</div><div class="fob-s8-muted">Delivery: ${esc(p.delivery_format || 'Digital')}</div><div class="fob-s8-actions" style="margin-top:auto"><button class="fob-s8-btn gold" data-product="${esc(p.id)}">Enquire</button></div></div></div>`).join('');
-    el.innerHTML = `<div class="fob-s8-banner"><h3>Biodiversity Intelligence</h3><p>Turn verified community observations into useful evidence for EIA, research, conservation planning and institutional monitoring.</p></div>
-      <div class="fob-s8-grid">${cards || '<div class="fob-s8-empty">No products are currently published.</div>'}</div>
-      <div class="fob-s8-note">Paid intelligence should be assembled from verified evidence. The app treats this catalogue as an enquiry and delivery workflow, not as a public dump of sensitive location data.</div>`;
-    el.querySelectorAll('[data-product]').forEach(b => b.addEventListener('click', () => openProductEnquiry(b.dataset.product)));
+  function mount(){
+    injectStyle();
+    if(document.getElementById('fob-bi-rail')) return;
+    const rail=document.createElement('div');rail.id='fob-bi-rail';rail.style.display='none';
+    rail.innerHTML=`<button id="fob-bi-launch" aria-label="Open Biodiversity Intelligence"><span class="ico">🧠</span><span class="txt">Biodiversity Intelligence</span></button>
+      <div id="fob-bi-panel" role="dialog" aria-modal="true" aria-label="Biodiversity Intelligence"><div class="fob-bi-shell"><div class="fob-bi-head"><div><h2>Biodiversity Intelligence</h2><p>Member evidence &amp; intelligence workspace</p></div><button class="fob-bi-close" id="fob-bi-close">Close</button></div><div class="fob-bi-body"></div></div></div>`;
+    document.body.appendChild(rail);
+    document.getElementById('fob-bi-launch').addEventListener('click',async()=>{const ok=await refresh();if(!ok)return;if(document.getElementById('fob-bi-panel'))document.getElementById('fob-bi-panel').classList.add('open')});
+    document.getElementById('fob-bi-close').addEventListener('click',()=>document.getElementById('fob-bi-panel')?.classList.remove('open'));
+    document.getElementById('fob-bi-panel').addEventListener('click',e=>{if(e.target.id==='fob-bi-panel')e.currentTarget.classList.remove('open')});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('fob-bi-panel')?.classList.remove('open')});
+    observeMemberState();
   }
 
-  function openProductEnquiry(productId) {
-    const p = state.products.find(x => String(x.id) === String(productId)); if (!p) return;
-    const el = document.getElementById('fob-s8-intelligence');
-    const existing = document.getElementById('s8-enquiry-wrap'); existing?.remove();
-    const wrap = document.createElement('div'); wrap.id = 's8-enquiry-wrap'; wrap.className = 'fob-s8-card'; wrap.style.marginTop = '16px';
-    wrap.innerHTML = `<h3>Enquire: ${esc(p.name)}</h3><p>Tell UBF what you need so the team can scope the evidence and delivery format.</p><form class="fob-s8-form" id="s8-enquiry-form"><div class="fob-s8-field"><label>Name</label><input id="s8e-name" required></div><div class="fob-s8-field"><label>Work email</label><input id="s8e-email" type="email" required></div><div class="fob-s8-field"><label>Institution</label><input id="s8e-org"></div><div class="fob-s8-field"><label>Requested format / scope</label><input id="s8e-scope" placeholder="e.g. EIA baseline for western Uganda"></div><div class="fob-s8-field full"><label>Message</label><textarea id="s8e-message" required></textarea></div><div class="fob-s8-actions full"><button class="fob-s8-btn gold">Send enquiry</button><button class="fob-s8-btn secondary" type="button" id="s8e-cancel">Cancel</button></div></form>`;
-    el.appendChild(wrap); wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    document.getElementById('s8e-cancel').onclick = () => wrap.remove();
-    document.getElementById('s8-enquiry-form').onsubmit = async e => {
-      e.preventDefault(); const c = supabase(); if (!c) return;
-      const payload = { kind: 'biodiversity_intelligence', name: document.getElementById('s8e-name').value.trim(), email: document.getElementById('s8e-email').value.trim(), org: document.getElementById('s8e-org').value.trim(), message: document.getElementById('s8e-message').value.trim(), meta: JSON.stringify({ product_id: p.id, product: p.name, scope: document.getElementById('s8e-scope').value.trim() }) };
-      const { error } = await c.from('enquiries').insert(payload);
-      if (error) return alert('We could not send the enquiry: ' + error.message);
-      try { global.FoBSprint8?.track?.('data_product_enquiry', { product_id: p.id }); } catch (_) {}
-      alert('Enquiry sent to the UBF team.'); wrap.remove();
+  function observeMemberState(){
+    const sync=()=>{
+      const isMember=!!document.body.classList.contains('has-tabbar') && !!document.getElementById('view-member')?.classList.contains('active');
+      const rail=document.getElementById('fob-bi-rail');if(rail)rail.style.display=isMember?'block':'none';
     };
+    sync();
+    const mo=new MutationObserver(sync);mo.observe(document.body,{attributes:true,attributeFilter:['class']});
+    const vm=document.getElementById('view-member');if(vm)new MutationObserver(sync).observe(vm,{attributes:true,attributeFilter:['class']});
   }
 
-  function renderMembership() {
-    const el = document.getElementById('fob-s8-membership'); if (!el) return;
-    const member = (() => { try { return typeof currentUser !== 'undefined' ? currentUser : null; } catch (_) { return null; } })();
-    const tier = member?.tier || 'silver';
-    const tierLabel = String(tier).replace(/^./, x => x.toUpperCase());
-    el.innerHTML = `<div class="fob-s8-banner"><h3>Green Card membership</h3><p>Your membership should connect contribution to participation, learning and visible conservation impact.</p></div><div class="fob-s8-grid two"><div class="fob-s8-card"><span class="fob-s8-pill">Current status</span><div class="fob-s8-kpi">${member ? esc(tierLabel) : 'Guest'}</div><p>${member ? `Welcome back, ${esc(member.name || 'member')}. Your existing account remains the source of truth while the new membership ledger is adopted.` : 'Sign in or join the Friends of Biodiversity movement to unlock member-specific services.'}</p><div class="fob-s8-actions"><button class="fob-s8-btn gold" id="s8-membership-action">${member ? 'View my profile' : 'Join Green Card'}</button></div></div><div class="fob-s8-card"><h3>Membership ladder</h3><table class="fob-s8-table"><thead><tr><th>Tier</th><th>Purpose</th></tr></thead><tbody><tr><td>🎓 Student</td><td>Youth participation & in-kind contribution</td></tr><tr><td>🥈 Silver</td><td>Core individual membership</td></tr><tr><td>🥇 Gold</td><td>Engaged supporter & network</td></tr><tr><td>💎 Platinum</td><td>Strategic partnership</td></tr><tr><td>🔷 Diamond</td><td>Major conservation patron</td></tr><tr><td>🤝 Partner</td><td>Institutional participation</td></tr></tbody></table></div></div>`;
-    document.getElementById('s8-membership-action')?.addEventListener('click', () => {
-      try { if (member && typeof showView === 'function') showView('profile'); else if (typeof openModal === 'function') openModal('m-join'); else alert('Use the main app navigation to join or open your profile.'); } catch (_) { alert('Use the main app navigation to join or open your profile.'); }
-    });
-  }
-
-  async function renderAdmin() {
-    const el = document.getElementById('fob-s8-admin'); if (!el || !state.staff) return;
-    el.innerHTML = '<div class="fob-s8-card"><h3>Loading intelligence cockpit…</h3></div>';
-    const c = supabase(); if (!c) return;
-    const safeCount = async table => { const r = await c.from(table).select('*', { count: 'exact', head: true }); return r.error ? 0 : (r.count || 0); };
-    const [memberships, transactions, sightings, leads, orders, analytics] = await Promise.all([safeCount('memberships'),safeCount('payment_transactions'),safeCount('sightings'),safeCount('institution_leads'),safeCount('data_product_orders'),safeCount('analytics_events')]);
-    let revenue = 0, verified = 0, funnel = 0;
-    try { const r = await c.from('payment_transactions').select('amount_ugx').eq('status','successful'); revenue = (r.data || []).reduce((s,x)=>s + Number(x.amount_ugx || 0),0); } catch (_) {}
-    try { const r = await c.from('sightings').select('*',{count:'exact',head:true}).eq('verified',true); verified = r.count || 0; } catch (_) {}
-    try { const r = await c.from('institution_leads').select('estimated_value_ugx,probability'); funnel = (r.data || []).reduce((s,x)=>s + (Number(x.estimated_value_ugx||0)*Number(x.probability||0)/100),0); } catch (_) {}
-    el.innerHTML = `<div class="fob-s8-banner"><h3>Staff intelligence cockpit</h3><p>Operational view across members, revenue, citizen science, institutional pipeline and product demand.</p></div><div class="fob-s8-grid"><div class="fob-s8-card"><span class="fob-s8-pill">Memberships</span><div class="fob-s8-kpi">${memberships}</div><p>records in the new membership ledger.</p></div><div class="fob-s8-card"><span class="fob-s8-pill">Revenue</span><div class="fob-s8-kpi">${money(revenue)}</div><p>successful transactions only.</p></div><div class="fob-s8-card"><span class="fob-s8-pill">Observations</span><div class="fob-s8-kpi">${sightings}</div><p>${verified} verified records.</p></div><div class="fob-s8-card"><span class="fob-s8-pill">Institutional leads</span><div class="fob-s8-kpi">${leads}</div><p>weighted pipeline: ${money(funnel)}.</p></div><div class="fob-s8-card"><span class="fob-s8-pill">Data-product orders</span><div class="fob-s8-kpi">${orders}</div><p>commercial delivery workflow records.</p></div><div class="fob-s8-card"><span class="fob-s8-pill">Analytics events</span><div class="fob-s8-kpi">${analytics}</div><p>product engagement events captured so far.</p></div></div><div class="fob-s8-note">Finance numbers come from the canonical payment ledger. Citizen-science records are separated into submitted and verified evidence so the commercial data layer can stay defensible.</div>`;
-  }
-
-  function installGlobalBridge() {
-    global.FoBSprint8UI = Object.freeze({ open, close, refresh, selectTab });
-    try {
-      document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
-    } catch (_) {}
-  }
-
-  function boot() { renderShell(); installGlobalBridge(); }
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot, { once: true }); else boot();
+  function boot(){mount();global.FoBSprint8UI=Object.freeze({open:async()=>{const rail=document.getElementById('fob-bi-rail');if(rail){rail.style.display='block';const ok=await refresh();if(ok)document.getElementById('fob-bi-panel')?.classList.add('open')}},close:()=>document.getElementById('fob-bi-panel')?.classList.remove('open'),refresh});}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })(window);
