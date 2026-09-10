@@ -1,22 +1,26 @@
 /* ═══════════════════════════════════════════
    FRIENDS OF BIODIVERSITY — SERVICE WORKER
    Uganda Biodiversity Fund
-   
+
    Caches core app files for offline access.
-   Members can open the app even without internet
-   and see the last loaded content.
+   Sprint 8 exposes only the member-side Biodiversity Intelligence package.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v5';
+const CACHE_NAME = 'fob-app-v15';
+const RUNTIME_SRC = './sprint8-runtime.js';
+const PROFILE_SRC = './sprint8-auth-profile.js';
+const UI_SRC = './sprint8-ui.js';
+const PACKAGE_SRC = './sprint8-member-package.js';
 
-// Core files to cache immediately on install.
-// RELATIVE paths so the app works under a GitHub project subpath
-// (e.g. /friends-of-biodiversity/) as well as a custom domain root.
 const CORE_FILES = [
   './',
   './index.html',
   './styles.css',
   './app.js',
+  RUNTIME_SRC,
+  PROFILE_SRC,
+  UI_SRC,
+  PACKAGE_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -29,8 +33,6 @@ const CORE_FILES = [
   './slide3sm.jpg',
 ];
 
-// ── INSTALL: cache core files (each independently, so one missing
-// file can never break the whole install) ──
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -39,91 +41,80 @@ self.addEventListener('install', event => {
   );
 });
 
-// ── ACTIVATE: clean up old caches ──
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => caches.delete(key))
-      )
+      Promise.all(keys.filter(key => key !== CACHE_NAME).map(key => caches.delete(key)))
     ).then(() => self.clients.claim())
   );
 });
 
-// ── FETCH ──
-// App code (HTML/CSS/JS) = NETWORK-FIRST so updates appear immediately after deploy.
-// Images & other static assets = CACHE-FIRST for speed and offline use.
-self.addEventListener('fetch', event => {
-  // Only handle GET requests
-  if (event.request.method !== 'GET') return;
+async function injectSprint8Layer(response) {
+  if (!response || !response.ok) return response;
+  const type = response.headers.get('content-type') || '';
+  if (!type.includes('text/html')) return response;
+  try {
+    const html = await response.text();
+    if (/sprint8-member-package\.js/i.test(html)) return new Response(html, response);
+    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script><script src="' + PACKAGE_SRC + '" defer></script>';
+    const updated = html.includes('</body>') ? html.replace('</body>', tags + '</body>') : html + tags;
+    const headers = new Headers(response.headers);
+    headers.delete('content-length');
+    return new Response(updated, { status: response.status, statusText: response.statusText, headers });
+  } catch (_) {
+    return response;
+  }
+}
 
-  // Always go to network for live/external data — never cache these
+async function networkCodeRequest(request) {
+  const network = await fetch(request);
+  const transformed = await injectSprint8Layer(network.clone());
+  if (transformed && transformed.ok) {
+    caches.open(CACHE_NAME).then(cache => cache.put(request, transformed.clone())).catch(() => {});
+  }
+  return transformed;
+}
+
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.hostname.includes('supabase.co')) return;
   if (url.hostname.includes('googleapis.com')) return;
   if (url.hostname.includes('jsdelivr.net')) return;
   if (url.hostname.includes('cloudflare')) return;
-
   const sameOrigin = url.origin === self.location.origin;
-  const isCode = event.request.destination === 'document' ||
-                 /\.(?:html|css|js)$/i.test(url.pathname);
-
-  // NETWORK-FIRST for the app shell and code so new deploys show up right away
+  const isCode = event.request.destination === 'document' || /\.(?:html|css|js)$/i.test(url.pathname);
   if (sameOrigin && isCode) {
-    event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          if (response && response.ok) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match(event.request).then(c => c || caches.match('./index.html'))
-        )
-    );
+    event.respondWith(networkCodeRequest(event.request).catch(() => caches.match(event.request).then(c => c || caches.match('./index.html'))));
     return;
   }
-
-  // CACHE-FIRST for images and everything else
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request)
         .then(response => {
           if (response && response.ok && response.type === 'basic' && sameOrigin) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, response.clone())).catch(() => {});
           }
           return response;
         })
-        .catch(() => {
-          if (event.request.destination === 'document') {
-            return caches.match('./index.html');
-          }
-        });
+        .catch(() => event.request.destination === 'document' ? caches.match('./index.html') : undefined);
     })
   );
 });
 
-// ── PUSH NOTIFICATIONS (future use) ──
 self.addEventListener('push', event => {
   if (!event.data) return;
   const data = event.data.json();
-  self.registration.showNotification(data.title || 'Friends of Biodiversity', {
+  event.waitUntil(self.registration.showNotification(data.title || 'Friends of Biodiversity', {
     body: data.body || 'New update from Uganda Biodiversity Fund',
     icon: './icon192.png',
     badge: './icon192.png',
     data: { url: data.url || './' }
-  });
+  }));
 });
 
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  event.waitUntil(
-    clients.openWindow(event.notification.data.url || './')
-  );
+  event.waitUntil(clients.openWindow(event.notification.data.url || './'));
 });

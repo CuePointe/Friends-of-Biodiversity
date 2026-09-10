@@ -109,3 +109,9 @@ All sightings are stored in the Supabase table `public.sightings`:
 | `verified` | Admin-confirmed flag |
 
 Nothing is ever deleted automatically — the record is the asset.
+
+---
+
+## 8. Sprint 8 visible workspace
+
+The Sprint 8 **Explore FoB** workspace adds a second visible entry point for Citizen Science. It provides observation capture with GPS, date, species, count band, activity, habitat, optional photo URL and evidence notes. New submissions are stored as unverified records and the workspace feed is intended to show verified records only.
