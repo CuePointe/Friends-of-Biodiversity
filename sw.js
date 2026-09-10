@@ -3,16 +3,13 @@
    Uganda Biodiversity Fund
 
    Caches core app files for offline access.
-   Sprint 8 runtime, auth bridge, visible feature layer, strategic product
-   architecture and interactive Pulse filters are injected into the HTML response.
+   Sprint 8 now exposes only the member-side Biodiversity Intelligence shell.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v12';
+const CACHE_NAME = 'fob-app-v13';
 const RUNTIME_SRC = './sprint8-runtime.js';
 const PROFILE_SRC = './sprint8-auth-profile.js';
 const UI_SRC = './sprint8-ui.js';
-const STRATEGY_SRC = './sprint8-strategy.js';
-const PULSE_SRC = './sprint8-pulse-filters.js';
 
 const CORE_FILES = [
   './',
@@ -22,8 +19,6 @@ const CORE_FILES = [
   RUNTIME_SRC,
   PROFILE_SRC,
   UI_SRC,
-  STRATEGY_SRC,
-  PULSE_SRC,
   './manifest.json',
   './fob-logo.png',
   './ubf-logo.png',
@@ -60,8 +55,8 @@ async function injectSprint8Layer(response) {
   if (!type.includes('text/html')) return response;
   try {
     const html = await response.text();
-    if (/sprint8-pulse-filters\.js/i.test(html)) return new Response(html, response);
-    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script><script src="' + STRATEGY_SRC + '" defer></script><script src="' + PULSE_SRC + '" defer></script>';
+    if (/sprint8-ui\.js/i.test(html)) return new Response(html, response);
+    const tags = '<script src="' + RUNTIME_SRC + '" defer></script><script src="' + PROFILE_SRC + '" defer></script><script src="' + UI_SRC + '" defer></script>';
     const updated = html.includes('</body>')
       ? html.replace('</body>', tags + '</body>')
       : html + tags;
