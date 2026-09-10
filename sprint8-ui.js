@@ -15,15 +15,12 @@
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
 
-  const money = (value) => new Intl.NumberFormat('en-UG', {
-    style: 'currency', currency: 'UGX', maximumFractionDigits: 0
-  }).format(Number(value) || 0);
-
   const TIER_RANK = { student: 1, silver: 1, gold: 2, platinum: 3, diamond: 4, partner: 2 };
+  const PACKAGE_ID = 'fob-bi-package';
 
   const css = `
   #fob-bi-rail{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:1800;font-family:Inter,system-ui,sans-serif}
-  #fob-bi-launch{width:62px;min-height:150px;border:1px solid rgba(200,168,75,.45);border-radius:18px;background:linear-gradient(180deg,#123a25,#0b2618);color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.22);cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 9px}
+  #fob-bi-launch{display:none!important;width:62px;min-height:150px;border:1px solid rgba(200,168,75,.45);border-radius:18px;background:linear-gradient(180deg,#123a25,#0b2618);color:#fff;box-shadow:0 12px 34px rgba(0,0,0,.22);cursor:pointer;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:12px 9px}
   #fob-bi-launch .ico{font-size:24px;line-height:1}
   #fob-bi-launch .txt{font-size:11px;font-weight:900;line-height:1.15;text-align:center;writing-mode:vertical-rl;transform:rotate(180deg);letter-spacing:.04em}
   #fob-bi-panel{display:none;position:fixed;inset:0;background:rgba(5,18,11,.56);backdrop-filter:blur(3px);padding:18px;overflow:auto;z-index:1801}
@@ -39,6 +36,10 @@
   .fob-bi-list{margin-top:15px;border-top:1px solid #ece6dc}.fob-bi-item{padding:12px 0;border-bottom:1px solid #ece6dc}.fob-bi-item:last-child{border-bottom:0}.fob-bi-item strong{display:block;color:#173522;font-size:13px}.fob-bi-item span{display:block;color:#6b756d;font-size:12px;line-height:1.5;margin-top:3px}.fob-bi-empty{padding:18px 0;color:#737d75;font-size:13px}
   .fob-bi-topline{padding:14px 16px;margin-bottom:16px;border-radius:13px;background:linear-gradient(135deg,#173f29,#0b2618);color:#fff}.fob-bi-topline strong{font-size:15px}.fob-bi-topline span{display:block;color:rgba(255,255,255,.72);font-size:12px;line-height:1.5;margin-top:4px}
   .fob-bi-note{margin-top:15px;padding:11px 13px;border-radius:11px;background:#f0eadf;color:#526057;font-size:12px;line-height:1.55}
+  #${PACKAGE_ID}{cursor:pointer;border:1px solid rgba(200,168,75,.55);background:linear-gradient(135deg,rgba(200,168,75,.10),rgba(45,106,79,.08));color:inherit;font:inherit;text-align:left;transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease}
+  #${PACKAGE_ID}:hover{transform:translateY(-2px);box-shadow:0 8px 22px rgba(0,0,0,.10);border-color:rgba(200,168,75,.9)}
+  #${PACKAGE_ID}:focus-visible{outline:2px solid #C8A84B;outline-offset:2px}
+  #${PACKAGE_ID} .pc-txt{font-weight:800}
   @media(max-width:760px){#fob-bi-rail{right:10px;top:auto;bottom:84px;transform:none}#fob-bi-launch{width:58px;min-height:58px;border-radius:50%;padding:0;gap:0}.fob-bi-launch .txt{display:none}.fob-bi-shell{margin:10px auto;border-radius:17px}.fob-bi-head{padding:17px}.fob-bi-body{padding:14px}.fob-bi-grid{grid-template-columns:1fr}.fob-bi-card{min-height:0}}
   `;
 
@@ -99,11 +100,6 @@
     if(typeof global.openModal==='function'){global.openModal('m-sighting');return}
     const launch=document.getElementById('app-fab');
     if(launch) launch.click();
-  }
-
-  function openLearning(){
-    if(typeof global.appNav==='function'){global.appNav('learn');return}
-    if(typeof global.showView==='function'){global.showView('member');return}
   }
 
   function bringMember(){
@@ -167,30 +163,69 @@
     return true;
   }
 
+  function openWorkspace(){
+    const rail=document.getElementById('fob-bi-rail');
+    if(rail) rail.style.display='block';
+    refresh().then(ok=>{if(ok) document.getElementById('fob-bi-panel')?.classList.add('open')});
+  }
+
+  function mountPackageCard(){
+    const host=document.querySelector('#view-member #mem-body .perk-chips');
+    if(!host) return;
+    let card=document.getElementById(PACKAGE_ID);
+    if(!card){
+      card=document.createElement('button');
+      card.type='button';
+      card.id=PACKAGE_ID;
+      card.className='perk-chip fob-bi-package';
+      card.setAttribute('aria-label','Open Biodiversity Intelligence');
+      card.title='Briefings · EIA Data Pack · Citizen Science · Bring a Member';
+      card.innerHTML='<span class="pc-ico">🧠</span><span class="pc-txt">Biodiversity Intelligence</span>';
+      card.addEventListener('click',openWorkspace);
+      host.appendChild(card);
+    }else if(card.parentElement!==host){
+      host.appendChild(card);
+    }
+  }
+
   function mount(){
     injectStyle();
-    if(document.getElementById('fob-bi-rail')) return;
-    const rail=document.createElement('div');rail.id='fob-bi-rail';rail.style.display='none';
-    rail.innerHTML=`<button id="fob-bi-launch" aria-label="Open Biodiversity Intelligence"><span class="ico">🧠</span><span class="txt">Biodiversity Intelligence</span></button>
-      <div id="fob-bi-panel" role="dialog" aria-modal="true" aria-label="Biodiversity Intelligence"><div class="fob-bi-shell"><div class="fob-bi-head"><div><h2>Biodiversity Intelligence</h2><p>Member evidence &amp; intelligence workspace</p></div><button class="fob-bi-close" id="fob-bi-close">Close</button></div><div class="fob-bi-body"></div></div></div>`;
-    document.body.appendChild(rail);
-    document.getElementById('fob-bi-launch').addEventListener('click',async()=>{const ok=await refresh();if(!ok)return;if(document.getElementById('fob-bi-panel'))document.getElementById('fob-bi-panel').classList.add('open')});
-    document.getElementById('fob-bi-close').addEventListener('click',()=>document.getElementById('fob-bi-panel')?.classList.remove('open'));
-    document.getElementById('fob-bi-panel').addEventListener('click',e=>{if(e.target.id==='fob-bi-panel')e.currentTarget.classList.remove('open')});
-    document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('fob-bi-panel')?.classList.remove('open')});
+    if(!document.getElementById('fob-bi-rail')){
+      const rail=document.createElement('div');rail.id='fob-bi-rail';rail.style.display='none';
+      rail.innerHTML=`<button id="fob-bi-launch" aria-label="Open Biodiversity Intelligence"><span class="ico">🧠</span><span class="txt">Biodiversity Intelligence</span></button>
+        <div id="fob-bi-panel" role="dialog" aria-modal="true" aria-label="Biodiversity Intelligence"><div class="fob-bi-shell"><div class="fob-bi-head"><div><h2>Biodiversity Intelligence</h2><p>Member evidence &amp; intelligence workspace</p></div><button class="fob-bi-close" id="fob-bi-close">Close</button></div><div class="fob-bi-body"></div></div></div>`;
+      document.body.appendChild(rail);
+      document.getElementById('fob-bi-launch').addEventListener('click',openWorkspace);
+      document.getElementById('fob-bi-close').addEventListener('click',()=>document.getElementById('fob-bi-panel')?.classList.remove('open'));
+      document.getElementById('fob-bi-panel').addEventListener('click',e=>{if(e.target.id==='fob-bi-panel')e.currentTarget.classList.remove('open')});
+      document.addEventListener('keydown',e=>{if(e.key==='Escape')document.getElementById('fob-bi-panel')?.classList.remove('open')});
+    }
     observeMemberState();
+    mountPackageCard();
+    const vm=document.getElementById('view-member');
+    if(vm)new MutationObserver(mountPackageCard).observe(vm,{subtree:true,childList:true});
   }
 
   function observeMemberState(){
     const sync=()=>{
       const isMember=!!document.body.classList.contains('has-tabbar') && !!document.getElementById('view-member')?.classList.contains('active');
       const rail=document.getElementById('fob-bi-rail');if(rail)rail.style.display=isMember?'block':'none';
+      if(isMember) mountPackageCard();
     };
     sync();
     const mo=new MutationObserver(sync);mo.observe(document.body,{attributes:true,attributeFilter:['class']});
-    const vm=document.getElementById('view-member');if(vm)new MutationObserver(sync).observe(vm,{attributes:true,attributeFilter:['class']});
+    const vm=document.getElementById('view-member');if(vm)new MutationObserver(sync).observe(vm,{attributes:true,attributeFilter:['class','style']});
   }
 
-  function boot(){mount();global.FoBSprint8UI=Object.freeze({open:async()=>{const rail=document.getElementById('fob-bi-rail');if(rail){rail.style.display='block';const ok=await refresh();if(ok)document.getElementById('fob-bi-panel')?.classList.add('open')}},close:()=>document.getElementById('fob-bi-panel')?.classList.remove('open'),refresh});}
+  function boot(){
+    mount();
+    global.FoBSprint8UI=Object.freeze({
+      open:openWorkspace,
+      close:()=>document.getElementById('fob-bi-panel')?.classList.remove('open'),
+      refresh
+    });
+    mountPackageCard();
+  }
+
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
 })(window);
