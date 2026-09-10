@@ -6,7 +6,7 @@
    Sprint 8 exposes only the member-side Biodiversity Intelligence package.
 ═══════════════════════════════════════════ */
 
-const CACHE_NAME = 'fob-app-v14';
+const CACHE_NAME = 'fob-app-v15';
 const RUNTIME_SRC = './sprint8-runtime.js';
 const PROFILE_SRC = './sprint8-auth-profile.js';
 const UI_SRC = './sprint8-ui.js';
